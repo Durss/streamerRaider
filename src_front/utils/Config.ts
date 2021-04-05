@@ -28,14 +28,6 @@ export default class Config {
 		});
 	}
 	
-	public static get TWITCHAPP_REDIRECT_URI(): string {
-		return this.getEnvData({
-			dev: document.location.protocol+"//"+document.location.hostname+":"+document.location.port+"/oauth",
-			prod:"https://protopotes.durss.ninja/oauth",
-		});
-	}
-
-
 	
 
 	/**
