@@ -2,7 +2,8 @@
 	<div :class="classes">
 		<div class="userName">
 			<img v-if="userInfos" :src="userInfos.profile_image_url" alt="avatar" class="avatar">
-			<a :href="'https://twitch.tv/'+userName" target="_blank">{{userName}}</a>
+			<div class="name">{{userName}}</div>
+			<Button class="link" v-if="streamInfos" :icon="require('@/assets/icons/open.svg')" type="link" target="_blank" :to="'https://twitch.tv/'+userName" />
 		</div>
 		
 		<div class="detailsHolder" v-if="streamInfos">
@@ -150,7 +151,7 @@ export default class StreamInfo extends Vue {
 		width: 250px;
 		.userName {
 			margin-bottom: 0px;
-			a {
+			.name {
 				font-size: 20px;
 				// word-wrap: break-word;
 			}
@@ -164,14 +165,6 @@ export default class StreamInfo extends Vue {
 		display: flex;
 		flex-direction: row;
 		align-items: center;
-		a {
-			flex-grow: 1;
-			text-align: center;
-			font-family: "Nunito";
-			font-size: 30px;
-			text-transform: capitalize;
-			color: @mainColor_normal;
-		}
 		.avatar {
 			width: 30px;
 			height: 30px;
@@ -179,6 +172,22 @@ export default class StreamInfo extends Vue {
 			vertical-align: top;
 			margin-right: 10px;
 			border: 1px solid @mainColor_normal;
+		}
+		.name {
+			flex-grow: 1;
+			text-align: center;
+			font-family: "Nunito";
+			font-size: 30px;
+			text-transform: capitalize;
+			color: @mainColor_normal;
+		}
+		.link {
+			width: 30px;
+			height: 30px;
+			max-width: 30px;
+			max-height: 30px;
+			padding: 5px;
+			border-radius: 10px;
 		}
 	}
 

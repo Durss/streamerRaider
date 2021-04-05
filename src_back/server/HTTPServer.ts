@@ -148,6 +148,7 @@ export default class HTTPServer {
 	 * @param res 
 	 */
 	private async addUser(req:Request, res:Response):Promise<void> {
+		Logger.info("Add user", req.query.login);
 		let users = JSON.parse(fs.readFileSync(Config.TWITCH_USER_NAMES_PATH, "utf8"));
 		users.push(req.query.login);
 		fs.writeFileSync(Config.TWITCH_USER_NAMES_PATH, JSON.stringify(users));
@@ -161,6 +162,7 @@ export default class HTTPServer {
 	 * @param res 
 	 */
 	private async removeUser(req:Request, res:Response):Promise<void> {
+		Logger.info("Remove user", req.query.login);
 		let users:string[] = JSON.parse(fs.readFileSync(Config.TWITCH_USER_NAMES_PATH, "utf8"));
 		let userIndex = users.indexOf(<string>req.query.login);
 		if(userIndex > -1) {
@@ -207,7 +209,6 @@ export default class HTTPServer {
 		let channels:string[] = <string[]>req.body.channels;
 		let url = "https://api.twitch.tv/helix/users?login="+channels.join("&login=");
 		// let url = "https://api.twitch.tv/helix/users?login="+user;
-		console.log("LOAD INFOS");
 		let result = await fetch(url, {
 			headers:{
 				"Client-ID": Config.TWITCHAPP_CLIENT_ID,
