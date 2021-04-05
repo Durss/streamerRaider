@@ -2,7 +2,8 @@
 	<div :class="classes">
 		<div class="userName">
 			<img v-if="userInfos" :src="userInfos.profile_image_url" alt="avatar" class="avatar">
-			<div class="name">{{userName}}</div>
+			<div v-if="small===false" class="name">{{userName}}</div>
+			<a v-if="small!==false" class="name" :href="'https://twitch.tv/'+userName" target="_blank">{{userName}}</a>
 			<Button class="link" v-if="streamInfos" :icon="require('@/assets/icons/open.svg')" type="link" target="_blank" :to="'https://twitch.tv/'+userName" />
 		</div>
 		
