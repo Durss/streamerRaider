@@ -34,12 +34,18 @@ export default class HTTPServer {
 	}
 
 	protected async doPrepareApp(): Promise<void> {
-		let token;
+		//Check if twitch keys are ok
 		try {
-			token = await this.getClientCredentialToken();
+			await this.getClientCredentialToken();
 		}catch(error) {
 			//Invalid token
 			Logger.error("Invalid twitch tokens. Please check the client_id and secret_id values in the file twitch_keys.json")
+		}
+		
+		//init default users list if necessary
+		if(!fs.existsSync(Config.TWITCH_USER_NAMES_PATH)) {
+			let defaultUsers = ["freecadfrance", "protopotes", "alf_arobase", "t4lus", "pixiecosplay", "durss", "lazarelive", "barbatroniclive", "ioodyme", "tixlegeek", "Evy_Cooper", "Yorzian", "virtualabs","MaxenceClt_", "tainalo2", "pimentofr", "cabridiy", "dianae_cosplay", "sombrepigeon", "mt_mak3r", "kmikazrobotics", "Libereau", "akanoa", "Kromette", "bynaris", "kathleenfabric", "coutureetpaillettes", "spectrenoir06", "motherofrats_", "FindTheStream", "alexnesnes", "lady_dcr", "hippo_fabmaker", "klebermaker"];
+			fs.writeFileSync(Config.TWITCH_USER_NAMES_PATH, JSON.stringify(defaultUsers));
 		}
 		
 		//Redirect to homepage invalid requests
@@ -114,6 +120,54 @@ export default class HTTPServer {
 	private async createEndpoints():Promise<void> {
 		this.app.post("/api/user_infos", (req:Request, res:Response) => this.getUserInfos(req,res));
 		this.app.post("/api/stream_infos", (req:Request, res:Response) => this.getStreamInfos(req,res));
+		this.app.get("/api/user_names", (req:Request, res:Response) => this.getUserNames(req,res));
+		this.app.get("/api/add_user", (req:Request, res:Response) => this.addUser(req,res));
+		this.app.get("/api/remove_user", (req:Request, res:Response) => this.removeUser(req,res));
+	}
+
+	/**
+	 * Gets all user names
+	 * 
+	 * @param req 
+	 * @param res 
+	 */
+	private async getUserNames(req:Request, res:Response):Promise<void> {
+		let users;
+		try {
+			users = JSON.parse(fs.readFileSync(Config.TWITCH_USER_NAMES_PATH, "utf8"));
+		}catch(err){
+			users = [];
+		}
+		res.status(200).send(JSON.stringify({success:true, data:users}));
+	}
+
+	/**
+	 * Adds a user to the list
+	 * 
+	 * @param req 
+	 * @param res 
+	 */
+	private async addUser(req:Request, res:Response):Promise<void> {
+		let users = JSON.parse(fs.readFileSync(Config.TWITCH_USER_NAMES_PATH, "utf8"));
+		users.push(req.query.login);
+		fs.writeFileSync(Config.TWITCH_USER_NAMES_PATH, JSON.stringify(users));
+		res.status(200).send(JSON.stringify({success:true, data:users}));
+	}
+
+	/**
+	 * Removes a user from the list
+	 * 
+	 * @param req 
+	 * @param res 
+	 */
+	private async removeUser(req:Request, res:Response):Promise<void> {
+		let users:string[] = JSON.parse(fs.readFileSync(Config.TWITCH_USER_NAMES_PATH, "utf8"));
+		let userIndex = users.indexOf(<string>req.query.login);
+		if(userIndex > -1) {
+			users.splice(userIndex,1);
+			fs.writeFileSync(Config.TWITCH_USER_NAMES_PATH, JSON.stringify(users));
+		}
+		res.status(200).send(JSON.stringify({success:true, data:users}));
 	}
 
 	/**

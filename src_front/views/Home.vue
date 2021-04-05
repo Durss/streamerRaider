@@ -7,9 +7,11 @@
 			</div>
 		</transition>
 
-		<div class="wrongKeys" v-if="missingTwitchKeys">Please fill in the <strong>client_id</strong> and <strong>secret_id</strong> values inside the file <strong>twitch_keys.json</strong> created at the root of the project!</div>
+		<div class="confError" v-if="missingTwitchKeys">Please fill in the <strong>client_id</strong> and <strong>secret_id</strong> values inside the file <strong>twitch_keys.json</strong> created at the root of the project!</div>
+		
+		<div class="confError" v-if="missingTwitchUsers">Please add users to the file <strong>protobuddiesList.json</strong> at the root of the project</div>
 
-		<div v-if="!loading && !missingTwitchKeys">
+		<div v-if="!loading && !missingTwitchKeys && !missingTwitchUsers">
 			<AuthForm v-if="!connected" />
 			<Button title="Lancer un raid aléatoire" v-if="connected" white
 				@click="randomRaid()"
@@ -72,6 +74,7 @@ export default class Home extends Vue {
 
 	public loading:boolean = false;
 	public missingTwitchKeys:boolean = false;
+	public missingTwitchUsers:boolean = false;
 
 	public userNameToInfos:TwitchTypes.UserInfo[] = [];
 	public onlineUsers:{userName:string, user?:TwitchTypes.UserInfo, stream?:TwitchTypes.StreamInfo}[] = [];
@@ -82,8 +85,13 @@ export default class Home extends Vue {
 	}
 
 	public async mounted():Promise<void> {
-		let channelList = ["freecadfrance", "protopotes", "alf_arobase", "t4lus", "pixiecosplay", "durss", "lazarelive", "barbatroniclive", "ioodyme", "tixlegeek", "Evy_Cooper", "Yorzian", "virtualabs","MaxenceClt_", "tainalo2", "pimentofr", "cabridiy", "dianae_cosplay", "sombrepigeon", "mt_mak3r", "kmikazrobotics", "Libereau", "akanoa", "Kromette", "bynaris", "kathleenfabric", "coutureetpaillettes", "spectrenoir06", "motherofrats_", "FindTheStream", "alexnesnes", "lady_dcr", "hippo_fabmaker"];
-		// channelList = channelList.concat(["mistermv", "ultia", "avamind", "horty_", "littlebigwhale"]);
+		//Load user names from server
+		let channelList = await Api.get("user_names");
+		if(!(channelList instanceof Array) || channelList.length == 0) {
+			this.missingTwitchUsers = true;
+			return;
+		}
+		
 		let channelListBackup = channelList.concat();
 		let maxBatch = 100;//Twitch API cannot get more than 100 users at once
 		this.loading = true;
@@ -198,7 +206,7 @@ export default class Home extends Vue {
 		}
 	}
 
-	.wrongKeys {
+	.confError {
 		.center();
 		position: absolute;
 		font-family: "Inter";

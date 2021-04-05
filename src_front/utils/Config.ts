@@ -7,8 +7,6 @@ export default class Config {
 	private static _ENV_NAME: EnvName;
 
 	public static IS_PROD:boolean = /.*\.(com|fr|net|org|ninja|st)$/gi.test(window.location.hostname);
-	// public static TWITCHAPP_CLIENT_ID:string = "zmt5rqjd07kqv8me3hd74gzb6z5jq0";
-	// public static TWITCHAPP_SCOPES:string[] = ['channel:read:redemptions','channel:manage:redemptions','channel:moderate','channel:read:subscriptions','bits:read','whispers:read'];
 
 	public static init():void {
 		let prod = this.IS_PROD;//document.location.port == "";

@@ -16,7 +16,7 @@
 				<iframe
 					class="streamImage"
 					v-if="showLive"
-					:src="'https://player.twitch.tv/?channel='+userName+'&parent=localhost&autoplay=true'"
+					:src="'https://player.twitch.tv/?channel='+userName+'&parent='+twitchParent+'&autoplay=true'"
 					height="190"
 					width="340"
 					allowfullscreen="true">
@@ -61,6 +61,10 @@ export default class StreamInfo extends Vue {
 	private refreshThumbInterval:number;
 	private incrementInterval:number;
 	private pictureRefreshInc:number = 0;
+
+	public get twitchParent():string {
+		return document.location.hostname;
+	}
 
 	public get classes():string[] {
 		let res = ["streaminfo"]
