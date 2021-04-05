@@ -1,0 +1,51 @@
+{
+  "name": "protopotes_raider",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently --kill-others \"npm run front/watch\" \"npm run server/watch\"",
+    "build": "npm run front/build && npm run server/build",
+    "front/serve": "vue-cli-service serve",
+    "front/watch": "npm run front/serve",
+    "front/build": "vue-cli-service build",
+    "server/watch": "tsc -w -p ./tsconfig_server.json",
+    "server/build": "tsc -p ./tsconfig_server.json",
+    "server/start": "pm2 start bootstrap-pm2.json"
+  },
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "concurrently": "^5.3.0",
+    "connect-history-api-fallback": "^1.6.0",
+    "crypto-js": "^4.0.0",
+    "express": "^4.17.1",
+    "multiparty": "^4.2.2",
+    "node-fetch": "^2.6.1",
+    "tmi.js": "^1.7.1",
+    "vue": "^2.6.12",
+    "vue-class-component": "^7.2.5",
+    "vue-router": "^3.4.3",
+    "vuex": "^3.5.1"
+  },
+  "devDependencies": {
+    "@types/crypto-js": "^4.0.1",
+    "@types/express": "^4.17.8",
+    "@types/gsap": "^1.20.2",
+    "@types/multiparty": "0.0.32",
+    "@types/node-fetch": "^2.5.8",
+    "@types/tmi.js": "^1.7.1",
+    "@types/uuid": "^8.3.0",
+    "@vue/cli-plugin-router": "^4.5.4",
+    "@vue/cli-plugin-typescript": "^4.5.4",
+    "@vue/cli-plugin-vuex": "^4.5.4",
+    "@vue/cli-service": "^4.5.4",
+    "gsap": "^3.6.1",
+    "less-loader": "^7.0.1",
+    "vue-i18n": "^8.21.0",
+    "vue-property-decorator": "^9.0.0",
+    "vue-template-compiler": "^2.6.12"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions"
+  ]
+}
