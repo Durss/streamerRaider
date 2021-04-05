@@ -79,13 +79,59 @@ export default class Home extends Vue {
 	public userNameToInfos:TwitchTypes.UserInfo[] = [];
 	public onlineUsers:{userName:string, user?:TwitchTypes.UserInfo, stream?:TwitchTypes.StreamInfo}[] = [];
 	public offlineUsers:{userName:string, user?:TwitchTypes.UserInfo, stream?:TwitchTypes.StreamInfo}[] = [];
+	
+	private mouseMoveHandler:any;
+	private refreshTimeout:number;
 
 	public get connected():boolean {
 		return this.$store.state.OAuthToken;
 	}
 
 	public async mounted():Promise<void> {
-		//Load user names from server
+		this.loadData();
+		this.mouseMoveHandler = (e:MouseEvent) => this.onMouseMove(e);
+		document.body.addEventListener("mousemove", this.mouseMoveHandler);
+	}
+
+	public beforeDestroy(): void {
+		clearTimeout(this.refreshTimeout);
+		document.body.removeEventListener("mousemove", this.mouseMoveHandler);
+	}
+
+	public randomRaid():void {
+		let user = Utils.pickRand(this.onlineUsers);
+		Utils.confirm("Lancer un raid", "Veux-tu vraiment lancer un raid vers la chaîne de "+user.userName+" ?")
+		.then(_=> {
+			IRCClient.instance.sendMessage("/raid "+user.userName);
+		}).catch(error=>{});
+	}
+
+	public beforeEnter(el:HTMLElement):void {
+		gsap.set(el, {opacity:0, y:-50});
+	}
+
+	public enter(el:HTMLDivElement):void {
+		let delay = parseInt(el.dataset.index) * .15;
+		gsap.to(el, {duration:.5, opacity:1, y:0, delay});
+	}
+
+	public leave(el:HTMLElement):void {
+
+	}
+
+	/**
+	 * Called on mouse move event.
+	 */
+	private onMouseMove(e:MouseEvent):void {
+		this.sheduleReload();
+	}
+
+	/**
+	 * Loads all the data from server
+	 */
+	private async loadData():Promise<void> {
+		
+		//Load user name list from server
 		let channelList = await Api.get("user_names");
 		if(!(channelList instanceof Array) || channelList.length == 0) {
 			this.missingTwitchUsers = true;
@@ -159,29 +205,19 @@ export default class Home extends Vue {
 		await this.$nextTick();
 		this.onlineUsers = onlineUsers;
 		this.offlineUsers = offlineUsers;
+		
+		this.sheduleReload();
 	}
 
-	public beforeDestroy(): void {}
-
-	public randomRaid():void {
-		let user = Utils.pickRand(this.onlineUsers);
-		Utils.confirm("Lancer un raid", "Veux-tu vraiment lancer un raid vers la chaîne de "+user.userName+" ?")
-		.then(_=> {
-			IRCClient.instance.sendMessage("/raid "+user.userName);
-		}).catch(error=>{});
-	}
-
-	public beforeEnter(el:HTMLElement):void {
-		gsap.set(el, {opacity:0, y:-50});
-	}
-
-	public enter(el:HTMLDivElement):void {
-		let delay = parseInt(el.dataset.index) * .15;
-		gsap.to(el, {duration:.5, opacity:1, y:0, delay});
-	}
-
-	public leave(el:HTMLElement):void {
-
+	/**
+	 * Schedule a data reload in 10min
+	 * Clears the previous schedule.
+	 */
+	private sheduleReload():void {
+		clearTimeout(this.refreshTimeout);
+		this.refreshTimeout = setTimeout(_=> {
+			this.loadData();
+		}, 10 * 60 * 1000);
 	}
 
 }
