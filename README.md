@@ -17,7 +17,8 @@ Create a file twitch_keys.json on the projet's root folder and put this inside i
 ``` json
 {
 	"client_id":"xxx",
-	"secret_id":"xxx"
+	"secret_id":"xxx",
+	"privateApiKey":"xxx",//This one is not used for twitch but to secure /api/add_user endpoint
 }
 ```
 To get these keys, create a twitch app here :\

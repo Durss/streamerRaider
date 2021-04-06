@@ -9,7 +9,7 @@ export default class Config {
 	private static _ENV_NAME: EnvName;
 	private static _CONF_PATH: string = "env.conf";
 	private static _TWITCH_KEYS_PATH: string = "twitch_keys.json";
-	private static _TWITCH_KEYS:{client_id:string, secret_id:string};
+	private static _TWITCH_KEYS:{client_id:string, secret_id:string, privateApiKey:string};
 
 	public static TWITCH_USER_NAMES_PATH:string = "protobuddiesList.json";
 
@@ -21,13 +21,17 @@ export default class Config {
 		this.loadKeys();
 		return this._TWITCH_KEYS.secret_id;
 	}
+	public static get PRIVATE_API_KEY():string {
+		this.loadKeys();
+		return this._TWITCH_KEYS.privateApiKey;
+	}
 	
 	private static loadKeys():void {
 		if(this._TWITCH_KEYS) return;
 		if(!fs.existsSync(this._TWITCH_KEYS_PATH)) {
 			Logger.error(LogStyle.BgRed+LogStyle.FgWhite+"MISSING Twitch keys !"+LogStyle.Reset);
 			Logger.error("Please fill in the client_id and secret_id values on the file twitch_keys.json");
-			this._TWITCH_KEYS = {client_id:"",secret_id:""};
+			this._TWITCH_KEYS = {client_id:"",secret_id:"", privateApiKey:""};
 			fs.writeFileSync(this._TWITCH_KEYS_PATH, JSON.stringify(this._TWITCH_KEYS));
 		}else{
 			this._TWITCH_KEYS = JSON.parse(fs.readFileSync(this._TWITCH_KEYS_PATH, "utf8"));

@@ -72,7 +72,7 @@ import { Component, Vue } from "vue-property-decorator";
 })
 export default class Home extends Vue {
 
-	public loading:boolean = false;
+	public loading:boolean = true;
 	public missingTwitchKeys:boolean = false;
 	public missingTwitchUsers:boolean = false;
 

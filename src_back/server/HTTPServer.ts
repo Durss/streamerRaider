@@ -6,7 +6,8 @@ import * as fs from "fs";
 import * as http from "http";
 import Config from '../utils/Config';
 import Logger from '../utils/Logger';
-import fetch from "node-fetch";
+import fetch, {Response as FetchResponse} from "node-fetch";
+import {SHA256} from "crypto-js";
 
 export default class HTTPServer {
 
@@ -121,8 +122,8 @@ export default class HTTPServer {
 		this.app.post("/api/user_infos", (req:Request, res:Response) => this.getUserInfos(req,res));
 		this.app.post("/api/stream_infos", (req:Request, res:Response) => this.getStreamInfos(req,res));
 		this.app.get("/api/user_names", (req:Request, res:Response) => this.getUserNames(req,res));
-		this.app.get("/api/add_user", (req:Request, res:Response) => this.addUser(req,res));
-		this.app.get("/api/remove_user", (req:Request, res:Response) => this.removeUser(req,res));
+		this.app.post("/api/add_user", (req:Request, res:Response) => this.postUser(req,res));
+		// this.app.get("/api/remove_user", (req:Request, res:Response) => this.removeUser(req,res));
 	}
 
 	/**
@@ -147,11 +148,39 @@ export default class HTTPServer {
 	 * @param req 
 	 * @param res 
 	 */
-	private async addUser(req:Request, res:Response):Promise<void> {
-		Logger.info("Add user", req.query.login);
+	private async postUser(req:Request, res:Response):Promise<void> {
+		let key = req.headers.authorization;
+		let login = <string>req.query.login;
 		let users = JSON.parse(fs.readFileSync(Config.TWITCH_USER_NAMES_PATH, "utf8"));
-		users.push(req.query.login);
-		fs.writeFileSync(Config.TWITCH_USER_NAMES_PATH, JSON.stringify(users));
+		let userIndex = users.indexOf(<string>req.query.login);
+		let hash = SHA256(login + Config.PRIVATE_API_KEY).toString();
+		if(key != hash) {
+			Logger.error(`Invalid authorization key`);
+			res.status(401).send(JSON.stringify({success:false, error:"invalid authorization key", error_code:"INVALID_KEY"}));
+			return
+		}
+		Logger.info(`Add user: ${login}`);
+		if(userIndex == -1) {
+			//Check if user is valid
+			let result = await this.loadChannelsInfo([login]);
+
+			if(result.status != 200) {
+				let txt = await result.text();
+				res.status(result.status).send(txt);
+			}else{
+				let json = await result.json();
+				if(json?.data.length > 0) {
+					users.push(login);
+					fs.writeFileSync(Config.TWITCH_USER_NAMES_PATH, JSON.stringify(users));
+				}else{
+					res.status(404).send(JSON.stringify({success:false, error:"user not found", error_code:"USER_NOT_FOUND"}));
+				}
+			}
+		}else{
+			Logger.warn(`User ${login} already added`);
+			res.status(200).send(JSON.stringify({success:false, error:"User already added", error_code:"USER_ALREADY_ADDED"}));
+			return
+		}
 		res.status(200).send(JSON.stringify({success:true, data:users}));
 	}
 
@@ -161,16 +190,16 @@ export default class HTTPServer {
 	 * @param req 
 	 * @param res 
 	 */
-	private async removeUser(req:Request, res:Response):Promise<void> {
-		Logger.info("Remove user", req.query.login);
-		let users:string[] = JSON.parse(fs.readFileSync(Config.TWITCH_USER_NAMES_PATH, "utf8"));
-		let userIndex = users.indexOf(<string>req.query.login);
-		if(userIndex > -1) {
-			users.splice(userIndex,1);
-			fs.writeFileSync(Config.TWITCH_USER_NAMES_PATH, JSON.stringify(users));
-		}
-		res.status(200).send(JSON.stringify({success:true, data:users}));
-	}
+	// private async removeUser(req:Request, res:Response):Promise<void> {
+	// 	Logger.info("Remove user", req.query.login);
+	// 	let users:string[] = JSON.parse(fs.readFileSync(Config.TWITCH_USER_NAMES_PATH, "utf8"));
+	// 	let userIndex = users.indexOf(<string>req.query.login);
+	// 	if(userIndex > -1) {
+	// 		users.splice(userIndex,1);
+	// 		fs.writeFileSync(Config.TWITCH_USER_NAMES_PATH, JSON.stringify(users));
+	// 	}
+	// 	res.status(200).send(JSON.stringify({success:true, data:users}));
+	// }
 
 	/**
 	 * Gets 1 to 100 stream status infos
@@ -207,15 +236,7 @@ export default class HTTPServer {
 	 */
 	private async getUserInfos(req:Request, res:Response):Promise<void> {
 		let channels:string[] = <string[]>req.body.channels;
-		let url = "https://api.twitch.tv/helix/users?login="+channels.join("&login=");
-		// let url = "https://api.twitch.tv/helix/users?login="+user;
-		let result = await fetch(url, {
-			headers:{
-				"Client-ID": Config.TWITCHAPP_CLIENT_ID,
-				"Authorization": "Bearer "+this.token,
-				"Content-Type": "application/json",
-			}
-		});
+		let result = await this.loadChannelsInfo(channels);
 
 		if(result.status != 200) {
 			let txt = await result.text();
@@ -257,5 +278,18 @@ export default class HTTPServer {
 				}
 			});
 		})
+	}
+
+	private async loadChannelsInfo(channels:string[]):Promise<FetchResponse> {
+		let url = "https://api.twitch.tv/helix/users?login="+channels.join("&login=");
+		// let url = "https://api.twitch.tv/helix/users?login="+user;
+		let result = await fetch(url, {
+			headers:{
+				"Client-ID": Config.TWITCHAPP_CLIENT_ID,
+				"Authorization": "Bearer "+this.token,
+				"Content-Type": "application/json",
+			}
+		});
+		return result;
 	}
 }
