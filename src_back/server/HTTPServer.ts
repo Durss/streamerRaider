@@ -123,7 +123,7 @@ export default class HTTPServer {
 		this.app.post("/api/stream_infos", (req:Request, res:Response) => this.getStreamInfos(req,res));
 		this.app.get("/api/user_names", (req:Request, res:Response) => this.getUserNames(req,res));
 		this.app.post("/api/add_user", (req:Request, res:Response) => this.postUser(req,res));
-		// this.app.get("/api/remove_user", (req:Request, res:Response) => this.removeUser(req,res));
+		this.app.post("/api/remove_user", (req:Request, res:Response) => this.removeUser(req,res));
 	}
 
 	/**
@@ -152,7 +152,7 @@ export default class HTTPServer {
 		let key = req.headers.authorization;
 		let login = <string>req.query.login;
 		let users = JSON.parse(fs.readFileSync(Config.TWITCH_USER_NAMES_PATH, "utf8"));
-		let userIndex = users.indexOf(<string>req.query.login);
+		let userIndex = users.indexOf(login);
 		let hash = SHA256(login + Config.PRIVATE_API_KEY).toString();
 		if(key != hash) {
 			Logger.error(`Invalid authorization key`);
@@ -190,16 +190,28 @@ export default class HTTPServer {
 	 * @param req 
 	 * @param res 
 	 */
-	// private async removeUser(req:Request, res:Response):Promise<void> {
-	// 	Logger.info("Remove user", req.query.login);
-	// 	let users:string[] = JSON.parse(fs.readFileSync(Config.TWITCH_USER_NAMES_PATH, "utf8"));
-	// 	let userIndex = users.indexOf(<string>req.query.login);
-	// 	if(userIndex > -1) {
-	// 		users.splice(userIndex,1);
-	// 		fs.writeFileSync(Config.TWITCH_USER_NAMES_PATH, JSON.stringify(users));
-	// 	}
-	// 	res.status(200).send(JSON.stringify({success:true, data:users}));
-	// }
+	private async removeUser(req:Request, res:Response):Promise<void> {
+		let key = req.headers.authorization;
+		let login = <string>req.query.login;
+		let users:string[] = JSON.parse(fs.readFileSync(Config.TWITCH_USER_NAMES_PATH, "utf8"));
+		let userIndex = users.indexOf(login);
+		let hash = SHA256(login + Config.PRIVATE_API_KEY).toString();
+		if(key != hash) {
+			Logger.error(`Invalid authorization key`);
+			res.status(401).send(JSON.stringify({success:false, error:"invalid authorization key", error_code:"INVALID_KEY"}));
+			return
+		}
+		Logger.info(`Remove user: ${login}`);
+		if(userIndex > -1) {
+			users.splice(userIndex, 1);
+			fs.writeFileSync(Config.TWITCH_USER_NAMES_PATH, JSON.stringify(users));
+		}else{
+			Logger.warn(`User ${login} not found`);
+			res.status(200).send(JSON.stringify({success:false, error:"User not found", error_code:"USER_NOT_FOUND"}));
+			return
+		}
+		res.status(200).send(JSON.stringify({success:true, data:users}));
+	}
 
 	/**
 	 * Gets 1 to 100 stream status infos
