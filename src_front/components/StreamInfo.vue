@@ -1,5 +1,5 @@
 <template>
-	<div :class="classes">
+	<div :class="classes" @mouseleave="outItem()">
 		<div class="userName">
 			<img v-if="userInfos" :src="userInfos.profile_image_url" alt="avatar" class="avatar">
 			<div v-if="small===false" class="name">{{userName}}</div>
@@ -13,7 +13,7 @@
 				<div class="category" v-if="streamInfos.game_name">{{streamInfos.game_name}}</div>
 				<div class="duration">{{streamDuration}}</div>
 			</div>
-			<div class="preview" @mouseenter="hoverItem()" @mouseleave="outItem()">
+			<div class="preview" @mouseenter="hoverItem()">
 				<div class="streamImage" v-if="!showLive"><img :src="previewUrl"></div>
 				<iframe
 					class="streamImage"
