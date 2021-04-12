@@ -76,7 +76,7 @@ export default class StreamInfo extends Vue {
 	}
 
 	public get canRaid():boolean {
-		return this.$store.state.OAuthToken;
+		return this.$store.state.OAuthToken || this.userName.toLowerCase() == this.$store.state.userLogin?.toLowerCase();
 	}
 
 	public get streamDuration():string {

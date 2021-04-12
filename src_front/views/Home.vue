@@ -13,7 +13,7 @@
 
 		<div v-if="!loading && !missingTwitchKeys && !missingTwitchUsers">
 			<AuthForm v-if="!connected" />
-			<Button title="Lancer un raid aléatoire" v-if="connected" white
+			<Button title="Lancer un raid aléatoire" v-if="connected && onlineUsers.length > 0" white
 				@click="randomRaid()"
 				:icon="require('@/assets/icons/random.svg')" />
 			
@@ -99,7 +99,10 @@ export default class Home extends Vue {
 	}
 
 	public randomRaid():void {
-		let user = Utils.pickRand(this.onlineUsers);
+		let user;
+		do {
+			user = Utils.pickRand(this.onlineUsers);
+		}while(user.userName.toLowerCase() == this.$store.state.userLogin.toLowerCase());
 		Utils.confirm("Lancer un raid", "Veux-tu vraiment lancer un raid vers la chaîne de "+user.userName+" ?")
 		.then(_=> {
 			IRCClient.instance.sendMessage("/raid "+user.userName);

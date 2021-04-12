@@ -10,6 +10,7 @@ Vue.use(Vuex)
 export default new Vuex.Store({
 	state: {
 		OAuthToken: "",
+		userLogin: "",
 		initComplete: false,
 		confirm:{
 			title:null,
@@ -31,7 +32,8 @@ export default new Vuex.Store({
 					state.OAuthToken = null;
 					Store.remove("OAuthToken");
 				}else{
-					state.OAuthToken = token;
+					state.userLogin = result.login;
+					state.OAuthToken = result;
 					Store.set("OAuthToken", token);
 					IRCClient.instance.initialize(result.login, token);
 				}
