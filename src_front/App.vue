@@ -4,6 +4,7 @@
 		<router-view class="view" />
 		<Footer class="footer" />
 		<Confirm />
+		<Tooltip />
 	</div>
 </template>
 
@@ -11,10 +12,12 @@
 import { Component, Vue } from "vue-property-decorator";
 import Confirm from "./views/Confirm.vue";
 import Footer from "./components/Footer.vue";
+import Tooltip from "./components/Tooltip.vue";
 
 @Component({
 	components:{
 		Footer,
+		Tooltip,
 		Confirm,
 	}
 })

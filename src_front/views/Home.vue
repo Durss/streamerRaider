@@ -31,6 +31,10 @@
 						:streamInfos="u.stream"
 						:userInfos="u.user" />
 				</transition-group>
+				<div class="noResult">
+					<img src="@/assets/icons/sadFace.svg" class="icon">
+					<span>Personne n'est en ligne</span>
+				</div>
 			</div>
 			<div class="block">
 				<h2>PROTOPOTES HORS LIGNE ({{offlineUsers.length}})</h2>
@@ -263,6 +267,15 @@ export default class Home extends Vue {
 		margin-top: 50px;
 		&:last-child {
 			margin-top: 100px;
+		}
+
+		.noResult {
+			color: @mainColor_normal;
+			text-shadow: #ffffff55 0px 0px 5px;
+			font-style: italic;
+			.icon {
+				max-height: 150px;
+			}
 		}
 
 		h2 {

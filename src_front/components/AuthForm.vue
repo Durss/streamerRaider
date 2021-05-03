@@ -1,17 +1,22 @@
 <template>
 	<div class="authform">
-		<Button :icon="require('@/assets/icons/twitch.svg')" @click="showForm=!showForm" title="Connexion" white class="login"/>
+		<Button v-if="!showForm" :icon="require('@/assets/icons/twitch.svg')" @click="showForm=true" title="Connexion" white class="login"/>
 
-		<div v-if="!success && showForm" class="content">
-			<div class="title">Connexion</div>
-			<div>En vous connectant vous pourrez Raid une chaîne aléatoirement ou en cliquant sur le bouton dédié.</div>
-			<div>Rendez-vous <a href="https://twitchapps.com/tmi/" target="_blank">sur cette page</a> pour générer un token puis collez-le dans le champs ci-dessous :</div>
-			<div class="form">
-				<input type="text" v-model="token">
-				<Button :icon="require('@/assets/icons/checkmark_white.svg')" :loading="loading" @click="saveToken()"/>
+		<transition name="scale">
+			<div v-if="!success && showForm" class="content">
+				<div class="title">
+					<span class="text">Connexion</span>
+					<Button :icon="require('@/assets/icons/cross_white.svg')" @click="showForm=false" class="close"/>
+				</div>
+				<div>En vous connectant vous pourrez Raid une chaîne aléatoirement ou en cliquant sur le bouton dédié.</div>
+				<div>Rendez-vous <a href="https://twitchapps.com/tmi/" target="_blank">sur cette page</a> pour générer un token puis collez-le dans le champs ci-dessous :</div>
+				<div class="form">
+					<input type="text" v-model="token" @keyup.enter="saveToken()">
+					<Button :icon="require('@/assets/icons/checkmark_white.svg')" :loading="loading" @click="saveToken()"/>
+				</div>
+				<div class="error" v-if="error" @click="error=false">invalid token</div>
 			</div>
-			<div class="error" v-if="error" @click="error=false">invalid token</div>
-		</div>
+		</transition>
 
 		<!-- <div class="success" v-if="success">Token validated <img src="@/assets/icons/checkmark.svg" class="check"></div> -->
 	</div>
@@ -20,7 +25,7 @@
 <script lang="ts">
 import Button from "@/components/Button.vue";
 import TwitchUtils from "@/utils/TwitchUtils";
-import { Component, Inject, Model, Prop, Vue, Watch, Provide } from "vue-property-decorator";
+import { Component, Vue } from "vue-property-decorator";
 
 @Component({
 	components:{
@@ -36,7 +41,6 @@ export default class AuthForm extends Vue {
 	public showForm:boolean = false;
 
 	public async mounted():Promise<void> {
-		
 	}
 
 	public beforeDestroy():void {
@@ -60,6 +64,12 @@ export default class AuthForm extends Vue {
 		this.loading = false;
 	}
 
+	// @Watch("showForm")
+	// public onFormChange():void {
+	// 	gsap.set(this.$el, {scale:1, maxHeight:"250px"});
+	// 	gsap.from(this.$el, {duration:.5, maxHeight:"35px", scale:1});
+	// }
+
 }
 </script>
 
@@ -73,10 +83,10 @@ export default class AuthForm extends Vue {
 		border-radius: 10px;
 		overflow: hidden;
 		margin: auto;
-		margin-top: 20px;
 		width: 500px;
 		font-family: "Inter";
 		font-size: 18px;
+		transition: all .5s;
 
 		.title {
 			padding: 10px;
@@ -85,6 +95,18 @@ export default class AuthForm extends Vue {
 			font-size: 30px;
 			text-transform: capitalize;
 			color: @mainColor_normal;
+			display: flex;
+			.text {
+				flex-grow: 1;
+			}
+			.close {
+				width: 30px;
+				height: 30px;
+				max-width: 30px;
+				max-height: 30px;
+				padding: 5px;
+				border-radius: 10px;
+			}
 		}
 
 		&>* {
@@ -125,6 +147,13 @@ export default class AuthForm extends Vue {
 			height: 60px;
 			margin-bottom: -7px;
 		}
+	}
+	
+	.scale-enter-active, .scale-leave-active {
+		max-height: 235px;
+	}
+	.scale-enter, .scale-leave-to {
+		max-height: 0px;
 	}
 
 }

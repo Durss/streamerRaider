@@ -27,7 +27,7 @@
 			</div>
 		</div>
 
-		<Button v-if="streamInfos" :title="'Raid '+userName" class="raid" @click="startRaid()" :disabled="!canRaid" />
+		<Button v-if="streamInfos" :title="'Raid '" class="raid" @click="startRaid()" :disabled="!canRaid" :data-tooltip="'Connecte toi en haut de page pour lancer un raid chez '+userName" />
 	</div>
 </template>
 

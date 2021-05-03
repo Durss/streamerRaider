@@ -1,9 +1,8 @@
-import TwitchUtils from '@/utils/TwitchUtils';
 import IRCClient from '@/utils/IRCClient';
+import TwitchUtils from '@/utils/TwitchUtils';
 import Vue from 'vue';
 import Vuex from 'vuex';
 import Store from './Store';
-import Utils from '@/utils/Utils';
 
 Vue.use(Vuex)
 
@@ -12,6 +11,7 @@ export default new Vuex.Store({
 		OAuthToken: "",
 		userLogin: "",
 		initComplete: false,
+		tooltip: null,
 		confirm:{
 			title:null,
 			description:null,
@@ -42,6 +42,10 @@ export default new Vuex.Store({
 
 		confirm(state, payload) { state.confirm = payload; },
 
+		openTooltip(state, payload) { state.tooltip = payload; },
+		
+		closeTooltip(state) { state.tooltip = null; },
+
 	},
 	actions: {
 		async startApp({ state, commit, dispatch }, payload) { 
@@ -54,5 +58,10 @@ export default new Vuex.Store({
 		setOAuthToken({ commit }, token) { commit("setOAuthToken", token); },
 
 		confirm({commit}, payload) { commit("confirm", payload); },
+
+		openTooltip({commit}, payload) { commit("openTooltip", payload); },
+		
+		closeTooltip({commit}) { commit("closeTooltip", null); },
+
 	},
 })
