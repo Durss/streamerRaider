@@ -31,7 +31,7 @@
 						:streamInfos="u.stream"
 						:userInfos="u.user" />
 				</transition-group>
-				<div class="noResult">
+				<div class="noResult" v-if="onlineUsers.length == 0">
 					<img src="@/assets/icons/sadFace.svg" class="icon">
 					<span>Personne n'est en ligne</span>
 				</div>
