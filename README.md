@@ -22,7 +22,7 @@ Create a file twitch_keys.json on the projet's root folder and put this inside i
 }
 ```
 To get these keys, create a twitch app here :\
-https://dev.twitch.tv/console/apps
+https://dev.twitch.tv/console/apps \
 The `privateApiKey` is just a key to secure an API exposed by the application itself. You probably won't care about it.
 
 
