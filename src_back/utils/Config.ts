@@ -12,6 +12,7 @@ export default class Config {
 	private static _TWITCH_KEYS:{client_id:string, secret_id:string, privateApiKey:string};
 
 	public static TWITCH_USER_NAMES_PATH:string = "protobuddiesList.json";
+	public static TWITCH_USER_DESCRIPTIONS_PATH:string = "protobuddiesDescriptions.json";
 
 	public static get TWITCHAPP_CLIENT_ID():string {
 		this.loadKeys();

@@ -157,7 +157,7 @@ export default class Home extends Vue {
 				//Get users infos
 				let result;
 				try {
-					result = await Api.post("user_infos", {channels});
+					result = await Api.get("user_infos", {channels});
 				}catch(error) {
 					if(error.error_code == "INVALID_TWITCH_KEYS") {
 						this.missingTwitchKeys = true;
@@ -173,7 +173,7 @@ export default class Home extends Vue {
 				}
 
 				//Get channels states
-				result = await Api.post("stream_infos", {channels});
+				result = await Api.get("stream_infos", {channels});
 				if(result.data?.length > 0) {
 					for (let i = 0; i < result.data.length; i++) {
 						const infos:TwitchTypes.StreamInfo = result.data[i];
