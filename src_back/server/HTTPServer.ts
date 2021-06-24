@@ -122,7 +122,7 @@ export default class HTTPServer {
 					if(key != hash) {
 						Logger.error(`Invalid authorization key`);
 						response.status(401).send(JSON.stringify({success:false, error:"invalid authorization key", error_code:"INVALID_KEY"}));
-						return
+						return;
 					}
 
 					//Check if user is valid via twitch API
@@ -208,17 +208,17 @@ export default class HTTPServer {
 	 * @param res 
 	 */
 	private async getUserDescription(req:Request, res:Response):Promise<void> {
-		let users;
+		let descriptions;
 		let login = (<string>req.query.login)?.toLowerCase();
 		try {
-			users = JSON.parse(fs.readFileSync(Config.TWITCH_USER_DESCRIPTIONS_PATH, "utf8"));
+			descriptions = JSON.parse(fs.readFileSync(Config.TWITCH_USER_DESCRIPTIONS_PATH, "utf8"));
 		}catch(err){
-			users = [];
+			descriptions = [];
 		}
-		if(users && users[ login ]) {
-			res.status(200).send(users[ login ]);
+		if(descriptions && descriptions[ login ]) {
+			res.status(200).send(descriptions[ login ]);
 		}else{
-			res.status(200).send("");
+			res.status(404).send("");
 		}
 	}
 
