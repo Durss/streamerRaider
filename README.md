@@ -18,11 +18,12 @@ Create a file twitch_keys.json on the projet's root folder and put this inside i
 {
 	"client_id":"xxx",
 	"secret_id":"xxx",
-	"privateApiKey":"xxx",//This one is not used for twitch but to secure /api/add_user endpoint
+	"privateApiKey":"xxx",
 }
 ```
 To get these keys, create a twitch app here :\
-https://dev.twitch.tv/console/apps
+https://dev.twitch.tv/console/apps \
+The `privateApiKey` is just a key to secure an API exposed by the application itself. You probably won't care about it.
 
 
 ### Compile front with hot-reloads for development
