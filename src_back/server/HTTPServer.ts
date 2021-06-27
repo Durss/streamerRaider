@@ -14,6 +14,7 @@ export default class HTTPServer {
 	private app:Express;
 	private token:string;
 	private token_invalidation_date:number;
+	private descriptionsCache:{[key:string]:string} = null;
 
 	constructor(public port:number) {
 		
@@ -210,10 +211,14 @@ export default class HTTPServer {
 	private async getUserDescription(req:Request, res:Response):Promise<void> {
 		let descriptions;
 		let login = (<string>req.query.login)?.toLowerCase();
-		try {
-			descriptions = JSON.parse(fs.readFileSync(Config.TWITCH_USER_DESCRIPTIONS_PATH, "utf8"));
-		}catch(err){
-			descriptions = [];
+		if(this.descriptionsCache) {
+			descriptions = this.descriptionsCache;
+		}else{
+			try {
+				descriptions = JSON.parse(fs.readFileSync(Config.TWITCH_USER_DESCRIPTIONS_PATH, "utf8"));
+			}catch(err){
+				descriptions = [];
+			}
 		}
 		if(descriptions && descriptions[ login ]) {
 			res.status(200).send(descriptions[ login ]);
@@ -277,6 +282,7 @@ export default class HTTPServer {
 		if(description) {
 			let descriptions:{[key:string]:string} = JSON.parse(fs.readFileSync(Config.TWITCH_USER_DESCRIPTIONS_PATH, "utf8"));
 			descriptions[login] = description;
+			this.descriptionsCache = descriptions;
 			fs.writeFileSync(Config.TWITCH_USER_DESCRIPTIONS_PATH, JSON.stringify(descriptions));
 			res.status(200).send(JSON.stringify({success:true, data:descriptions}));
 		}else{
@@ -293,10 +299,11 @@ export default class HTTPServer {
 	 */
 	private async deleteUserDescription(req:Request, res:Response):Promise<void> {
 		let login = (<string>req.query.login)?.toLowerCase();
-		let descriptions:string[] = JSON.parse(fs.readFileSync(Config.TWITCH_USER_DESCRIPTIONS_PATH, "utf8"));
+		let descriptions:{[key:string]:string} = JSON.parse(fs.readFileSync(Config.TWITCH_USER_DESCRIPTIONS_PATH, "utf8"));
 		Logger.info(`Delete user description: ${login}`);
 		if(descriptions[login]) {
 			delete descriptions[login];
+			this.descriptionsCache = descriptions;
 			fs.writeFileSync(Config.TWITCH_USER_DESCRIPTIONS_PATH, JSON.stringify(descriptions));
 			res.status(200).send(JSON.stringify({success:true, data:descriptions}));
 		}else{
