@@ -101,6 +101,28 @@ export default class TwitchUtils {
 		}
 	}
 	
+	public static validateToken(token:string):Promise<boolean|any> {
+		return new Promise((resolve, reject) => {
+			let headers:any = {
+				"Authorization":"OAuth "+token
+			};
+			var options = {
+				method: "GET",
+				headers: headers,
+			};
+			fetch("https://id.twitch.tv/oauth2/validate", options)
+			.then(async(result) => {
+				if(result.status == 200) {
+					result.json().then((json)=> {
+						resolve(json)
+					});
+				}else{
+					resolve(false);
+				}
+			});
+		});
+	}
+	
 	
 	
 	/*******************

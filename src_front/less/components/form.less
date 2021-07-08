@@ -1,6 +1,6 @@
 input, textarea, select {
 	font-family: "Futura";
-	color: @mainColor_dark;
+	color: @mainColor_light;
 	border-radius: @border_radius;
 	border: 1px solid @mainColor_light;
 	background-color: @mainColor_normal_light;
@@ -9,7 +9,6 @@ input, textarea, select {
 	box-sizing: border-box;
 	border-top: 1px solid @mainColor_normal;
 	border-left: 1px solid @mainColor_normal;
-	outline-offset: 2px;
 	
 	&::placeholder {
 		font-style: italic;
@@ -42,6 +41,8 @@ input, textarea, select {
 	
 textarea {
 	min-height: 65px;
+	font-size: 20px;
+	font-family: 'Courier New', Courier, monospace;
 }
 
 input[type="submit"],

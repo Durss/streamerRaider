@@ -153,6 +153,7 @@ export default class APIController {
 	private async postUserDescription(req:Request, res:Response):Promise<void> {
 		let login = (<string>req.query.login)?.toLowerCase();
 		let description = <string>req.query.description;
+		if(!description) description = <string>req.body.description;
 		Logger.info(`Add user description: ${login}`);
 		if(description) {
 			let descriptions:{[key:string]:string} = JSON.parse(fs.readFileSync(Config.TWITCH_USER_DESCRIPTIONS_PATH, "utf8"));
@@ -161,7 +162,7 @@ export default class APIController {
 			fs.writeFileSync(Config.TWITCH_USER_DESCRIPTIONS_PATH, JSON.stringify(descriptions));
 			res.status(200).send(JSON.stringify({success:true, data:descriptions}));
 		}else{
-			Logger.warn(`User ${login} already added`);
+			Logger.warn(`Missing description param`);
 			res.status(200).send(JSON.stringify({success:false, error:"Missing \"description\" parameter", error_code:"MISSING_DESCRIPTION"}));
 		}
 	}

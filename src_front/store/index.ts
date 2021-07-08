@@ -39,7 +39,7 @@ export default new Vuex.Store({
 					Store.remove("OAuthToken");
 				}else{
 					state.userLogin = result.login;
-					state.OAuthToken = result;
+					state.OAuthToken = token;
 					Store.set("OAuthToken", token);
 					IRCClient.instance.initialize(result.login, token);
 				}
@@ -62,6 +62,7 @@ export default new Vuex.Store({
 			if(token) {
 				let tokenValid = true;
 				try {
+					console.log(token);
 					let result = await TwitchUtils.validateToken(token);
 					let scopes:string[] = result.scopes;
 					let expectedScopes = Config.TWITCH_SCOPES;

@@ -51,42 +51,44 @@ export default class Api {
 
 
 
-	protected static _sendRequest(url:string, options: any, bodyParams?: string): Promise<any> {
-		return new Promise((resolve, reject) => {
-			if(bodyParams) {
-				options.body = bodyParams;
-			}
-			fetch(url, options)
-			.then((result) => {
-				if(result.status == 200) {
-					result.json().then((json)=> {
-						if(json.success === false) {
-							//Status 200 but JSON says there's an error
-							reject(json);
-						}else if(json.data){
-							resolve(json.data);
-						}else{
-							resolve(json);
-						}
-					}).catch(_=> {
-						reject({code:"unknown", message:"Unable to decode query result"});
-					});
-				}else if(result.status == 429) {
-					result.json().then((json)=> {
-						let duration = Math.ceil(json.retryAfter/1000);
-						store.dispatch("alert", "Too many requests, try again in "+duration+" seconds");
-						reject({code:"unknown", message:"Too many requests, try again in "+duration+" seconds", alertDone:true});
-					});
+	protected static async _sendRequest(url:string, options: any, bodyParams?: string): Promise<any> {
+		if(bodyParams) {
+			options.body = bodyParams;
+		}
+		
+		let result = await fetch(url, options)
+		if(result.status == 200) {
+			let text = await result.text()
+			try {
+				let json = JSON.parse(text);
+				if(json.success === false) {
+					//Status 200 but JSON says there's an error
+					throw(json);
+				}else if(json.data){
+					return json.data;
 				}else{
-					result.json().then((json)=> {
-						reject(json);
-					}).catch(_=> {
-						reject({code:"unknown", message:"Unable to decode query result"});
-					});
+					return json;
 				}
-			}).catch((error) => {
-				reject(error);
-			});
-		});
+			}catch(error) {
+				if(text) {
+					return text;
+				}else{
+					console.log(error);
+					throw({code:"unknown", message:"Unable to decode query result"});
+				}
+			}
+		}else if(result.status == 429) {
+			let json = await result.json()
+			let duration = Math.ceil(json.retryAfter/1000);
+			store.dispatch("alert", "Too many requests, try again in "+duration+" seconds");
+			throw({code:"unknown", message:"Too many requests, try again in "+duration+" seconds", alertDone:true});
+		}else{
+			try {
+				let json = await result.json();
+				throw(json);
+			}catch(error) {
+				throw({code:"unknown", message:"Unable to decode query result"});
+			};
+		}
     }
 }

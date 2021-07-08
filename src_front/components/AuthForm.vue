@@ -3,18 +3,15 @@
 		<Button v-if="!showForm" :icon="require('@/assets/icons/twitch.svg')" @click="showForm=true" title="Connexion" white class="login"/>
 
 		<transition name="scale">
-			<div v-if="!success && showForm" class="content">
+			<div v-if="showForm" class="content">
 				<div class="title">
 					<span class="text">Connexion</span>
 					<Button :href="oAuthURL" :icon="require('@/assets/icons/cross_white.svg')" @click="showForm=false" class="close"/>
 				</div>
-				<div>En vous connectant vous pourrez Raid une chaîne aléatoirement ou en cliquant sur le bouton dédié.</div>
+				<div>En te connectant tu pourras lancer un raid en un click et éditer ta description.</div>
 				<Button :href="oAuthURL" type="link" target="_self" :icon="require('@/assets/icons/twitch.svg')" title="Me connecter" />
-				<div class="error" v-if="error" @click="error=false">invalid token</div>
 			</div>
 		</transition>
-
-		<!-- <div class="success" v-if="success">Token validated <img src="@/assets/icons/checkmark.svg" class="check"></div> -->
 	</div>
 </template>
 
@@ -31,8 +28,6 @@ import { Component, Vue } from "vue-property-decorator";
 export default class AuthForm extends Vue {
 
 	public token:string = null;
-	public error:boolean = false;
-	public success:boolean = false;
 	public loading:boolean = false;
 	public showForm:boolean = false;
 

@@ -118,11 +118,28 @@ export default class HTTPServer {
 					let login = <string>request.query.login;
 					let key = request.headers.authorization;
 					let hash = SHA256(login + Config.PRIVATE_API_KEY).toString();
-					//Check if the given authorization header hash is valid
-					if(key != hash) {
-						Logger.error(`Invalid authorization key`);
-						response.status(401).send(JSON.stringify({success:false, error:"invalid authorization key", error_code:"INVALID_KEY"}));
-						return;
+					let access_token = <string>request.body.access_token;
+					//If using API externally
+					if(!access_token) {
+						//Check if the given authorization header hash is valid
+						if(key != hash) {
+							Logger.error(`Invalid authorization key`);
+							response.status(401).send(JSON.stringify({success:false, error:"invalid authorization key", error_code:"INVALID_KEY"}));
+							return;
+						}
+					}else{
+						//If using API internally via twitch access token
+						let result = await TwitchUtils.validateToken(access_token);
+						if(result === false) {
+							Logger.error(`Invalid twitch access token`);
+							response.status(401).send(JSON.stringify({success:false, error:"invalid twitch access token", error_code:"INVALID_TWITCH_ACCESS_TOKEN"}));
+							return;
+						}else{
+							//Populate login on request
+							login = result.login;
+							request.body.login = result.login;
+							request.query.login = result.login;
+						}
 					}
 
 					//Check if user is valid via twitch API

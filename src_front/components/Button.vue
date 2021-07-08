@@ -140,7 +140,7 @@ export default class Button extends Vue {
 	}
 
 	public onClick(event):void {
-		if(this.disabled) return;
+		if(this.disabled || this.loading) return;
 		this.$emit('click', event);//bubble up event to avoid having to listen for @click.native everytime
 	}
 

@@ -9,13 +9,16 @@
 
 		<div class="confError" v-if="missingTwitchKeys">Please fill in the <strong>client_id</strong> and <strong>secret_id</strong> values inside the file <strong>twitch_keys.json</strong> created at the root of the project!</div>
 		
-		<div class="confError" v-if="missingTwitchUsers">Please add users to the file <strong>protobuddiesList.json</strong> at the root of the project</div>
+		<div class="confError" v-if="missingTwitchUsers">Please add users to the file <strong>userList.json</strong> at the root of the project</div>
 
 		<div v-if="!loading && !missingTwitchKeys && !missingTwitchUsers">
 			<AuthForm v-if="!connected" />
-			<Button title="Lancer un raid aléatoire" v-if="connected && onlineUsers.length > 0" white
-				@click="randomRaid()"
-				:icon="require('@/assets/icons/random.svg')" />
+			<div v-if="connected">
+				<Button title="Lancer un raid aléatoire" v-if="onlineUsers.length > 0" white
+					@click="randomRaid()"
+					:icon="require('@/assets/icons/random.svg')" />
+				<StreamerForm v-if="isAStreamer" />
+			</div>
 			
 			<div class="block">
 				<h2>PROTOPOTES EN LIGNE ({{onlineUsers.length}})</h2>
@@ -60,6 +63,7 @@
 import AuthForm from "@/components/AuthForm.vue";
 import Button from "@/components/Button.vue";
 import StreamInfo from "@/components/StreamInfo.vue";
+import StreamerForm from "@/components/StreamerForm.vue";
 import Api from "@/utils/Api";
 import IRCClient from "@/utils/IRCClient";
 import { TwitchTypes } from "@/utils/TwitchUtils";
@@ -72,6 +76,7 @@ import { Component, Vue } from "vue-property-decorator";
 		Button,
 		AuthForm,
 		StreamInfo,
+		StreamerForm,
 	},
 })
 export default class Home extends Vue {
@@ -91,8 +96,15 @@ export default class Home extends Vue {
 		return this.$store.state.OAuthToken;
 	}
 
+	public get isAStreamer():boolean {
+		let authLogin = IRCClient.instance.authenticatedUserLogin;
+
+		return this.onlineUsers.findIndex(v => v.userName == authLogin) > -1
+		|| this.offlineUsers.findIndex(v => v.userName == authLogin) > -1;
+	}
+
 	public async mounted():Promise<void> {
-		this.loadData();
+		this.loadData(true);
 		this.mouseMoveHandler = (e:MouseEvent) => this.onMouseMove(e);
 		document.body.addEventListener("mousemove", this.mouseMoveHandler);
 	}
@@ -136,7 +148,7 @@ export default class Home extends Vue {
 	/**
 	 * Loads all the data from server
 	 */
-	private async loadData():Promise<void> {
+	private async loadData(isFirstLoad:boolean = false):Promise<void> {
 		
 		//Load user name list from server
 		let channelList = await Api.get("user_names");
@@ -147,7 +159,10 @@ export default class Home extends Vue {
 		
 		let channelListBackup = channelList.concat();
 		let maxBatch = 100;//Twitch API cannot get more than 100 users at once
-		this.loading = true;
+		if(isFirstLoad)  {
+			//Avoid showing the loader when doing background reload
+			this.loading = true;
+		}
 		let onlineUsers = [];
 		let offlineUsers = [];
 		do{
@@ -160,6 +175,7 @@ export default class Home extends Vue {
 					result = await Api.get("user_infos", {channels});
 				}catch(error) {
 					if(error.error_code == "INVALID_TWITCH_KEYS") {
+						//Show configuration tips
 						this.missingTwitchKeys = true;
 						this.loading = false;
 						return;

@@ -4,7 +4,7 @@ node_modules
 /server
 /uploads
 twitch_keys.json
-protobuddiesList.json
+userList.json
 env.conf
 
 # local env files

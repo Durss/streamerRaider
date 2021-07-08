@@ -1,12 +1,12 @@
 <template>
 	<div :class="classes" @mouseleave="outItem()">
-		<div class="userName">
+		<div class="userName head">
 			<img v-if="userInfos" :src="userPicture" alt="avatar" class="avatar">
 			<a class="name" :href="'https://twitch.tv/'+userName" target="_blank">{{userName}}</a>
 			<Button class="link" v-if="streamInfos" :icon="require('@/assets/icons/open.svg')" type="link" target="_blank" :to="'https://twitch.tv/'+userName" />
 		</div>
 		
-		<div class="detailsHolder" v-if="streamInfos">
+		<div class="detailsHolder content" v-if="streamInfos">
 			<div class="infos">
 				<div class="title">{{streamInfos.title}}</div>
 				<div class="category" v-if="streamInfos.game_name">{{streamInfos.game_name}}</div>
@@ -131,16 +131,8 @@ export default class StreamInfo extends Vue {
 
 <style scoped lang="less">
 .streaminfo{
-	width: 500px;
-	color: @mainColor_light;
-	font-family: "Inter";
-	font-size: 18px;
-	background-color: @mainColor_dark_light;
-	box-shadow: rgba(0, 0, 0, 0.5) 0px 6px 16px 0px, rgba(0, 0, 0, 0.4) 0px 0px 4px 0px;
-	box-sizing: border-box;
-	border-radius: 10px;
-	overflow: hidden;
-
+	.block();
+	
 	&.expand {
 		.detailsHolder {
 			.preview {
@@ -165,12 +157,8 @@ export default class StreamInfo extends Vue {
 	}
 
 	.userName {
-		margin-bottom: 10px;
-		padding: 10px;
-		background-color: @mainColor_dark_extralight;
 		display: flex;
 		flex-direction: row;
-		align-items: center;
 		.avatar {
 			width: 30px;
 			height: 30px;
@@ -181,11 +169,7 @@ export default class StreamInfo extends Vue {
 		}
 		.name {
 			flex-grow: 1;
-			text-align: center;
-			font-family: "Nunito";
-			font-size: 30px;
 			text-transform: capitalize;
-			color: @mainColor_normal;
 		}
 		.link {
 			width: 30px;
@@ -198,7 +182,6 @@ export default class StreamInfo extends Vue {
 	}
 
 	.detailsHolder {
-		padding: 10px;
 		display: flex;
 		flex-direction: row;
 		text-align: left;
