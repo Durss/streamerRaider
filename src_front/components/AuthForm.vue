@@ -6,7 +6,7 @@
 			<div v-if="showForm" class="content">
 				<div class="title">
 					<span class="text">Connexion</span>
-					<Button :href="oAuthURL" :icon="require('@/assets/icons/cross_white.svg')" @click="showForm=false" class="close"/>
+					<Button :icon="require('@/assets/icons/cross_white.svg')" @click="showForm=false" class="close"/>
 				</div>
 				<div>En te connectant tu pourras lancer un raid en un click et éditer ta description.</div>
 				<Button :href="oAuthURL" type="link" target="_self" :icon="require('@/assets/icons/twitch.svg')" title="Me connecter" />

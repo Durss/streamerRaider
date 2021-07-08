@@ -25,6 +25,7 @@ export default class DiscordController {
 	* PUBLIC METHODS *
 	******************/
 	public async create(app:Express):Promise<void> {
+		return;
 		this.client = new Discord.Client();
 		try {
 			await this.client.login(this.BOT_TOKEN);

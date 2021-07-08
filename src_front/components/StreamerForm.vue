@@ -2,7 +2,10 @@
 	<div class="streamerform">
 		<Button title="Editer mes infos" :icon="require('@/assets/icons/edit.svg')" v-if="!opened" @click="opened=true" white />
 		<div v-if="opened" class="holder">
-			<div class="head">{{userName}}</div>
+			<div class="head">
+				<span class="nickname">{{userName}}</span>
+				<Button :icon="require('@/assets/icons/cross_white.svg')" @click="opened=false" class="close"/>
+			</div>
 			<div class="content">
 				<div class="description">
 					<textarea v-model="description" id="" cols="30" rows="5" :maxlength="maxLengthDescription"></textarea>
@@ -65,6 +68,18 @@ export default class StreamerForm extends Vue {
 		margin: auto;
 		.head {
 			text-transform: capitalize;
+			display: flex;
+			.nickname {
+				flex-grow: 1;
+			}
+			.close {
+				width: 30px;
+				height: 30px;
+				max-width: 30px;
+				max-height: 30px;
+				padding: 5px;
+				border-radius: 10px;
+			}
 		}
 
 		.content {
