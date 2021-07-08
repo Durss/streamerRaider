@@ -94,7 +94,7 @@ export default class StreamInfo extends Vue {
 	}
 
 	public async mounted():Promise<void> {
-		//Allows to increment durations every seconds
+		//Allows to increment stream durations every seconds without using requestAnimationFrame
 		this.incrementInterval = setInterval(_=> {
 			this.increment ++;
 		},1000);

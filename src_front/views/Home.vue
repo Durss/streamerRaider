@@ -169,7 +169,6 @@ export default class Home extends Vue {
 					for (let i = 0; i < result.data.length; i++) {
 						const infos:TwitchTypes.UserInfo = result.data[i];
 						this.userNameToInfos[infos.login.toLowerCase()] = infos;
-						console.log(infos);
 					}
 				}
 
@@ -225,7 +224,7 @@ export default class Home extends Vue {
 		clearTimeout(this.refreshTimeout);
 		this.refreshTimeout = setTimeout(_=> {
 			this.loadData();
-		}, 10 * 60 * 1000);
+		}, 2 * 60 * 1000);
 	}
 
 }

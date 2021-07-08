@@ -28,6 +28,8 @@ export default class APIController {
 	******************/
 	public create(app:Express):void {
 		this._app = app;
+		this._app.get("/api/client_id", (req:Request, res:Response) => this.getClientID(req,res));
+
 		this._app.get("/api/user_infos", (req:Request, res:Response) => this.getUserInfos(req,res));
 		this._app.get("/api/stream_infos", (req:Request, res:Response) => this.getStreamInfos(req,res));
 		this._app.get("/api/user_names", (req:Request, res:Response) => this.getUserNames(req,res));
@@ -47,6 +49,16 @@ export default class APIController {
 	*******************/
 	private initialize():void {
 		
+	}
+
+	/**
+	 * Gets app client ID
+	 * 
+	 * @param req 
+	 * @param res 
+	 */
+	private async getClientID(req:Request, res:Response):Promise<void> {
+		res.status(200).json({success:true, id:Config.TWITCHAPP_CLIENT_ID});
 	}
 
 	/**

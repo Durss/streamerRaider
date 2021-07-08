@@ -6,14 +6,10 @@
 			<div v-if="!success && showForm" class="content">
 				<div class="title">
 					<span class="text">Connexion</span>
-					<Button :icon="require('@/assets/icons/cross_white.svg')" @click="showForm=false" class="close"/>
+					<Button :href="oAuthURL" :icon="require('@/assets/icons/cross_white.svg')" @click="showForm=false" class="close"/>
 				</div>
 				<div>En vous connectant vous pourrez Raid une chaîne aléatoirement ou en cliquant sur le bouton dédié.</div>
-				<div>Rendez-vous <a href="https://twitchapps.com/tmi/" target="_blank">sur cette page</a> pour générer un token puis collez-le dans le champs ci-dessous :</div>
-				<div class="form">
-					<input type="text" v-model="token" @keyup.enter="saveToken()">
-					<Button :icon="require('@/assets/icons/checkmark_white.svg')" :loading="loading" @click="saveToken()"/>
-				</div>
+				<Button :href="oAuthURL" type="link" target="_self" :icon="require('@/assets/icons/twitch.svg')" title="Me connecter" />
 				<div class="error" v-if="error" @click="error=false">invalid token</div>
 			</div>
 		</transition>
@@ -24,7 +20,7 @@
 
 <script lang="ts">
 import Button from "@/components/Button.vue";
-import TwitchUtils from "@/utils/TwitchUtils";
+import Config from "@/utils/Config";
 import { Component, Vue } from "vue-property-decorator";
 
 @Component({
@@ -40,28 +36,26 @@ export default class AuthForm extends Vue {
 	public loading:boolean = false;
 	public showForm:boolean = false;
 
+	public get oAuthURL():string {
+		let path = this.$router.resolve({name:"oauth"}).href;
+		let redirect = encodeURIComponent( document.location.origin+path );
+		let scopes = encodeURIComponent( Config.TWITCH_SCOPES.join(" ") );
+		let clientID = this.$store.state.clientID;
+
+		let url = "https://id.twitch.tv/oauth2/authorize?";
+		url += "client_id="+clientID
+		url += "&redirect_uri="+redirect;
+		url += "&response_type=token";
+		url += "&scope="+scopes;
+		return url;
+	}
+
 	public async mounted():Promise<void> {
+		console.log(this.oAuthURL);
 	}
 
 	public beforeDestroy():void {
 		
-	}
-
-	public async saveToken():Promise<void> {
-		this.error = false;
-		this.loading = true;
-		if(this.token && this.token.indexOf("oauth:")==0) {
-			this.token = this.token.replace("oauth:", "");
-		}
-		console.log(this.token);
-		let valid = await TwitchUtils.validateToken(this.token);
-		if(!valid) {
-			this.error = true;
-		}else{
-			this.success = true;
-			this.$store.dispatch("setOAuthToken", this.token);
-		}
-		this.loading = false;
 	}
 
 	// @Watch("showForm")
@@ -111,25 +105,6 @@ export default class AuthForm extends Vue {
 
 		&>* {
 			margin-bottom: 10px;
-		}
-		.form {
-			display: flex;
-			flex-direction: row;
-			width: 70%;
-			height: 30px;
-			margin-left: auto;
-			margin-right: auto;
-			input {
-				text-align: center;
-				flex-grow: 1;
-				border-top-right-radius: 0;
-				border-bottom-right-radius: 0;
-			}
-			button {
-				border-top-left-radius: 0;
-				border-bottom-left-radius: 0;
-				height: 100%;
-			}
 		}
 	}
 

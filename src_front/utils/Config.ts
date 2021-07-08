@@ -8,6 +8,8 @@ export default class Config {
 
 	public static IS_PROD:boolean = /.*\.(com|fr|net|org|ninja|st)$/gi.test(window.location.hostname);
 
+	public static TWITCH_SCOPES:string[] = ["chat:read","chat:edit","channel_editor"];
+
 	public static init():void {
 		let prod = this.IS_PROD;//document.location.port == "";
 		if(prod) this._ENV_NAME = "prod";

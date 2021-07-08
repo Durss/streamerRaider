@@ -41,6 +41,7 @@ export default class IRCClient extends EventDispatcher {
 	* PUBLIC METHODS *
 	******************/
 	public initialize(login:string, token:string):Promise<void> {
+		console.log(login, token);
 		return new Promise((resolve, reject) => {
 			this.login = login;
 			this.token = token;
