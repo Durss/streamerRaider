@@ -1,20 +1,18 @@
-import * as bodyParser from "body-parser";
 import * as historyApiFallback from 'connect-history-api-fallback';
+import { SHA256 } from "crypto-js";
 import * as express from "express";
 import { Express, NextFunction, Request, Response } from "express-serve-static-core";
 import * as fs from "fs";
 import * as http from "http";
+import APIController from '../controllers/APIController';
+import DiscordController from '../controllers/DiscordController';
 import Config from '../utils/Config';
-import Logger from '../utils/Logger';
-import fetch, {Response as FetchResponse} from "node-fetch";
-import {SHA256} from "crypto-js";
+import Logger, { LogStyle } from '../utils/Logger';
+import TwitchUtils from '../utils/TwitchUtils';
 
 export default class HTTPServer {
 
 	private app:Express;
-	private token:string;
-	private token_invalidation_date:number;
-	private descriptionsCache:{[key:string]:string} = null;
 
 	constructor(public port:number) {
 		
@@ -32,13 +30,14 @@ export default class HTTPServer {
 	}
 
 	protected initError(error: any): void {
-		Logger.error("Error happened !", error);
+		Logger.error("Error happened !");
+		console.log(LogStyle.FgRed+error+LogStyle.Reset);
 	}
 
 	protected async doPrepareApp(): Promise<void> {
 		//Check if twitch keys are ok
 		try {
-			await this.getClientCredentialToken();
+			await TwitchUtils.getClientCredentialToken();
 		}catch(error) {
 			//Invalid token
 			Logger.error("Invalid twitch tokens. Please check the client_id and secret_id values in the file twitch_keys.json")
@@ -112,7 +111,7 @@ export default class HTTPServer {
 		 * Auth middleware to protect POST and DELETE endpoints via SHA256 hash
 		 */
 		this.app.all("/api/*", async (request:Request, response:Response, next:NextFunction) => {
-			if(!this.token) {
+			if(!TwitchUtils.ready) {
 				response.status(401).send(JSON.stringify({success:false, error_code:"INVALID_TWITCH_KEYS", error:"missing or invalid twitch API keys"}));
 			}else{
 				if(request.method == "POST" || request.method == "DELETE") {
@@ -127,7 +126,7 @@ export default class HTTPServer {
 					}
 
 					//Check if user is valid via twitch API
-					let result = await this.loadChannelsInfo([login]);
+					let result = await TwitchUtils.loadChannelsInfo([login]);
 					if(result.status != 200) {
 						let txt = await result.text();
 						response.status(result.status).send(txt);
@@ -168,240 +167,7 @@ export default class HTTPServer {
 	 * Creates API endpoints
 	 */
 	private async createEndpoints():Promise<void> {
-		this.app.get("/api/user_infos", (req:Request, res:Response) => this.getUserInfos(req,res));
-		this.app.get("/api/stream_infos", (req:Request, res:Response) => this.getStreamInfos(req,res));
-		this.app.get("/api/user_names", (req:Request, res:Response) => this.getUserNames(req,res));
-		this.app.get("/api/description", (req:Request, res:Response) => this.getUserDescription(req,res));
-		
-		//Keeping these endpoints for compatibility reason but prever using "/api/user" with proper
-		//method (POST/DELETE) depending on the type of action to make
-		this.app.post("/api/add_user", (req:Request, res:Response) => this.postUser(req,res));
-		this.app.post("/api/remove_user", (req:Request, res:Response) => this.deleteUser(req,res));
-
-		//These are sort of duplicate of previous endpoints but more REST-friendly
-		this.app.post("/api/user", (req:Request, res:Response) => this.postUser(req,res));
-		this.app.delete("/api/user", (req:Request, res:Response) => this.deleteUser(req,res));
-
-		this.app.post("/api/description", (req:Request, res:Response) => this.postUserDescription(req,res));
-		this.app.delete("/api/description", (req:Request, res:Response) => this.deleteUserDescription(req,res));
-	}
-
-	/**
-	 * Gets all user names
-	 * 
-	 * @param req 
-	 * @param res 
-	 */
-	private async getUserNames(req:Request, res:Response):Promise<void> {
-		let users;
-		try {
-			users = JSON.parse(fs.readFileSync(Config.TWITCH_USER_NAMES_PATH, "utf8"));
-		}catch(err){
-			users = [];
-		}
-		res.status(200).send(JSON.stringify({success:true, data:users}));
-	}
-
-	/**
-	 * Gets the description of a specific twitch user
-	 * 
-	 * @param req needs a "login" parameter
-	 * @param res 
-	 */
-	private async getUserDescription(req:Request, res:Response):Promise<void> {
-		let descriptions;
-		let login = (<string>req.query.login)?.toLowerCase();
-		if(this.descriptionsCache) {
-			descriptions = this.descriptionsCache;
-		}else{
-			try {
-				descriptions = JSON.parse(fs.readFileSync(Config.TWITCH_USER_DESCRIPTIONS_PATH, "utf8"));
-			}catch(err){
-				descriptions = [];
-			}
-		}
-		if(descriptions && descriptions[ login ]) {
-			res.status(200).send(descriptions[ login ]);
-		}else{
-			res.status(404).send("");
-		}
-	}
-
-	/**
-	 * Adds a user to the list
-	 * 
-	 * @param req 
-	 * @param res 
-	 */
-	private async postUser(req:Request, res:Response):Promise<void> {
-		let login = (<string>req.query.login)?.toLowerCase();
-		let users = JSON.parse(fs.readFileSync(Config.TWITCH_USER_NAMES_PATH, "utf8"));
-		let userIndex = users.indexOf(login);
-		Logger.info(`Add user: ${login}`);
-		if(userIndex == -1) {
-			users.push(login);
-			fs.writeFileSync(Config.TWITCH_USER_NAMES_PATH, JSON.stringify(users));
-			res.status(200).send(JSON.stringify({success:true, data:users}));
-		}else{
-			Logger.warn(`User ${login} already added`);
-			res.status(200).send(JSON.stringify({success:false, error:"User already added", error_code:"USER_ALREADY_ADDED"}));
-		}
-	}
-
-	/**
-	 * Removes a user from the list
-	 * 
-	 * @param req 
-	 * @param res 
-	 */
-	private async deleteUser(req:Request, res:Response):Promise<void> {
-		let login = (<string>req.query.login)?.toLowerCase();
-		let users:string[] = JSON.parse(fs.readFileSync(Config.TWITCH_USER_NAMES_PATH, "utf8"));
-		let userIndex = users.indexOf(login);
-		Logger.info(`Delete user: ${login}`);
-		if(userIndex > -1) {
-			users.splice(userIndex, 1);
-			fs.writeFileSync(Config.TWITCH_USER_NAMES_PATH, JSON.stringify(users));
-			res.status(200).send(JSON.stringify({success:true, data:users}));
-		}else{
-			Logger.warn(`User ${login} not found`);
-			res.status(200).send(JSON.stringify({success:false, error:"User not found", error_code:"USER_NOT_FOUND"}));
-		}
-	}
-
-	/**
-	 * Adds a user's description to the list
-	 * 
-	 * @param req 
-	 * @param res 
-	 */
-	private async postUserDescription(req:Request, res:Response):Promise<void> {
-		let login = (<string>req.query.login)?.toLowerCase();
-		let description = <string>req.query.description;
-		Logger.info(`Add user description: ${login}`);
-		if(description) {
-			let descriptions:{[key:string]:string} = JSON.parse(fs.readFileSync(Config.TWITCH_USER_DESCRIPTIONS_PATH, "utf8"));
-			descriptions[login] = description;
-			this.descriptionsCache = descriptions;
-			fs.writeFileSync(Config.TWITCH_USER_DESCRIPTIONS_PATH, JSON.stringify(descriptions));
-			res.status(200).send(JSON.stringify({success:true, data:descriptions}));
-		}else{
-			Logger.warn(`User ${login} already added`);
-			res.status(200).send(JSON.stringify({success:false, error:"Missing \"description\" parameter", error_code:"MISSING_DESCRIPTION"}));
-		}
-	}
-
-	/**
-	 * Removes a user's description
-	 * 
-	 * @param req 
-	 * @param res 
-	 */
-	private async deleteUserDescription(req:Request, res:Response):Promise<void> {
-		let login = (<string>req.query.login)?.toLowerCase();
-		let descriptions:{[key:string]:string} = JSON.parse(fs.readFileSync(Config.TWITCH_USER_DESCRIPTIONS_PATH, "utf8"));
-		Logger.info(`Delete user description: ${login}`);
-		if(descriptions[login]) {
-			delete descriptions[login];
-			this.descriptionsCache = descriptions;
-			fs.writeFileSync(Config.TWITCH_USER_DESCRIPTIONS_PATH, JSON.stringify(descriptions));
-			res.status(200).send(JSON.stringify({success:true, data:descriptions}));
-		}else{
-			Logger.warn(`User ${login} not found`);
-			res.status(200).send(JSON.stringify({success:false, error:"DNo description found for this user", error_code:"USER_NOT_FOUND"}));
-			return
-		}
-	}
-
-	/**
-	 * Gets 1 to 100 stream status infos
-	 * 
-	 * @param req 
-	 * @param res 
-	 */
-	private async getStreamInfos(req:Request, res:Response):Promise<void> {
-		let channels:string = <string>req.query.channels;
-		let url = "https://api.twitch.tv/helix/streams?user_login="+channels.split(",").join("&user_login=");
-		
-		let result = await fetch(url, {
-			headers:{
-				"Client-ID": Config.TWITCHAPP_CLIENT_ID,
-				"Authorization": "Bearer "+this.token,
-				"Content-Type": "application/json",
-			}
-		});
-		
-		if(result.status != 200) {
-			let txt = await result.text();
-			res.status(result.status).send(txt);
-		}else{
-			let json = await result.json();
-			res.status(200).send(JSON.stringify({success:true, data:json}));
-		}
-	}
-
-	/**
-	 * Gets info of the specified user(s)
-	 * 
-	 * @param req 
-	 * @param res 
-	 */
-	private async getUserInfos(req:Request, res:Response):Promise<void> {
-		let channels:string = <string>req.query.channels;
-		let result = await this.loadChannelsInfo(channels.split(","));
-
-		if(result.status != 200) {
-			let txt = await result.text();
-			res.status(result.status).send(txt);
-		}else{
-			let json = await result.json();
-			res.status(200).send(JSON.stringify({success:true, data:json}));
-		}
-	}
-
-	/**
-	 * Generates a credential token if necessary from the client and private keys
-	 * @returns 
-	 */
-	private getClientCredentialToken():Promise<string> {
-		//Invalidate token if expiration date is passed
-		if(Date.now() > this.token_invalidation_date) this.token = null;
-		//Avoid generating a new token if one already exists
-		if(this.token) return Promise.resolve(this.token);
-
-		//Generate a new token
-		return new Promise((resolve, reject) => {
-			let headers:any = {
-			};
-			var options = {
-				method: "POST",
-				headers: headers,
-			};
-			fetch("https://id.twitch.tv/oauth2/token?client_id="+Config.TWITCHAPP_CLIENT_ID+"&client_secret="+Config.TWITCHAPP_SECRET_ID+"&grant_type=client_credentials&scope=", options)
-			.then((result) => {
-				if(result.status == 200) {
-					result.json().then((json)=> {
-						this.token = json.access_token;
-						this.token_invalidation_date = Date.now() + json.expires_in - 1000;
-						resolve(json.access_token);
-					});
-				}else{
-					reject();
-				}
-			});
-		})
-	}
-
-	private async loadChannelsInfo(channels:string[]):Promise<FetchResponse> {
-		let url = "https://api.twitch.tv/helix/users?login="+channels.join("&login=");
-		// let url = "https://api.twitch.tv/helix/users?login="+user;
-		let result = await fetch(url, {
-			headers:{
-				"Client-ID": Config.TWITCHAPP_CLIENT_ID,
-				"Authorization": "Bearer "+this.token,
-				"Content-Type": "application/json",
-			}
-		});
-		return result;
+		new APIController().create(this.app);
+		new DiscordController().create(this.app);
 	}
 }
