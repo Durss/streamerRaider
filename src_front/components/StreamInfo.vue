@@ -1,9 +1,8 @@
 <template>
 	<div :class="classes" @mouseleave="outItem()">
 		<div class="userName">
-			<img v-if="userInfos" :src="userInfos.profile_image_url" alt="avatar" class="avatar">
-			<div v-if="small===false" class="name">{{userName}}</div>
-			<a v-if="small!==false" class="name" :href="'https://twitch.tv/'+userName" target="_blank">{{userName}}</a>
+			<img v-if="userInfos" :src="userPicture" alt="avatar" class="avatar">
+			<a class="name" :href="'https://twitch.tv/'+userName" target="_blank">{{userName}}</a>
 			<Button class="link" v-if="streamInfos" :icon="require('@/assets/icons/open.svg')" type="link" target="_blank" :to="'https://twitch.tv/'+userName" />
 		</div>
 		
@@ -68,6 +67,10 @@ export default class StreamInfo extends Vue {
 
 	public get twitchParent():string {
 		return document.location.hostname;
+	}
+
+	public get userPicture():string {
+		return this.userInfos.profile_image_url.replace("300x300", "70x70");
 	}
 
 	public get classes():string[] {

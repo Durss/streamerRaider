@@ -169,6 +169,7 @@ export default class Home extends Vue {
 					for (let i = 0; i < result.data.length; i++) {
 						const infos:TwitchTypes.UserInfo = result.data[i];
 						this.userNameToInfos[infos.login.toLowerCase()] = infos;
+						console.log(infos);
 					}
 				}
 
@@ -181,7 +182,7 @@ export default class Home extends Vue {
 							userName:infos.user_login,
 							stream:infos,
 							user: this.userNameToInfos[infos.user_login.toLowerCase()]
-						})
+						});
 					}
 				}
 			}catch(error) {
