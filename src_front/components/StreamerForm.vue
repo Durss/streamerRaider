@@ -8,7 +8,8 @@
 			</div>
 			<div class="content">
 				<div class="description">
-					<textarea v-model="description" id="" cols="30" rows="5" :maxlength="maxLengthDescription"></textarea>
+					<label for="description">Description :</label>
+					<textarea id="description" v-model="description" cols="30" rows="5" :maxlength="maxLengthDescription"></textarea>
 					<div class="counter">{{description.length}}/{{maxLengthDescription}}</div>
 				</div>
 				<Button title="Mettre à jour" @click="submit()" :loading="saving" />
@@ -83,11 +84,20 @@ export default class StreamerForm extends Vue {
 		}
 
 		.content {
+			label {
+				font-size: 18px;
+				text-align: left;
+				display: block;
+			}
 			.description {
 				position: relative;
 				width: min-content;
 				margin: auto;
 				margin-bottom: 15px;
+				textarea {
+					max-width: 450px;
+					max-height: 270px;
+				}
 				.counter {
 					position: absolute;
 					bottom: -20px;
