@@ -39,36 +39,33 @@ export default class TwitchUtils {
 	 * Generates a credential token if necessary from the client and private keys
 	 * @returns 
 	 */
-	public static getClientCredentialToken():Promise<string> {
+	public static async getClientCredentialToken():Promise<string> {
 		//Invalidate token if expiration date is passed
 		if(Date.now() > this._token_invalidation_date) this._token = null;
 		//Avoid generating a new token if one already exists
-		if(this._token) return Promise.resolve(this._token);
+		if(this._token) return this._token;
 
 		//Generate a new token
-		return new Promise((resolve, reject) => {
-			let headers:any = {
-			};
-			var options = {
-				method: "POST",
-				headers: headers,
-			};
-			fetch("https://id.twitch.tv/oauth2/token?client_id="+Config.TWITCHAPP_CLIENT_ID+"&client_secret="+Config.TWITCHAPP_SECRET_ID+"&grant_type=client_credentials&scope=", options)
-			.then((result) => {
-				if(result.status == 200) {
-					result.json().then((json)=> {
-						this._token = json.access_token;
-						this._token_invalidation_date = Date.now() + json.expires_in - 1000;
-						resolve(json.access_token);
-					});
-				}else{
-					reject();
-				}
-			});
-		})
+		let headers:any = {
+		};
+		var options = {
+			method: "POST",
+			headers: headers,
+		};
+		let result = await fetch("https://id.twitch.tv/oauth2/token?client_id="+Config.TWITCHAPP_CLIENT_ID+"&client_secret="+Config.TWITCHAPP_SECRET_ID+"&grant_type=client_credentials&scope=", options)
+		if(result.status == 200) {
+			let json =await result.json()
+			this._token = json.access_token;
+			this._token_invalidation_date = Date.now() + json.expires_in - 60000;
+			return json.access_token;
+		}else{
+			throw("Token generation failed");
+		}
 	}
 
 	public static async loadChannelsInfo(channels:string[]):Promise<FetchResponse> {
+		await this.getClientCredentialToken();//This will refresh the token if necessary
+
 		let url = "https://api.twitch.tv/helix/users?login="+channels.join("&login=");
 		// let url = "https://api.twitch.tv/helix/users?login="+user;
 		let result = await fetch(url, {
@@ -82,6 +79,8 @@ export default class TwitchUtils {
 	}
 
 	public static async getStreamsInfos(channels:string[]):Promise<any> {
+		await this.getClientCredentialToken();//This will refresh the token if necessary
+
 		let url = "https://api.twitch.tv/helix/streams?user_login="+channels.join("&user_login=");
 		
 		let result = await fetch(url, {
