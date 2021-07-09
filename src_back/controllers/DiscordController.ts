@@ -62,8 +62,9 @@ export default class DiscordController {
 	* PRIVATE METHODS *
 	*******************/
 	private async onReady():Promise<void> {
-		this.client.guilds.cache.map(async (g) => {
-		});
+		Logger.success("Discord bot connected");
+		// this.client.guilds.cache.map(async (g) => {
+		// });
 	}
 
 	/**
@@ -132,13 +133,24 @@ export default class DiscordController {
 
 			case "raider-help":
 				if(!this.isWatchingChannel(message) && !isAdmin) return;
-				message.channel.send(`Voici les commandes disponibles:\`\`\`
-!raider-add        Ajouter le bot à un chan
-!raider-del        Supprimer le bot d'un chan
-!add-user          Ajouter un·e utilisateur/trice twitch
-!del-user          Supprimer un·e utilisateur/trice twitch
-!add-description   Ajouter une description à un·e utilisateur/trice twitch
-!del-description   Supprimer une description à un·e utilisateur/trice twitch
+				message.channel.send(`Voici les commandes disponibles :\`\`\`
+!raider-add
+	Ajouter le bot à un chan
+
+!raider-del
+	Supprimer le bot d'un chan
+
+!add-user LOGIN
+	Ajouter un·e utilisateur/trice twitch
+
+!del-user LOGIN
+	Supprimer un·e utilisateur/trice twitch
+
+!add-description LOGIN DESCRIPTION
+	Ajouter une description à un·e utilisateur/trice twitch
+
+!del-description LOGIN DESCRIPTION
+	Supprimer une description à un·e utilisateur/trice twitch
 \`\`\`
 `);
 				break;
