@@ -141,16 +141,16 @@ export default class DiscordController {
 !raider-del
 	Supprimer le bot d'un chan
 
-!add-user LOGIN
+!add-user TWITCH_LOGIN
 	Ajouter un·e utilisateur/trice twitch
 
-!del-user LOGIN
+!del-user TWITCH_LOGIN
 	Supprimer un·e utilisateur/trice twitch
 
-!add-description LOGIN DESCRIPTION
+!add-description TWITCH_LOGIN DESCRIPTION
 	Ajouter une description à un·e utilisateur/trice twitch
 
-!del-description LOGIN DESCRIPTION
+!del-description TWITCH_LOGIN DESCRIPTION
 	Supprimer une description à un·e utilisateur/trice twitch
 \`\`\`
 `);
