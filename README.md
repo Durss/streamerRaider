@@ -13,7 +13,7 @@ Install PM2 globally (will run the script as a service) :
 ```
 npm i -g pm2
 ```
-Create a file twitch_keys.json on the projet's root folder and put this inside it with you twitch APP keys :
+Create a file credentials.json on the projet's root folder and put this inside it with you twitch APP keys :
 ``` json
 {
 	"client_id":"xxx",

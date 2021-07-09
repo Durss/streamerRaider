@@ -8,34 +8,39 @@ export default class Config {
 
 	private static _ENV_NAME: EnvName;
 	private static _CONF_PATH: string = "env.conf";
-	private static _TWITCH_KEYS_PATH: string = "twitch_keys.json";
-	private static _TWITCH_KEYS:{client_id:string, secret_id:string, privateApiKey:string};
+	private static _CREDENTIALS_PATH: string = "credentials.json";
+	private static _CREDENTIALS:{client_id:string, secret_id:string, privateApiKey:string, discordBot_token:string};
 
 	public static TWITCH_USER_NAMES_PATH:string = "userList.json";
 	public static TWITCH_USER_DESCRIPTIONS_PATH:string = "userDescription.json";
+	public static DISCORD_CHANNELS_LISTENED:string = "discordChannels.json";
 
 	public static get TWITCHAPP_CLIENT_ID():string {
 		this.loadKeys();
-		return this._TWITCH_KEYS.client_id;
+		return this._CREDENTIALS.client_id;
 	}
 	public static get TWITCHAPP_SECRET_ID():string {
 		this.loadKeys();
-		return this._TWITCH_KEYS.secret_id;
+		return this._CREDENTIALS.secret_id;
 	}
 	public static get PRIVATE_API_KEY():string {
 		this.loadKeys();
-		return this._TWITCH_KEYS.privateApiKey;
+		return this._CREDENTIALS.privateApiKey;
+	}
+	public static get DISCORDBOT_TOKEN():string {
+		this.loadKeys();
+		return this._CREDENTIALS.discordBot_token;
 	}
 	
 	private static loadKeys():void {
-		if(this._TWITCH_KEYS) return;
-		if(!fs.existsSync(this._TWITCH_KEYS_PATH)) {
-			Logger.error(LogStyle.BgRed+LogStyle.FgWhite+"MISSING Twitch keys !"+LogStyle.Reset);
-			Logger.error("Please fill in the client_id and secret_id values on the file twitch_keys.json");
-			this._TWITCH_KEYS = {client_id:"",secret_id:"", privateApiKey:""};
-			fs.writeFileSync(this._TWITCH_KEYS_PATH, JSON.stringify(this._TWITCH_KEYS));
+		if(this._CREDENTIALS) return;
+		if(!fs.existsSync(this._CREDENTIALS_PATH)) {
+			Logger.error(LogStyle.BgRed+LogStyle.FgWhite+"MISSING Twitch credentials !"+LogStyle.Reset);
+			Logger.error("Please fill in the client_id and secret_id values on the file credentials.json");
+			this._CREDENTIALS = {client_id:"",secret_id:"", privateApiKey:""};
+			fs.writeFileSync(this._CREDENTIALS_PATH, JSON.stringify(this._CREDENTIALS));
 		}else{
-			this._TWITCH_KEYS = JSON.parse(fs.readFileSync(this._TWITCH_KEYS_PATH, "utf8"));
+			this._CREDENTIALS = JSON.parse(fs.readFileSync(this._CREDENTIALS_PATH, "utf8"));
 		}
 	}
 	

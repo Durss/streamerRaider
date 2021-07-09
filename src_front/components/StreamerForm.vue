@@ -95,6 +95,7 @@ export default class StreamerForm extends Vue {
 				margin: auto;
 				margin-bottom: 15px;
 				textarea {
+					min-width: 450px;
 					max-width: 450px;
 					max-height: 270px;
 				}
