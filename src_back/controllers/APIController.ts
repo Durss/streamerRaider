@@ -12,6 +12,7 @@ export default class APIController {
 
 	private _app:Express;
 	private _descriptionsCache:{[key:string]:string} = null;
+	private static _DESCRIPTION_CACHE_INVALIDATED:boolean;
 	
 	constructor() {
 		this.initialize();
@@ -40,6 +41,10 @@ export default class APIController {
 
 		this._app.post("/api/description", (req:Request, res:Response) => this.postUserDescription(req,res));
 		this._app.delete("/api/description", (req:Request, res:Response) => this.deleteUserDescription(req,res));
+	}
+
+	public static invalidateDescriptionCache():void {
+		this._DESCRIPTION_CACHE_INVALIDATED = true;
 	}
 	
 	
@@ -75,31 +80,6 @@ export default class APIController {
 			users = [];
 		}
 		res.status(200).send(JSON.stringify({success:true, data:users}));
-	}
-
-	/**
-	 * Gets the description of a specific twitch user
-	 * 
-	 * @param req needs a "login" parameter
-	 * @param res 
-	 */
-	private async getUserDescription(req:Request, res:Response):Promise<void> {
-		let descriptions;
-		let login = (<string>req.query.login)?.toLowerCase();
-		if(this._descriptionsCache) {
-			descriptions = this._descriptionsCache;
-		}else{
-			try {
-				descriptions = JSON.parse(fs.readFileSync(Config.TWITCH_USER_DESCRIPTIONS_PATH, "utf8"));
-			}catch(err){
-				descriptions = [];
-			}
-		}
-		if(descriptions && descriptions[ login ]) {
-			res.status(200).send(descriptions[ login ]);
-		}else{
-			res.status(404).send("");
-		}
 	}
 
 	/**
@@ -141,6 +121,37 @@ export default class APIController {
 		}else{
 			Logger.warn(`User ${login} not found`);
 			res.status(200).send(JSON.stringify({success:false, error:"User not found", error_code:"USER_NOT_FOUND"}));
+		}
+	}
+
+	/**
+	 * Gets the description of a specific twitch user
+	 * 
+	 * @param req needs a "login" parameter
+	 * @param res 
+	 */
+	private async getUserDescription(req:Request, res:Response):Promise<void> {
+		let descriptions;
+		//If cache needs to be updated, reload data from JSON file
+		if(APIController._DESCRIPTION_CACHE_INVALIDATED) {
+			let descriptions:{[key:string]:string} = JSON.parse(fs.readFileSync(Config.TWITCH_USER_DESCRIPTIONS_PATH, "utf8"));
+			this._descriptionsCache = descriptions;
+			APIController._DESCRIPTION_CACHE_INVALIDATED = false;
+		}
+		let login = (<string>req.query.login)?.toLowerCase();
+		if(this._descriptionsCache) {
+			descriptions = this._descriptionsCache;
+		}else{
+			try {
+				descriptions = JSON.parse(fs.readFileSync(Config.TWITCH_USER_DESCRIPTIONS_PATH, "utf8"));
+			}catch(err){
+				descriptions = [];
+			}
+		}
+		if(descriptions && descriptions[ login ]) {
+			res.status(200).send(descriptions[ login ]);
+		}else{
+			res.status(404).send("");
 		}
 	}
 

@@ -4,6 +4,7 @@ import * as fs from "fs"
 import Logger from '../utils/Logger';
 import Config from "../utils/Config";
 import TwitchUtils from "../utils/TwitchUtils";
+import APIController from "./APIController";
 
 /**
 * Created : 15/10/2020 
@@ -288,6 +289,7 @@ export default class DiscordController {
 			message.reply("La description a bien été supprimée pour le compte **\""+login+"\"**.");
 		}
 		fs.writeFileSync(Config.TWITCH_USER_DESCRIPTIONS_PATH, JSON.stringify(descriptions));
+		APIController.invalidateDescriptionCache();
 	}
 
 }
