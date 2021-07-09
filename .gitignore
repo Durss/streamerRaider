@@ -3,8 +3,10 @@ node_modules
 /dist
 /server
 /uploads
-twitch_keys.json
+credentials.json
+discordChannels.json
 userList.json
+userDescriptions.json
 env.conf
 
 # local env files
