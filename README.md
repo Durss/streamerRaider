@@ -13,18 +13,42 @@ Install PM2 globally (will run the script as a service) :
 ```
 npm i -g pm2
 ```
-Create a file credentials.json on the projet's root folder and put this inside it with you twitch APP keys :
+Create a file `credentials.json` on the projet's root folder and put this inside it with you twitch APP keys :
 ``` json
 {
 	"client_id":"xxx",
 	"secret_id":"xxx",
-	"privateApiKey":"xxx",
+	"discordBot_token":"xxx",
+	"privateApiKey":"xxx"
 }
 ```
-To get these keys, create a twitch app here :\
-https://dev.twitch.tv/console/apps \
+To get the `client_id` and `secret_id` keys, create a twitch app here :\
+https://dev.twitch.tv/console/apps 
+
 The `privateApiKey` is just a key to secure an API exposed by the application itself. You probably won't care about it.
 
+The `discordBot_token` is a token to be defined if you want to control the app from discord.\
+See [Create a discord bot](#create-a-discord-bot) 
+
+## Create a discord bot
+It is possible to add a bot to your discord that will control this app.\
+This allows to add/remove users and add/remove their description.\
+First, create an app there:\
+https://discord.com/developers/applications/ \
+Once the app is created, create a bot within the app.\
+Get its `token` and set it as the `discordBot_token` value on the file `credentials.json`.\
+\
+To add the bot to your discord, find the `client ID` on oAuth section of the discord APP, update the following URL and open it on your browser:
+https://discordapp.com/oauth2/authorize?scope=bot&client_id=CLIENT_ID
+\
+Once done, the administrator of the discord needs to send this command on the channel(s) that should be listened by the bot:
+```
+!raider-add
+```
+Then you should be good to go!.\
+You can list all the available commands with this command `!raider-help`
+
+## Project dev/build
 
 ### Compile front with hot-reloads for development
 ```
