@@ -12,7 +12,7 @@ export default class Config {
 	private static _CREDENTIALS:{client_id:string, secret_id:string, privateApiKey:string, discordBot_token:string};
 
 	public static TWITCH_USER_NAMES_PATH:string = "userList.json";
-	public static TWITCH_USER_DESCRIPTIONS_PATH:string = "userDescription.json";
+	public static TWITCH_USER_DESCRIPTIONS_PATH:string = "userDescriptions.json";
 	public static DISCORD_CHANNELS_LISTENED:string = "discordChannels.json";
 
 	public static get TWITCHAPP_CLIENT_ID():string {
@@ -37,7 +37,7 @@ export default class Config {
 		if(!fs.existsSync(this._CREDENTIALS_PATH)) {
 			Logger.error(LogStyle.BgRed+LogStyle.FgWhite+"MISSING Twitch credentials !"+LogStyle.Reset);
 			Logger.error("Please fill in the client_id and secret_id values on the file credentials.json");
-			this._CREDENTIALS = {client_id:"",secret_id:"", privateApiKey:""};
+			this._CREDENTIALS = {client_id:"",secret_id:"", discordBot_token:"", privateApiKey:""};
 			fs.writeFileSync(this._CREDENTIALS_PATH, JSON.stringify(this._CREDENTIALS));
 		}else{
 			this._CREDENTIALS = JSON.parse(fs.readFileSync(this._CREDENTIALS_PATH, "utf8"));
