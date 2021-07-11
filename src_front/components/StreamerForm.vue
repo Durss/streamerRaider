@@ -54,7 +54,7 @@ export default class StreamerForm extends Vue {
 	public get userName():string{ return IRCClient.instance.authenticatedUserLogin; }
 
 	public get apiUrl():string {
-		return Config.API_PATH+"/description?login="+this.userName;
+		return Config.API_PATH_ABSOLUTE+"/description?login="+this.userName;
 	}
 
 	public mounted():void {

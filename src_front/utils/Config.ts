@@ -18,9 +18,10 @@ export default class Config {
 	 * will be based on the value returned by this method.
 	 */
 	public static get profile():string {
-		// if(document.location.host.indexOf("durss") == -1) return null;
+		if(document.location.host.indexOf("durss") == -1
+		&& document.location.host.indexOf("localhost") == -1) return null;
 		return this.getEnvData({
-			dev: "protopotes",
+			dev: null,
 			prod: document.location.host.replace(/([a-z]+).durss.[a-z]+/gi, "$1"),
 		});
 	}
@@ -43,6 +44,14 @@ export default class Config {
 			dev: document.location.protocol+"//"+document.location.hostname+":"+Config.SERVER_PORT+"/api",
 			prod:"/api",
 		});
+	}
+	
+	public static get API_PATH_ABSOLUTE(): string {
+		let path = this.API_PATH;
+		if(path.indexOf("http") == -1) {
+			path = "https://"+document.location.host+path;
+		}
+		return path;
 	}
 	
 	

@@ -13,9 +13,11 @@ export default class Config {
 	private static _DISCORD_GUILD_IDS_PATH: string = "discordGuildIdToProfile.json";
 	private static _CREDENTIALS:{client_id:string, secret_id:string, privateApiKey:string, discordBot_token:string};
 
+	public static AVAILABLE_PROFILES_LIST: string = "dnsToProfile.json";
+	public static DISCORD_CHANNELS_LISTENED:string = "discordChannels.json";
+
 	public static TWITCH_USER_NAMES_FILE(req:Request, discordGuildID?:string):string {
 		let profile:string = Utils.getProfile(req, discordGuildID);
-		if(profile == "default") profile = null;
 		let path = "userList{PROFILE}.json";
 		if(profile) path = path.replace(/\{PROFILE\}/gi, "_"+profile);
 		else        path = path.replace(/\{PROFILE\}/gi, "");
@@ -24,7 +26,6 @@ export default class Config {
 
 	public static TWITCH_USER_DESCRIPTIONS_FILE(req:Request, discordGuildID?:string):string {
 		let profile:string = Utils.getProfile(req, discordGuildID);
-		if(profile == "default") profile = null;
 		let path = "userDescriptions{PROFILE}.json";
 		if(profile) path = path.replace(/\{PROFILE\}/gi, "_"+profile);
 		else        path = path.replace(/\{PROFILE\}/gi, "");
@@ -42,8 +43,6 @@ export default class Config {
 			return null;
 		}
 	}
-
-	public static DISCORD_CHANNELS_LISTENED:string = "discordChannels.json";
 
 	public static get TWITCHAPP_CLIENT_ID():string {
 		this.loadKeys();

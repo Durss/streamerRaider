@@ -1,6 +1,7 @@
 import { Request } from "express-serve-static-core";
 import Config from "./Config";
 import * as fs from "fs";
+import Logger from "./Logger";
 
 /**
  * Created by François
@@ -413,12 +414,26 @@ export default class Utils  {
 		})
 	}
 
+	private static profileCache:{[key:string]:string} = null;
 	public static getProfile(req:Request, discordGuildID?:string):string {
+		if(!this.profileCache) {
+			try {
+				this.profileCache = JSON.parse(fs.readFileSync(Config.AVAILABLE_PROFILES_LIST, "utf8"));
+			}catch(error) {
+				Logger.error("Unable to parse JSON file: "+Config.AVAILABLE_PROFILES_LIST);
+				return null;
+			}
+		}
 		let profile:string = null;
-		if(req) profile = <string>req.query.profile;
-		if(req && !profile) profile = <string>req.body.profile;
+		if(req && req.hostname && req.hostname.indexOf("durss") > -1) {
+			profile = req.hostname.replace(/([a-z]+).durss.[a-z]+/gi, "$1");
+		}
 		if(!profile && discordGuildID) profile = Config.DISCORD_GUILD_ID_TO_PROFILE(discordGuildID);
-		if(!profile) profile = "default";
+		if(req && !profile) profile = <string>req.query.profile;
+		if(req && !profile) profile = <string>req.body.profile;
+		
+		//Make sure the requested profile actually exists to avoid some sort of injection
+		if(!this.profileCache[profile]) profile = null;
 		return profile;
 	}
 
