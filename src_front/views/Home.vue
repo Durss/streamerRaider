@@ -347,8 +347,11 @@ export default class Home extends Vue {
 		.menu {
 			margin-top: 20px;
 			box-sizing: border-box;
-			.button:not(:last-child) {
-				margin-right: 5px;
+			.button {
+				margin-bottom: 5px;
+				&:not(:last-child) {
+					margin-right: 5px;
+				}
 			}
 		}
 	
