@@ -13,7 +13,7 @@
 
 		<div v-if="!loading && !missingTwitchKeys && !missingTwitchUsers">
 			<img :src="logoPath" height="100">
-			<h1>PROTOPOTES</h1>
+			<h1>{{title}}</h1>
 
 			<AuthForm class="menu" v-if="!connected" />
 
@@ -110,6 +110,12 @@ export default class Home extends Vue {
 
 	public get connected():boolean {
 		return this.$store.state.OAuthToken;
+	}
+
+	public get title():string {
+		let res = "Streamers";
+		if(Config.profile) res += " "+Config.profile;
+		return res;
 	}
 
 	public get userFile():string {
@@ -317,10 +323,11 @@ export default class Home extends Vue {
 
 	h1 {
 		font-family: "Nunito Black";
-		font-size: 40px;
+		font-size: 50px;
 		color: @mainColor_normal;
 		margin-bottom: 20px;
 		text-shadow: #ffffff55 0px 0px 5px;
+		text-transform: capitalize;
 	}
 
 	.menu {
@@ -344,7 +351,7 @@ export default class Home extends Vue {
 
 		h2 {
 			font-family: "Nunito Black";
-			font-size: 40px;
+			font-size: 30px;
 			color: @mainColor_normal;
 			margin-bottom: 20px;
 			text-shadow: #ffffff55 0px 0px 5px;

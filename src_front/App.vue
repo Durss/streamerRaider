@@ -1,6 +1,7 @@
 
 <template>
 	<div id="app" class="app">
+		<vue-headful :title="pageTitle" v-if="pageTitle" />
 		<router-view class="view" />
 		<Footer class="footer" />
 		<Confirm />
@@ -15,6 +16,7 @@ import Confirm from "./views/Confirm.vue";
 import Alert from "./views/AlertView.vue";
 import Footer from "./components/Footer.vue";
 import Tooltip from "./components/Tooltip.vue";
+import Config from "./utils/Config";
 
 @Component({
 	components:{
@@ -26,7 +28,14 @@ import Tooltip from "./components/Tooltip.vue";
 })
 export default class App extends Vue {
 
+	public pageTitle:string = null;
+
 	public async mounted():Promise<void> {
+		if(Config.profile) {
+			let p = Config.profile;
+			p = p.replace(/^\w/, (c) => c.toUpperCase());
+			this.pageTitle = p+" Raider";
+		}
 	}
 
 	public beforeDestroy():void {

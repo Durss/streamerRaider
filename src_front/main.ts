@@ -5,8 +5,10 @@ import App from './App.vue';
 import './less/index.less';
 import router from './router';
 import store from './store';
+import vueHeadful from 'vue-headful';
 
 Vue.config.productionTip = false;
+Vue.component('vue-headful', vueHeadful);
 Config.init();
 
 router.beforeEach(async (to: Route, from: Route, next: Function) => {
