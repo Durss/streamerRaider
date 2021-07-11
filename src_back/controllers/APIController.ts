@@ -53,7 +53,8 @@ export default class APIController {
 	* PRIVATE METHODS *
 	*******************/
 	private initialize():void {
-		
+		let descriptions:{[key:string]:string} = JSON.parse(fs.readFileSync(Config.TWITCH_USER_DESCRIPTIONS_PATH, "utf8"));
+		this._descriptionsCache = descriptions;
 	}
 
 	/**
@@ -210,8 +211,17 @@ export default class APIController {
 		let channels:string = <string>req.query.channels;
 		try {
 			let json = await TwitchUtils.getStreamsInfos(channels.split(","));
+			let descs = this._descriptionsCache;
+			//Inject descriptions for users that specified it
+			for (let i = 0; i < json.data.length; i++) {
+				const el = json.data[i];
+				if(descs[el.user_login.toLowerCase()]) { 
+					el.description = descs[el.user_login.toLowerCase()];
+				}
+			}
 			res.status(200).send(JSON.stringify({success:true, data:json}));
 		}catch(error){
+			console.log(error);
 			res.status(500).send(error);
 		}
 	}

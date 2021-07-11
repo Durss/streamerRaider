@@ -11,6 +11,7 @@
 				<div class="title">{{streamInfos.title}}</div>
 				<div class="category" v-if="streamInfos.game_name">{{streamInfos.game_name}}</div>
 				<div class="duration">{{streamDuration}}</div>
+				<div class="description" v-if="streamInfos.description && !showLive">{{streamInfos.description}}</div>
 			</div>
 			<div class="preview" @mouseenter="hoverItem()">
 				<div class="streamImage" v-if="!showLive"><img :src="previewUrl"></div>
@@ -202,6 +203,26 @@ export default class StreamInfo extends Vue {
 			}
 			.duration {
 				font-size: 14px;
+			}
+			.description {
+				font-size: 17px;
+				font-style: italic;
+				padding-left: 40px;
+				position: relative;
+				margin-top: 10px;
+				opacity: .6;
+				font-family: "Nunito Light";
+				&::before {
+					content: "";
+					background: url("../assets/icons/quote.svg");
+					background-size: 30px 30px;
+					width: 30px;
+					height: 30px;
+					display: block;
+					top: 0;
+					left: 0;
+					position: absolute;
+				}
 			}
 		}
 		.preview {

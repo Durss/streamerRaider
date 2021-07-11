@@ -12,12 +12,24 @@
 		<div class="confError" v-if="missingTwitchUsers">Please add users to the file <strong>userList.json</strong> at the root of the project</div>
 
 		<div v-if="!loading && !missingTwitchKeys && !missingTwitchUsers">
-			<AuthForm v-if="!connected" />
-			<div v-if="connected">
+			<img src="@/assets/icons/protopotes.svg" height="100">
+
+			<AuthForm class="menu" v-if="!connected" />
+
+			<StreamerForm v-if="showProfileForm" @close="showProfileForm=false" />
+			
+			<div v-if="connected" class="menu">
 				<Button title="Lancer un raid aléatoire" v-if="onlineUsers.length > 0" white
 					@click="randomRaid()"
 					:icon="require('@/assets/icons/random.svg')" />
-				<StreamerForm v-if="isAStreamer" />
+
+				<Button v-if="isAStreamer" title="Mes infos" white
+					@click="showProfileForm=true"
+					:icon="require('@/assets/icons/edit.svg')" />
+
+				<Button title="Logout" highlight
+					@click="logout()"
+					:icon="require('@/assets/icons/cross_white.svg')" />
 			</div>
 			
 			<div class="block">
@@ -39,9 +51,10 @@
 					<span>Personne n'est en ligne</span>
 				</div>
 			</div>
+
 			<div class="block">
 				<h2>PROTOPOTES HORS LIGNE ({{offlineUsers.length}})</h2>
-					
+				
 				<transition-group class="list small" name="appear" tag="div"
 				v-bind:css="false"
 				v-on:before-enter="beforeEnter"
@@ -82,6 +95,7 @@ import { Component, Vue } from "vue-property-decorator";
 export default class Home extends Vue {
 
 	public loading:boolean = true;
+	public showProfileForm:boolean = false;
 	public missingTwitchKeys:boolean = false;
 	public missingTwitchUsers:boolean = false;
 
@@ -95,6 +109,7 @@ export default class Home extends Vue {
 	public get connected():boolean {
 		return this.$store.state.OAuthToken;
 	}
+
 
 	public get isAStreamer():boolean {
 		let authLogin = IRCClient.instance.authenticatedUserLogin;
@@ -243,6 +258,10 @@ export default class Home extends Vue {
 		}, 2 * 60 * 1000);
 	}
 
+	public logout():void {
+		this.$store.dispatch("logout")
+	}
+
 }
 </script>
 
@@ -279,8 +298,14 @@ export default class Home extends Vue {
 		border-radius: 10px;
 	}
 
+	.menu {
+		margin: 20px 0;
+		.button:not(:last-child) {
+			margin-right: 5px;
+		}
+	}
+
 	.block {
-		margin-top: 50px;
 		&:last-child {
 			margin-top: 100px;
 		}

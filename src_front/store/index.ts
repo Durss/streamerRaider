@@ -100,6 +100,8 @@ export default new Vuex.Store({
 		openTooltip({commit}, payload) { commit("openTooltip", payload); },
 		
 		closeTooltip({commit}) { commit("closeTooltip", null); },
+		
+		logout({commit}) { commit("setOAuthToken", null); },
 
 	},
 })

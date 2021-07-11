@@ -41,6 +41,7 @@ export declare module TwitchTypes {
 		language:      string;
 		thumbnail_url: string;
 		tag_ids:       string[];
+		description:   string;//Custom injected data from server.
 	}
 
 	export interface UserInfo {
