@@ -18,7 +18,7 @@ export default class Config {
 	 * will be based on the value returned by this method.
 	 */
 	public static get profile():string {
-		if(document.location.host.indexOf("durss") == -1) return null;
+		// if(document.location.host.indexOf("durss") == -1) return null;
 		return this.getEnvData({
 			dev: "protopotes",
 			prod: document.location.host.replace(/([a-z]+).durss.[a-z]+/gi, "$1"),

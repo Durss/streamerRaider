@@ -152,6 +152,16 @@ export default class StreamInfo extends Vue {
 
 	&.small {
 		width: 250px;
+		margin-bottom: 10px !important;//ooouh...bad bad me :)
+		.head {
+			padding: 0;
+			.avatar {
+				border-radius: 0;
+				vertical-align: top;
+				margin-right: 10px;
+				border: 0px;
+			}
+		}
 		.userName {
 			margin-bottom: 0px;
 			.name {

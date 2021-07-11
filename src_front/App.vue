@@ -51,14 +51,24 @@ export default class App extends Vue {
 	-moz-osx-font-smoothing: grayscale;
 	text-align: center;
 	color: #2c3e50;
+	height: 100%;
+	min-height: 100vh;
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
 
 	.view {
-		padding-bottom: 50px;
+		height: 100%;
+		min-height: 100%;
+		padding-top: 20px;
+		padding-bottom: 35px;
+		flex-grow: 1;
+		display: flex;
+		flex-direction: column;
 	}
 	.footer {
 		position: fixed;
 		background-color: @mainColor_dark_light;
-		margin-top: 30px;
 		height: 35px;
 		color: @mainColor_light;
 		display: flex;

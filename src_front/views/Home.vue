@@ -11,9 +11,9 @@
 		
 		<div class="confError" v-if="missingTwitchUsers">Please add users to the file <strong>{{userFile}}.json</strong> at the root of the project</div>
 
-		<div v-if="!loading && !missingTwitchKeys && !missingTwitchUsers">
+		<div v-if="!loading && !missingTwitchKeys && !missingTwitchUsers" class="page">
 			<img :src="logoPath" height="100">
-			<h1>{{title}}</h1>
+			<h1>{{title}} Raider</h1>
 
 			<AuthForm class="menu" v-if="!connected" />
 
@@ -34,7 +34,11 @@
 			</div>
 			
 			<div class="block">
-				<h2>PERSONNES EN LIGNE ({{onlineUsers.length}})</h2>
+				<div class="title">
+					<span class="line"></span>
+					<h2>STREAMERS EN LIGNE ({{onlineUsers.length}})</h2>
+					<span class="line"></span>
+				</div>
 				<transition-group class="list" name="appear" tag="div"
 				v-bind:css="false"
 				v-on:before-enter="beforeEnter"
@@ -53,10 +57,14 @@
 				</div>
 			</div>
 
-			<div class="block">
-				<h2>PERSONNES HORS LIGNE ({{offlineUsers.length}})</h2>
+			<div class="block offline">
+				<div class="title">
+					<span class="line"></span>
+					<h2>STREAMERS HORS LIGNE ({{offlineUsers.length}})</h2>
+					<span class="line"></span>
+				</div>
 				
-				<transition-group class="list small" name="appear" tag="div"
+				<transition-group class="list" name="appear" tag="div"
 				v-bind:css="false"
 				v-on:before-enter="beforeEnter"
 				v-on:enter="enter"
@@ -113,8 +121,8 @@ export default class Home extends Vue {
 	}
 
 	public get title():string {
-		let res = "Streamers";
-		if(Config.profile) res += " "+Config.profile;
+		let res = "";
+		if(Config.profile) res = Config.profile;
 		return res;
 	}
 
@@ -290,7 +298,6 @@ export default class Home extends Vue {
 
 <style scoped lang="less">
 .home {
-	padding-top: 20px;
 
 	.loader {
 		.center();
@@ -321,53 +328,93 @@ export default class Home extends Vue {
 		border-radius: 10px;
 	}
 
-	h1 {
-		font-family: "Nunito Black";
-		font-size: 50px;
-		color: @mainColor_normal;
-		margin-bottom: 20px;
-		text-shadow: #ffffff55 0px 0px 5px;
-		text-transform: capitalize;
-	}
-
-	.menu {
-		margin-top: 20px;
-		.button:not(:last-child) {
-			margin-right: 5px;
-		}
-	}
-
-	.block {
-		margin-top: 100px;
-
-		.noResult {
-			color: @mainColor_normal;
-			text-shadow: #ffffff55 0px 0px 5px;
-			font-style: italic;
-			.icon {
-				max-height: 150px;
-			}
-		}
-
-		h2 {
+	.page {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		height: 100%;
+		flex-grow: 1;
+	
+		h1 {
 			font-family: "Nunito Black";
-			font-size: 30px;
+			font-size: 50px;
 			color: @mainColor_normal;
 			margin-bottom: 20px;
 			text-shadow: #ffffff55 0px 0px 5px;
+			text-transform: capitalize;
 		}
-
-		.list {
-			display: flex;
-			flex-direction: row;
-			flex-wrap: wrap;
-			max-width: 90vw;
-			margin: auto;
-			justify-content: space-around;
-			.stream {
-				margin: 10px;
-				// margin: auto;
-				margin-bottom: 20px;
+	
+		.menu {
+			margin-top: 20px;
+			.button:not(:last-child) {
+				margin-right: 5px;
+			}
+		}
+	
+		.block {
+			width: 100%;
+			padding-top: 100px;
+	
+			.noResult {
+				color: @mainColor_normal;
+				text-shadow: #ffffff55 0px 0px 5px;
+				font-style: italic;
+				.icon {
+					max-height: 150px;
+				}
+			}
+	
+			.title {
+				display: flex;
+				flex-direction: row;
+				align-items: center;
+				padding-bottom: 20px;
+	
+				.line {
+					flex-grow: 1;
+					background-color: @mainColor_normal;
+					height: 1px;
+				}
+	
+				h2 {
+					font-family: "Nunito Black";
+					font-size: 30px;
+					color: @mainColor_normal;
+					margin: 0 15px;
+					text-shadow: #ffffff55 0px 0px 5px;
+				}
+			}
+	
+			.list {
+				display: flex;
+				flex-direction: row;
+				flex-wrap: wrap;
+				padding: 20px 5vw;
+				margin: auto;
+				justify-content: space-around;
+				align-items: flex-start;
+				.stream {
+					margin: 10px;
+					// margin: auto;
+					margin-bottom: 20px;
+				}
+			}
+	
+			&.offline {
+				flex-grow: 1;
+				width: 100%;
+				height: 100%;
+				display: flex;
+				flex-direction: column;
+				.title {
+					background: linear-gradient(0deg, rgba(0,0,0,0.5) 20%, rgba(0,0,0,0) 100%);
+				}
+				.list {
+					box-sizing: border-box;
+					width: 100%;
+					flex-grow: 1;
+					background-color: rgba(0,0,0,0.5);
+				}
 			}
 		}
 	}
