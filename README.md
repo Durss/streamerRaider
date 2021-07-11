@@ -13,7 +13,7 @@ Install PM2 globally (will run the script as a service) :
 ```
 npm i -g pm2
 ```
-Create a file `credentials.json` on the projet's root folder and put this inside it with you twitch APP keys :
+Create a file `data/credentials.json` on the projet's root folder and put this inside it with you twitch APP keys :
 ``` json
 {
 	"client_id":"xxx",
@@ -36,7 +36,7 @@ This allows to add/remove users and add/remove their description.\
 First, create an app there:\
 https://discord.com/developers/applications/ \
 Once the app is created, create a bot within the app.\
-Get its `token` and set it as the `discordBot_token` value on the file `credentials.json`.\
+Get its `token` and set it as the `discordBot_token` value on the file `data/credentials.json`.\
 \
 To add the bot to your discord, find the `client ID` on oAuth section of the discord APP, update the following URL and open it on your browser:
 https://discordapp.com/oauth2/authorize?scope=bot&client_id=CLIENT_ID

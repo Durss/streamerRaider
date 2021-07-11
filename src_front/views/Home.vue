@@ -7,9 +7,9 @@
 			</div>
 		</transition>
 
-		<div class="confError" v-if="missingTwitchKeys">Please fill in the <strong>client_id</strong> and <strong>secret_id</strong> values inside the file <strong>twitch_keys.json</strong> created at the root of the project!</div>
+		<div class="confError" v-if="missingTwitchKeys">Please fill in the <strong>client_id</strong> and <strong>secret_id</strong> values inside the file <strong>data/credentials.json</strong> created at the root of the project!</div>
 		
-		<div class="confError" v-if="missingTwitchUsers">Please add users to the file <strong>{{userFile}}.json</strong> at the root of the project</div>
+		<div class="confError" v-if="missingTwitchUsers">Please add users to the file <strong>data/{{userFile}}.json</strong> at the root of the project</div>
 
 		<div v-if="!loading && !missingTwitchKeys && !missingTwitchUsers" class="page">
 			<img :src="logoPath" height="100">
