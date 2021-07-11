@@ -34,6 +34,12 @@ export default class Api {
 			headers: _headers
 		};
 		
+		//Inject current profile if necessary
+		if(Config.profile) {
+			if(!params) params = {};
+			params.profile = Config.profile;
+		}
+		
 		let url = endpoint;
 		if(autoPrefixApiPath) url = Config.API_PATH + "/" + url;
 		if (verb == 'GET' && params != null) {

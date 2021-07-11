@@ -1,3 +1,7 @@
+import { Request } from "express-serve-static-core";
+import Config from "./Config";
+import * as fs from "fs";
+
 /**
  * Created by François
  */
@@ -407,5 +411,30 @@ export default class Utils  {
 		return new Promise(function (resolve) {
 			setTimeout(_ => resolve(), delay);
 		})
+	}
+
+	public static getProfile(req:Request, discordGuildID?:string):string {
+		let profile:string = null;
+		if(req) profile = <string>req.query.profile;
+		if(req && !profile) profile = <string>req.body.profile;
+		if(!profile && discordGuildID) profile = Config.DISCORD_GUILD_ID_TO_PROFILE(discordGuildID);
+		if(!profile) profile = "default";
+		return profile;
+	}
+
+
+	public static getUserList(req:Request, discordGuildID?:string):string[] {
+		return this.getFileContent(Config.TWITCH_USER_NAMES_FILE(req, discordGuildID), []);
+	}
+
+	public static getUserDescriptions(req:Request, discordGuildID?:string):{[key:string]:string} {
+		return this.getFileContent(Config.TWITCH_USER_DESCRIPTIONS_FILE(req, discordGuildID), {});
+	}
+
+	private static getFileContent(path:string, defaultValue:any):any {
+		if(!fs.existsSync(path)) {
+			fs.writeFileSync(path, JSON.stringify(defaultValue));
+		}
+		return JSON.parse(fs.readFileSync(path, "utf8"));
 	}
 }

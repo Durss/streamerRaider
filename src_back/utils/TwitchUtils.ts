@@ -39,9 +39,9 @@ export default class TwitchUtils {
 	 * Generates a credential token if necessary from the client and private keys
 	 * @returns 
 	 */
-	public static async getClientCredentialToken():Promise<string> {
+	public static async getClientCredentialToken(force:boolean = false):Promise<string> {
 		//Invalidate token if expiration date is passed
-		if(Date.now() > this._token_invalidation_date) this._token = null;
+		if(Date.now() > this._token_invalidation_date || force) this._token = null;
 		//Avoid generating a new token if one already exists
 		if(this._token) return this._token;
 
@@ -56,7 +56,7 @@ export default class TwitchUtils {
 		if(result.status == 200) {
 			let json =await result.json()
 			this._token = json.access_token;
-			this._token_invalidation_date = Date.now() + json.expires_in - 60000;
+			this._token_invalidation_date = Date.now() + (json.expires_in - 60000);
 			return json.access_token;
 		}else{
 			throw("Token generation failed");
@@ -75,6 +75,9 @@ export default class TwitchUtils {
 				"Content-Type": "application/json",
 			}
 		});
+		//Token seem to expire before it's actual EOL date.
+		//Make sure here the next request will work.
+		if(result.status == 401) this.getClientCredentialToken(true);
 		return result;
 	}
 
@@ -92,6 +95,9 @@ export default class TwitchUtils {
 		});
 		
 		if(result.status != 200) {
+			//Token seem to expire before it's actual EOL date.
+			//Make sure here the next request will work.
+			if(result.status == 401) this.getClientCredentialToken(true);
 			let txt = await result.text();
 			throw(txt);
 		}else{

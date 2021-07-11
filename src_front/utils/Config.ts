@@ -10,6 +10,21 @@ export default class Config {
 
 	public static TWITCH_SCOPES:string[] = ["chat:read","chat:edit","channel_editor"];
 
+	/**
+	 * Undocumented facultative stuff to keep basic installs simple
+	 * 
+	 * This actually allows me to have one instance of the server
+	 * to run multiple frontends. The data will be split in files which names
+	 * will be based on the value returned by this method.
+	 */
+	public static get profile():string {
+		if(document.location.host.indexOf("durss") == -1) return null;
+		return this.getEnvData({
+			dev: "protopotes",
+			prod: document.location.host.replace(/([a-z]+).durss.[a-z]+/gi, "$1"),
+		});
+	}
+
 	public static init():void {
 		let prod = this.IS_PROD;//document.location.port == "";
 		if(prod) this._ENV_NAME = "prod";
@@ -44,4 +59,4 @@ export default class Config {
 	}
 }
 
-type EnvName = "dev" | "preprod" | "prod" | "standalone";
+type EnvName = "dev" | "preprod" | "prod";

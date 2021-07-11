@@ -62,7 +62,6 @@ export default new Vuex.Store({
 			if(token) {
 				let tokenValid = true;
 				try {
-					console.log(token);
 					let result = await TwitchUtils.validateToken(token);
 					let scopes:string[] = result.scopes;
 					let expectedScopes = Config.TWITCH_SCOPES;

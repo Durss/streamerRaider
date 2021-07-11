@@ -9,10 +9,11 @@
 
 		<div class="confError" v-if="missingTwitchKeys">Please fill in the <strong>client_id</strong> and <strong>secret_id</strong> values inside the file <strong>twitch_keys.json</strong> created at the root of the project!</div>
 		
-		<div class="confError" v-if="missingTwitchUsers">Please add users to the file <strong>userList.json</strong> at the root of the project</div>
+		<div class="confError" v-if="missingTwitchUsers">Please add users to the file <strong>{{userFile}}.json</strong> at the root of the project</div>
 
 		<div v-if="!loading && !missingTwitchKeys && !missingTwitchUsers">
-			<img src="@/assets/icons/protopotes.svg" height="100">
+			<img :src="logoPath" height="100">
+			<h1>PROTOPOTES</h1>
 
 			<AuthForm class="menu" v-if="!connected" />
 
@@ -33,7 +34,7 @@
 			</div>
 			
 			<div class="block">
-				<h2>PROTOPOTES EN LIGNE ({{onlineUsers.length}})</h2>
+				<h2>PERSONNES EN LIGNE ({{onlineUsers.length}})</h2>
 				<transition-group class="list" name="appear" tag="div"
 				v-bind:css="false"
 				v-on:before-enter="beforeEnter"
@@ -53,7 +54,7 @@
 			</div>
 
 			<div class="block">
-				<h2>PROTOPOTES HORS LIGNE ({{offlineUsers.length}})</h2>
+				<h2>PERSONNES HORS LIGNE ({{offlineUsers.length}})</h2>
 				
 				<transition-group class="list small" name="appear" tag="div"
 				v-bind:css="false"
@@ -83,6 +84,7 @@ import { TwitchTypes } from "@/utils/TwitchUtils";
 import Utils from "@/utils/Utils";
 import gsap from "gsap/all";
 import { Component, Vue } from "vue-property-decorator";
+import Config from "@/utils/Config";
 
 @Component({
 	components: {
@@ -110,6 +112,20 @@ export default class Home extends Vue {
 		return this.$store.state.OAuthToken;
 	}
 
+	public get userFile():string {
+		let res = "userList";
+		if(Config.profile) res += "_"+Config.profile;
+		return res;
+	}
+
+	public get logoPath():string {
+		if(Config.profile) {
+			return require("@/assets/logos/"+Config.profile+".png");
+		}else{
+			return require("@/assets/logos/protopotes.png");
+		}
+		// @/assets/logos/pogscience.png
+	}
 
 	public get isAStreamer():boolean {
 		let authLogin = IRCClient.instance.authenticatedUserLogin;
@@ -164,20 +180,21 @@ export default class Home extends Vue {
 	 * Loads all the data from server
 	 */
 	private async loadData(isFirstLoad:boolean = false):Promise<void> {
+		if(isFirstLoad)  {
+			//Avoid showing the loader when doing background reload
+			this.loading = true;
+		}
 		
 		//Load user name list from server
 		let channelList = await Api.get("user_names");
 		if(!(channelList instanceof Array) || channelList.length == 0) {
+			this.loading = false;
 			this.missingTwitchUsers = true;
 			return;
 		}
 		
 		let channelListBackup = channelList.concat();
 		let maxBatch = 100;//Twitch API cannot get more than 100 users at once
-		if(isFirstLoad)  {
-			//Avoid showing the loader when doing background reload
-			this.loading = true;
-		}
 		let onlineUsers = [];
 		let offlineUsers = [];
 		do{
@@ -267,7 +284,7 @@ export default class Home extends Vue {
 
 <style scoped lang="less">
 .home {
-	padding-top: 50px;
+	padding-top: 20px;
 
 	.loader {
 		.center();
@@ -298,17 +315,23 @@ export default class Home extends Vue {
 		border-radius: 10px;
 	}
 
+	h1 {
+		font-family: "Nunito Black";
+		font-size: 40px;
+		color: @mainColor_normal;
+		margin-bottom: 20px;
+		text-shadow: #ffffff55 0px 0px 5px;
+	}
+
 	.menu {
-		margin: 20px 0;
+		margin-top: 20px;
 		.button:not(:last-child) {
 			margin-right: 5px;
 		}
 	}
 
 	.block {
-		&:last-child {
-			margin-top: 100px;
-		}
+		margin-top: 100px;
 
 		.noResult {
 			color: @mainColor_normal;

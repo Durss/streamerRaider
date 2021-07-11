@@ -11,7 +11,6 @@
 				<div class="title">{{streamInfos.title}}</div>
 				<div class="category" v-if="streamInfos.game_name">{{streamInfos.game_name}}</div>
 				<div class="duration">{{streamDuration}}</div>
-				<div class="description" v-if="streamInfos.description && !showLive">{{streamInfos.description}}</div>
 			</div>
 			<div class="preview" @mouseenter="hoverItem()">
 				<div class="streamImage" v-if="!showLive"><img :src="previewUrl"></div>
@@ -25,6 +24,7 @@
 				</iframe>
 				<div v-if="streamInfos" class="viewersCount">{{streamInfos.viewer_count}} viewers</div>
 			</div>
+			<div class="description" v-if="streamInfos.description && !showLive">{{streamInfos.description}}</div>
 		</div>
 
 		<Button v-if="streamInfos" :title="'Raid '" class="raid" @click="startRaid()" :disabled="!canRaid" :data-tooltip="connected? null : 'Connecte toi en haut de page pour lancer un raid chez '+userName" />
@@ -136,7 +136,11 @@ export default class StreamInfo extends Vue {
 	
 	&.expand {
 		.detailsHolder {
+			.infos {
+				max-width: 25%;
+			}
 			.preview {
+				max-width: 75%;
 				.streamImage {
 					@ratio: 1;
 					width: calc(340px * @ratio);
@@ -185,9 +189,11 @@ export default class StreamInfo extends Vue {
 	.detailsHolder {
 		display: flex;
 		flex-direction: row;
+		flex-wrap: wrap;
 		text-align: left;
 		justify-content: space-between;
 		.infos {
+			max-width: 50%;
 			display: flex;
 			flex-direction: column;
 			align-items: flex-start;
@@ -204,28 +210,9 @@ export default class StreamInfo extends Vue {
 			.duration {
 				font-size: 14px;
 			}
-			.description {
-				font-size: 17px;
-				font-style: italic;
-				padding-left: 40px;
-				position: relative;
-				margin-top: 10px;
-				opacity: .6;
-				font-family: "Nunito Light";
-				&::before {
-					content: "";
-					background: url("../assets/icons/quote.svg");
-					background-size: 30px 30px;
-					width: 30px;
-					height: 30px;
-					display: block;
-					top: 0;
-					left: 0;
-					position: absolute;
-				}
-			}
 		}
 		.preview {
+			max-width: 50%;
 			.streamImage {
 				@ratio: .5;
 				width: calc(340px * @ratio);
@@ -244,6 +231,27 @@ export default class StreamInfo extends Vue {
 				font-style: italic;
 				font-size: 14px;
 				text-align: center;
+			}
+		}
+		.description {
+			font-size: 17px;
+			font-style: italic;
+			padding-left: 40px;
+			position: relative;
+			margin-top: 10px;
+			opacity: .6;
+			font-family: "Nunito Light";
+			width: 100%;
+			&::before {
+				content: "";
+				background: url("../assets/icons/quote.svg");
+				background-size: 30px 30px;
+				width: 30px;
+				height: 30px;
+				display: block;
+				top: 0;
+				left: 0;
+				position: absolute;
 			}
 		}
 	}

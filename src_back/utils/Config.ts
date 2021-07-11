@@ -1,6 +1,7 @@
+import { Request } from "express-serve-static-core";
 import * as fs from "fs";
-import * as path from "path";
 import Logger, { LogStyle } from "../utils/Logger";
+import Utils from "./Utils";
 /**
  * Created by Durss
  */
@@ -9,10 +10,39 @@ export default class Config {
 	private static _ENV_NAME: EnvName;
 	private static _CONF_PATH: string = "env.conf";
 	private static _CREDENTIALS_PATH: string = "credentials.json";
+	private static _DISCORD_GUILD_IDS_PATH: string = "discordGuildIdToProfile.json";
 	private static _CREDENTIALS:{client_id:string, secret_id:string, privateApiKey:string, discordBot_token:string};
 
-	public static TWITCH_USER_NAMES_PATH:string = "userList.json";
-	public static TWITCH_USER_DESCRIPTIONS_PATH:string = "userDescriptions.json";
+	public static TWITCH_USER_NAMES_FILE(req:Request, discordGuildID?:string):string {
+		let profile:string = Utils.getProfile(req, discordGuildID);
+		if(profile == "default") profile = null;
+		let path = "userList{PROFILE}.json";
+		if(profile) path = path.replace(/\{PROFILE\}/gi, "_"+profile);
+		else        path = path.replace(/\{PROFILE\}/gi, "");
+		return path;
+	}
+
+	public static TWITCH_USER_DESCRIPTIONS_FILE(req:Request, discordGuildID?:string):string {
+		let profile:string = Utils.getProfile(req, discordGuildID);
+		if(profile == "default") profile = null;
+		let path = "userDescriptions{PROFILE}.json";
+		if(profile) path = path.replace(/\{PROFILE\}/gi, "_"+profile);
+		else        path = path.replace(/\{PROFILE\}/gi, "");
+		return path;
+	}
+
+	public static DISCORD_GUILD_ID_TO_PROFILE(guildID:string):string {
+		if(!fs.existsSync(this._DISCORD_GUILD_IDS_PATH)) return null;
+		try {
+			let json = JSON.parse(fs.readFileSync(this._DISCORD_GUILD_IDS_PATH, "utf8"));
+			return json[guildID];
+		}catch(error) {
+			Logger.error("Invalid content of file discordGuildIdToProfile.json");
+			console.log(error);
+			return null;
+		}
+	}
+
 	public static DISCORD_CHANNELS_LISTENED:string = "discordChannels.json";
 
 	public static get TWITCHAPP_CLIENT_ID():string {
@@ -69,14 +99,6 @@ export default class Config {
 			prod: "./public",
 		});
 	}
-
-	public static get UPLOAD_PATH(): string {
-		return this.getEnvData({
-			dev: "./uploads/",
-			prod: path.resolve(__dirname+"/../uploads")+"/",
-		});
-	}
-
 
 
 	/**

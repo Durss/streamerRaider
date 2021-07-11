@@ -1,9 +1,10 @@
 <template>
 	<div class="streamerform">
-		<div class="holder">
+		<div class="dimmer" ref="dimmer" @click="close()"></div>
+		<div class="holder" ref="holder">
 			<div class="head">
 				<span class="nickname">{{userName}}</span>
-				<Button :icon="require('@/assets/icons/cross_white.svg')" @click="$emit('close')" class="close"/>
+				<Button :icon="require('@/assets/icons/cross_white.svg')" @click="close()" class="close"/>
 			</div>
 			<div class="content">
 				<div class="description">
@@ -32,6 +33,7 @@
 import Api from "@/utils/Api";
 import Config from "@/utils/Config";
 import IRCClient from "@/utils/IRCClient";
+import gsap from "gsap/all";
 import { Component, Vue } from "vue-property-decorator";
 import Button from "./Button.vue";
 
@@ -47,6 +49,8 @@ export default class StreamerForm extends Vue {
 	public maxLengthDescription:number = 350;
 	public saving:boolean = false;
 
+	private keyUpHandler:any;
+
 	public get userName():string{ return IRCClient.instance.authenticatedUserLogin; }
 
 	public get apiUrl():string {
@@ -54,22 +58,39 @@ export default class StreamerForm extends Vue {
 	}
 
 	public mounted():void {
-		this.loadDescription()
+		gsap.killTweensOf([this.$refs.holder, this.$refs.dimmer]);
+		gsap.set(this.$refs.holder, {marginTop:0, opacity:1});
+		gsap.to(this.$refs.dimmer, {duration:.25, opacity:1});
+		gsap.from(this.$refs.holder, {duration:.25, marginTop:100, opacity:0, ease:"back.out"});
+
+		this.loadDescription();
+
+		this.keyUpHandler = (e:KeyboardEvent) => { if(e.key == "Escape") this.close(); }
+
+		document.addEventListener("keyup", this.keyUpHandler);
 	}
 
 	public beforeDestroy():void {
-		
+		document.removeEventListener("keyup", this.keyUpHandler);
 	}
 
 	private async loadDescription():Promise<void> {
-		this.description = await Api.get("description?login="+IRCClient.instance.authenticatedUserLogin);
+		this.description = await Api.get("description", {login:IRCClient.instance.authenticatedUserLogin});
 	}
 
 	public async submit():Promise<void> {
 		this.saving = true;
 		let res = await Api.post("description", {description:this.description, access_token:this.$store.state.OAuthToken});
 		this.saving = false;
-		this.$emit("close")
+		this.close();
+	}
+
+	public close():void {
+		gsap.killTweensOf([this.$refs.holder, this.$refs.dimmer]);
+		gsap.to(this.$refs.dimmer, {duration:.25, opacity:0, ease:"sine.in"});
+		gsap.to(this.$refs.holder, {duration:.25, marginTop:100, opacity:0, ease:"back.out", onComplete:()=> {
+			this.$emit("close")
+		}});
 	}
 
 }
@@ -82,8 +103,19 @@ export default class StreamerForm extends Vue {
 	left: 0;
 	width: 100%;
 	height: 100%;
-	backdrop-filter: blur(5px);
 	z-index: 1;
+
+	.dimmer {
+		backdrop-filter: blur(5px);
+		background-color: rgba(0,0,0,.7);
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		opacity: 0;
+	}
+
 	.holder {
 		.center();
 		position: absolute;

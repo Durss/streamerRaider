@@ -5,6 +5,7 @@ import Logger from '../utils/Logger';
 import Config from "../utils/Config";
 import TwitchUtils from "../utils/TwitchUtils";
 import APIController from "./APIController";
+import Utils from "../utils/Utils";
 
 /**
 * Created : 15/10/2020 
@@ -119,6 +120,18 @@ export default class DiscordController {
 					message.reply("Le bot a bien été supprimé du channel #"+channelName);
 				}
 				break;
+		
+			//List all registered users
+			case "raider-list":
+				let users = Utils.getUserList(null, message.guild.id);
+				if(users.length == 0) {
+					message.channel.send(`Il n'y a actuellement personne d'enregistré.`);
+				}else{
+					message.channel.send(`Il y a actuellement ${users.length} personnes enregistrées :\`\`\`
+${users.join(", ")}
+\`\`\``);
+				}
+				break;
 			
 			//Adds/Removes a user from the list
 			case "add-user":
@@ -140,6 +153,9 @@ export default class DiscordController {
 
 !raider-del
 	Supprimer le bot d'un chan
+
+!raider-list
+	Liste toutes les personnes enregistrées
 
 !add-user TWITCH_LOGIN
 	Ajouter un·e utilisateur/trice twitch
@@ -204,6 +220,16 @@ export default class DiscordController {
 	}
 
 	/**
+	 * Check if the channel sending a message is actually in the watch list of the bot
+	 * @param message 
+	 * @returns 
+	 */
+	private isGuildValid(message:Discord.Message):boolean {
+		Utils.getProfile(null, message.guild.id)
+		return this.watchListCache[message.guild.id]?.indexOf(message.channel.id) > -1;
+	}
+
+	/**
 	 * Adds or removes a user from the JSON file
 	 * 
 	 * @param message 
@@ -212,6 +238,7 @@ export default class DiscordController {
 	 */
 	private async addDelUser(message:Discord.Message, chunks:string[]):Promise<void> {
 		if(!this.isWatchingChannel(message)) return;
+		if(!this.isGuildValid(message)) return
 
 		let cmd = chunks[0];
 
@@ -230,7 +257,7 @@ export default class DiscordController {
 		}
 
 		//Add or remove the user from the JSON file
-		let users = JSON.parse(fs.readFileSync(Config.TWITCH_USER_NAMES_PATH, "utf8"));
+		let users = Utils.getUserList(null, message.guild.id);
 		let userIndex = users.indexOf(login);
 		Logger.info(`Add user: ${login}`);
 		if( (cmd == "add-user" && userIndex == -1)
@@ -242,7 +269,7 @@ export default class DiscordController {
 				users.splice(userIndex, 1);
 				message.reply("Le compte Twitch **\""+login+"\"** a bien été supprimé de la liste.");
 			}
-			fs.writeFileSync(Config.TWITCH_USER_NAMES_PATH, JSON.stringify(users));
+			fs.writeFileSync(Config.TWITCH_USER_NAMES_FILE(null, message.guild.id), JSON.stringify(users));
 		}else{
 			if(cmd == "add-user") {
 				message.reply("Le compte Twitch **\""+login+"\"** est déjà ajouté à la liste.");
@@ -279,7 +306,7 @@ export default class DiscordController {
 		}
 
 		//Add or remove the description from the JSON file
-		let descriptions:{[key:string]:string} = JSON.parse(fs.readFileSync(Config.TWITCH_USER_DESCRIPTIONS_PATH, "utf8"));
+		let descriptions = Utils.getUserDescriptions(null, message.guild.id);
 		Logger.info(`Add description: ${login}`);
 		if(cmd == "add-description") {
 			descriptions[login] = chunks.splice(2).join(" ");
@@ -288,7 +315,7 @@ export default class DiscordController {
 			delete descriptions[login];
 			message.reply("La description a bien été supprimée pour le compte **\""+login+"\"**.");
 		}
-		fs.writeFileSync(Config.TWITCH_USER_DESCRIPTIONS_PATH, JSON.stringify(descriptions));
+		fs.writeFileSync(Config.TWITCH_USER_DESCRIPTIONS_FILE(null, message.guild.id), JSON.stringify(descriptions));
 		APIController.invalidateDescriptionCache();
 	}
 

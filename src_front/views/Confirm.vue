@@ -29,12 +29,19 @@ export default class ConfirmView extends Vue {
 	public noLabel:string = "";
 	public hidden:boolean = true;
 
+	private keyUpHandler:any;
+
 	public mounted():void {
-		document.addEventListener("keyup", (e:KeyboardEvent) => this.onKeyUp(e))
+		this.keyUpHandler = (e:KeyboardEvent) => this.onKeyUp(e);
+		document.addEventListener("keyup", this.keyUpHandler);
+	}
+
+	public beforeDestroy():void {
+		document.removeEventListener("keyup", this.keyUpHandler);
 	}
 
 	@Watch('$store.state.confirm', { immediate: true, deep: true })
-	private onConfirmChanged() {
+	public onConfirmChanged() {
 		let hidden = !this.$store.state.confirm || !this.$store.state.confirm.title;
 		
 		if(this.hidden == hidden) return;//No change, ignore
@@ -53,7 +60,7 @@ export default class ConfirmView extends Vue {
 			gsap.from(this.$refs.holder, {duration:.25, marginTop:100, opacity:0, ease:"back.out"});
 		}else{
 			gsap.killTweensOf([this.$refs.holder, this.$refs.dimmer]);
-			gsap.to(this.$refs.dimmer, {duration:.25, opacity:0});
+			gsap.to(this.$refs.dimmer, {duration:.25, opacity:0, ease:"sine.in"});
 			gsap.to(this.$refs.holder, {duration:.25, marginTop:100, opacity:0, ease:"back.out", onComplete:()=> {
 				this.hidden = true;
 			}});
@@ -106,10 +113,10 @@ export default class ConfirmView extends Vue {
 	}
 	.dimmer {
 		backdrop-filter: blur(5px);
+		background-color: rgba(0,0,0,.7);
 		position: absolute;
 		top: 0;
 		left: 0;
-		background-color: rgba(0,0,0,.5);
 		width: 100%;
 		height: 100%;
 	}

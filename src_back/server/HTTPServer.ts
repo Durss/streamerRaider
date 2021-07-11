@@ -15,10 +15,6 @@ export default class HTTPServer {
 	private app:Express;
 
 	constructor(public port:number) {
-		
-		if(!fs.existsSync(Config.UPLOAD_PATH)) {
-			fs.mkdirSync(Config.UPLOAD_PATH);
-		}
 
 		this.app = <Express>express();
 		let server = http.createServer(<any>this.app);
@@ -43,16 +39,6 @@ export default class HTTPServer {
 			Logger.error("Invalid twitch tokens. Please check the client_id and secret_id values in the file twitch_keys.json")
 		}
 		
-		//init default users list if necessary
-		if(!fs.existsSync(Config.TWITCH_USER_NAMES_PATH)) {
-			fs.writeFileSync(Config.TWITCH_USER_NAMES_PATH, "[]");
-		}
-		
-		//init default users description list if necessary
-		if(!fs.existsSync(Config.TWITCH_USER_DESCRIPTIONS_PATH)) {
-			fs.writeFileSync(Config.TWITCH_USER_DESCRIPTIONS_PATH, "{}");
-		}
-		
 		//Redirect to homepage invalid requests
 		this.app.use(historyApiFallback({
 			index:"/index.html",
@@ -71,7 +57,6 @@ export default class HTTPServer {
 
 		//SERVE PUBLIC FILES
 		this.app.use("/", express.static(Config.PUBLIC_PATH));
-		this.app.use("/uploads", express.static(Config.UPLOAD_PATH));
 
 		this.app.use(express.json());
 
@@ -167,5 +152,6 @@ export default class HTTPServer {
 	private async createEndpoints():Promise<void> {
 		new APIController().create(this.app);
 		new DiscordController().create(this.app);
+		
 	}
 }
