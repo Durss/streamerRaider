@@ -2,11 +2,11 @@
 node_modules
 /dist
 /server
-/uploads
 credentials.json
 discordChannels.json
-userList.json
-userDescriptions.json
+userList*.json
+userDescriptions*.json
+discordGuildIdToProfile.json
 env.conf
 
 # local env files
