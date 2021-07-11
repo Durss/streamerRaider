@@ -127,4 +127,12 @@ export default class AuthForm extends Vue {
 	}
 
 }
+
+@media only screen and (max-width: 500px) {
+	.authform{
+		.content {
+			width: 90%;
+		}
+	}
+}
 </style>

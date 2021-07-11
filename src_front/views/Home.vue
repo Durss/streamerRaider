@@ -346,6 +346,7 @@ export default class Home extends Vue {
 	
 		.menu {
 			margin-top: 20px;
+			box-sizing: border-box;
 			.button:not(:last-child) {
 				margin-right: 5px;
 			}
@@ -425,6 +426,22 @@ export default class Home extends Vue {
 	}
 	.fade-enter, .fade-leave-to {
 		opacity: 0;
+	}
+}
+
+@media only screen and (max-width: 500px) {
+	.home{
+		.page {
+			.menu {
+				margin-top: 0;
+			}
+			.block {
+				padding-top: 25px;
+				.title {
+					padding-bottom: 0;
+				}
+			}
+		}
 	}
 }
 </style>

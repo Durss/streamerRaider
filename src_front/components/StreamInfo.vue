@@ -185,6 +185,9 @@ export default class StreamInfo extends Vue {
 		.name {
 			flex-grow: 1;
 			text-transform: capitalize;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
 		}
 		.link {
 			width: 30px;
@@ -252,6 +255,7 @@ export default class StreamInfo extends Vue {
 			opacity: .6;
 			font-family: "Nunito Light";
 			width: 100%;
+			box-sizing: border-box;
 			&::before {
 				content: "";
 				background: url("../assets/icons/quote.svg");
@@ -272,5 +276,62 @@ export default class StreamInfo extends Vue {
 		margin-bottom: 20px;
 	}
 
+}
+
+@media only screen and (max-width: 500px) {
+	.streaminfo{
+		.detailsHolder {
+			display: flex;
+			flex-direction: column;
+			flex-wrap: wrap;
+			text-align: left;
+			justify-content: space-between;
+			.infos,.preview {
+				max-width: 100%;
+			}
+			.preview {
+				.streamImage {
+					@ratio: 1;
+					max-width: 100%;
+					width: calc(340px * @ratio);
+					height: calc(190px * @ratio);
+					img, iframe {
+						max-width: 100%;
+						width: calc(340px * @ratio);
+						height: calc(190px * @ratio);
+					}
+				}
+			}
+		}
+	
+		&.expand {
+			.detailsHolder {
+				.infos {
+					max-width: 100%;
+				}
+				.preview {
+					max-width: 100%;
+				}
+			}
+		}
+	}
+}
+
+@media only screen and (max-width: 320px) {
+	.streaminfo{
+		.detailsHolder {
+			.preview {
+				.streamImage {
+					@ratio: .7;
+					width: calc(340px * @ratio);
+					height: calc(190px * @ratio);
+					img, iframe {
+						width: calc(340px * @ratio);
+						height: calc(190px * @ratio);
+					}
+				}
+			}
+		}
+	}
 }
 </style>

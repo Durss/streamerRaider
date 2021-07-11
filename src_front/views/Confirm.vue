@@ -156,7 +156,7 @@ export default class ConfirmView extends Vue {
 }
 
 @media only screen and (max-width: 500px) {
-	.confirm {
+	.confirmView {
 		.holder {
 			padding: 15px;
 			width: 90vw;
@@ -177,7 +177,7 @@ export default class ConfirmView extends Vue {
 }
 
 @media only screen and (max-width: 360px) {
-	.confirm {
+	.confirmView {
 		.holder {
 			padding: 15px;
 			width: 90vw;
