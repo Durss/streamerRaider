@@ -14,6 +14,7 @@ export default class DiscordController {
 
 	private client:Discord.Client;
 	private watchListCache:{[key:string]:string[]};
+	private adminsCache:{[key:string]:string[]};
 	private BOT_TOKEN:string = Config.DISCORDBOT_TOKEN;
 	
 	
@@ -37,6 +38,13 @@ export default class DiscordController {
 			this.watchListCache = {};
 		}else{
 			this.watchListCache = JSON.parse(fs.readFileSync(Config.DISCORD_CHANNELS_LISTENED, "utf8"));
+		}
+		
+		if(!fs.existsSync(Config.DISCORD_CHANNELS_ADMINS)) {
+			fs.writeFileSync(Config.DISCORD_CHANNELS_ADMINS, "{}");
+			this.adminsCache = {};
+		}else{
+			this.adminsCache = JSON.parse(fs.readFileSync(Config.DISCORD_CHANNELS_ADMINS, "utf8"));
 		}
 
 		this.client = new Discord.Client();
@@ -99,8 +107,16 @@ export default class DiscordController {
 	 * @param text 
 	 */
 	private async parseCommand(message:Discord.Message):Promise<void> {
-		let adminRole = message.member.guild.roles.highest;
-		let isAdmin = message.member.roles.cache.has(adminRole.id);
+		let userId = message.member.id;
+		let isAdmin = false;
+		
+		for (let i = 0; i < this.adminsCache[message.member.guild.id].length; i++) {
+			const adminList = this.adminsCache[message.member.guild.id][i];
+			if(adminList.indexOf(userId) > -1) {
+				isAdmin = true;
+				break;
+			}
+		}
 		let txt = message.content.substr(1, message.content.length);
 		let chunks = txt.split(/\s/gi);
 		let	cmd = chunks[0];
@@ -110,6 +126,8 @@ export default class DiscordController {
 					let channelName = (<any>message.channel).name;
 					this.updateWatchList(message.guild.id, message.channel.id, true);
 					message.reply("Le bot a bien été configuré sur le channel #"+channelName);
+				}else{
+					message.reply("Seul un Administrateur peut ajouter le bot à un channel");
 				}
 				break;
 			
