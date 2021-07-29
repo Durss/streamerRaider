@@ -1,6 +1,7 @@
 import store from '@/store';
 import Utils from "@/utils/Utils";
 import Home from '@/views/Home.vue';
+import OBSPanel from '@/views/OBSPanel.vue';
 import Vue from 'vue';
 import VueRouter, { RouteConfig } from 'vue-router';
 
@@ -10,6 +11,14 @@ const routes: Array<RouteConfig> = [
 	{
 		path: '/',
 		name: 'home',
+		component: Home,
+	},
+	{
+		path: '/obs',
+		name: 'obs',
+		meta: {
+			lightMode:true,
+		},
 		component: Home,
 	},
 	{

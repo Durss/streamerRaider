@@ -12,8 +12,10 @@
 		<div class="confError" v-if="missingTwitchUsers">Please add users to the file <strong>data/{{userFile}}.json</strong> at the root of the project</div>
 
 		<div v-if="!loading && !missingTwitchKeys && !missingTwitchUsers" class="page">
-			<img :src="logoPath" height="100">
-			<h1>{{title}} Raider</h1>
+			<div v-if="!lightMode">
+				<img :src="logoPath" height="100">
+				<h1>{{title}} Raider</h1>
+			</div>
 
 			<AuthForm class="menu" v-if="!connected" />
 
@@ -24,9 +26,14 @@
 					@click="randomRaid()"
 					:icon="require('@/assets/icons/random.svg')" />
 
-				<Button v-if="isAStreamer" title="Mes infos" white
+				<Button v-if="isAStreamer && !lightMode" title="Mes infos" white
 					@click="showProfileForm=true"
 					:icon="require('@/assets/icons/edit.svg')" />
+
+				<Button title="OBS Panel" white
+					v-if="!lightMode"
+					@click="getOBSPanel()"
+					:icon="require('@/assets/icons/obs.svg')" />
 
 				<Button title="Logout" highlight
 					@click="logout()"
@@ -34,7 +41,7 @@
 			</div>
 			
 			<div class="block">
-				<div class="title">
+				<div class="title" v-if="!lightMode">
 					<span class="line"></span>
 					<h2>STREAMERS EN LIGNE ({{onlineUsers.length}})</h2>
 					<span class="line"></span>
@@ -49,7 +56,9 @@
 						:key="u.userName"
 						:userName="u.userName"
 						:streamInfos="u.stream"
-						:userInfos="u.user" />
+						:userInfos="u.user"
+						:lightMode="lightMode"
+						:small="true" />
 				</transition-group>
 				<div class="noResult" v-if="onlineUsers.length == 0">
 					<img src="@/assets/icons/sadFace.svg" class="icon">
@@ -57,7 +66,7 @@
 				</div>
 			</div>
 
-			<div class="block offline">
+			<div class="block offline" v-if="!lightMode">
 				<div class="title">
 					<span class="line"></span>
 					<h2>STREAMERS HORS LIGNE ({{offlineUsers.length}})</h2>
@@ -91,7 +100,7 @@ import IRCClient from "@/utils/IRCClient";
 import { TwitchTypes } from "@/utils/TwitchUtils";
 import Utils from "@/utils/Utils";
 import gsap from "gsap/all";
-import { Component, Vue } from "vue-property-decorator";
+import { Component, Prop, Vue } from "vue-property-decorator";
 import Config from "@/utils/Config";
 
 @Component({
@@ -115,6 +124,10 @@ export default class Home extends Vue {
 	
 	private mouseMoveHandler:any;
 	private refreshTimeout:number;
+
+	public get lightMode():boolean {
+		return Utils.getRouteMetaValue(this.$route, "lightMode") === true;
+	}
 
 	public get connected():boolean {
 		return this.$store.state.OAuthToken;
@@ -290,7 +303,11 @@ export default class Home extends Vue {
 	}
 
 	public logout():void {
-		this.$store.dispatch("logout")
+		this.$store.dispatch("logout");
+	}
+
+	public getOBSPanel():void {
+		
 	}
 
 }
@@ -308,7 +325,7 @@ export default class Home extends Vue {
 		}
 		.label {
 			color: @mainColor_light;
-			font-family: "Nunito Light";
+			font-family: "Nunito light";
 			font-size: 16px;
 			margin-top: 15px;
 		}

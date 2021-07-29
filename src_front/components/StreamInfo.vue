@@ -2,17 +2,30 @@
 	<div :class="classes" @mouseleave="outItem()">
 		<div class="userName head">
 			<img v-if="userInfos" :src="userPicture" alt="avatar" class="avatar">
+			
 			<a class="name" :href="'https://twitch.tv/'+userName" target="_blank">{{userName}}</a>
-			<Button class="link" v-if="streamInfos" :icon="require('@/assets/icons/open.svg')" type="link" target="_blank" :to="'https://twitch.tv/'+userName" />
+			
+			<div v-if="lightMode" class="viewersCount small">
+				<span>{{streamInfos.viewer_count}}</span>
+				<img class="icon" src="@/assets/icons/eye.svg" alt="">
+			</div>
+
+			<Button class="link"
+				v-if="streamInfos && !lightMode"
+				:icon="require('@/assets/icons/open.svg')"
+				type="link"
+				target="_blank"
+				:to="'https://twitch.tv/'+userName" />
 		</div>
 		
-		<div class="detailsHolder content" v-if="streamInfos">
+		<div class="detailsHolder content" v-if="!lightMode && streamInfos">
 			<div class="infos">
 				<div class="title">{{streamInfos.title}}</div>
-				<div class="category" v-if="streamInfos.game_name">{{streamInfos.game_name}}</div>
-				<div class="duration">{{streamDuration}}</div>
+				<div class="category" v-if="streamInfos.game_name && !lightMode">{{streamInfos.game_name}}</div>
+				<div v-if="!lightMode" class="duration">{{streamDuration}}</div>
+				<div v-if="lightMode" class="viewersCount">{{streamInfos.viewer_count}} viewers</div>
 			</div>
-			<div class="preview" @mouseenter="hoverItem()">
+			<div class="preview" @mouseenter="hoverItem()" v-if="!lightMode">
 				<div class="streamImage" v-if="!showLive"><img :src="previewUrl"></div>
 				<iframe
 					class="streamImage"
@@ -22,12 +35,12 @@
 					width="340"
 					allowfullscreen="true">
 				</iframe>
-				<div v-if="streamInfos" class="viewersCount">{{streamInfos.viewer_count}} viewers</div>
+				<div v-if="!lightMode && streamInfos" class="viewersCount">{{streamInfos.viewer_count}} viewers</div>
 			</div>
-			<div class="description" v-if="streamInfos.description && !showLive">{{streamInfos.description}}</div>
+			<div class="description" v-if="!lightMode && streamInfos.description && !showLive">{{streamInfos.description}}</div>
 		</div>
 
-		<Button v-if="streamInfos" :title="'Raid '" class="raid" @click="startRaid()" :disabled="!canRaid" :data-tooltip="connected? null : 'Connecte toi en haut de page pour lancer un raid chez '+userName" />
+		<Button v-if="!lightMode && streamInfos" :title="'Raid '" class="raid" @click="startRaid()" :disabled="!canRaid" :data-tooltip="connected? null : 'Connecte toi en haut de page pour lancer un raid chez '+userName" />
 	</div>
 </template>
 
@@ -56,6 +69,9 @@ export default class StreamInfo extends Vue {
 
 	@Prop()
 	public userInfos:TwitchTypes.UserInfo;
+
+	@Prop()
+	public lightMode:boolean;
 	
 	public showLive:boolean = false;
 
@@ -75,9 +91,10 @@ export default class StreamInfo extends Vue {
 	}
 
 	public get classes():string[] {
-		let res = ["streaminfo"]
+		let res = ["streaminfo"];
 		if(this.showLive) res.push("expand");
 		if(this.small !== false) res.push("small");
+		if(this.lightMode !== false) res.push("light");
 		return res;
 	}
 
@@ -150,7 +167,7 @@ export default class StreamInfo extends Vue {
 		}
 	}
 
-	&.small {
+	&.small, &.light {
 		width: 250px;
 		margin-bottom: 10px !important;//ooouh...bad bad me :)
 		.head {
@@ -167,6 +184,18 @@ export default class StreamInfo extends Vue {
 			.name {
 				font-size: 20px;
 				// word-wrap: break-word;
+			}
+		}
+		.detailsHolder {
+			.infos {
+				max-width: 100%;
+				margin-right: 0;
+				.title {
+					font-size: 16px;
+				}
+				.duration {
+					font-size: 12px;
+				}
 			}
 		}
 	}
@@ -196,6 +225,20 @@ export default class StreamInfo extends Vue {
 			max-height: 30px;
 			padding: 5px;
 			border-radius: 10px;
+		}
+	}
+		
+	.viewersCount {
+		font-style: italic;
+		font-size: 14px;
+		text-align: center;
+		&.small {
+			color: white;
+			opacity: 0.5;
+			.icon {
+				height: 12px;
+				margin-left: 5px;
+			}
 		}
 	}
 
@@ -239,13 +282,8 @@ export default class StreamInfo extends Vue {
 					height: calc(190px * @ratio);
 				}
 			}
-
-			.viewersCount {
-				font-style: italic;
-				font-size: 14px;
-				text-align: center;
-			}
 		}
+
 		.description {
 			font-size: 17px;
 			font-style: italic;
