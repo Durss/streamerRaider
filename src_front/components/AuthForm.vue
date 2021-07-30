@@ -1,15 +1,21 @@
 <template>
 	<div class="authform">
-		<Button v-if="!showForm" :icon="require('@/assets/icons/twitch.svg')" @click="showForm=true" title="Connexion" white class="login"/>
+		<Button v-if="showButton"
+			:icon="require('@/assets/icons/twitch.svg')"
+			@click="showForm=true; showButton=false" title="Connexion" white
+			class="login"/>
 
-		<transition name="scale">
+		<transition name="scale"
+		v-on:after-leave="onClose">
 			<div v-if="showForm" class="content">
 				<div class="title">
 					<span class="text">Connexion</span>
 					<Button :icon="require('@/assets/icons/cross_white.svg')" @click="showForm=false" class="close"/>
 				</div>
-				<div>En te connectant tu pourras lancer un raid en un click et éditer ta description.</div>
+				<div v-if="lightMode">En te connectant tu pourras lancer un raid en un click et activer un bot pour faire des shoutouts personnalisés.</div>
+				<div v-if="!lightMode">En te connectant tu pourras lancer un raid en un click et éditer ta description.</div>
 				<Button :href="oAuthURL"
+					class="auth"
 					type="link"
 					target="_self"
 					:icon="require('@/assets/icons/twitch.svg')"
@@ -36,6 +42,7 @@ export default class AuthForm extends Vue {
 	public token:string = null;
 	public loading:boolean = false;
 	public showForm:boolean = false;
+	public showButton:boolean = true;
 
 	public get oAuthURL():string {
 		let path = this.$router.resolve({name:"oauth"}).href;
@@ -58,6 +65,10 @@ export default class AuthForm extends Vue {
 
 	public beforeDestroy():void {
 		
+	}
+
+	public onClose():void {
+		this.showButton = true;
 	}
 
 	// @Watch("showForm")
@@ -137,9 +148,29 @@ export default class AuthForm extends Vue {
 
 @media only screen and (max-width: 500px) {
 	.authform{
+		.login {
+			font-size: 15px;
+			padding: 5px 20px;
+		}
 		.content {
 			width: 90%;
+			font-size: 15px;
+			.title {
+				font-size: 20px;
+				padding: 5px;
+				.close {
+					width: 20px;
+					height: 20px;
+					border-radius: 5px;
+				}
+			}
+
+			.auth {
+				font-size: 15px;
+				padding: 5px 20px;
+			}
 		}
+
 	}
 }
 </style>
