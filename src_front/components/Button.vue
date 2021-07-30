@@ -316,7 +316,7 @@ export default class Button extends Vue {
 			}
 		}
 		&:not(.loading):hover {
-			background-color: @mainColor_light_extralight;
+			background-color: @mainColor_normal_extralight;
 		}
 		&.loading {
 			background-color: fade(#ffffff, 50%);

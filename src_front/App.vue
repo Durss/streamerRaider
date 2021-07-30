@@ -3,7 +3,7 @@
 	<div id="app" class="app">
 		<vue-headful :title="pageTitle" v-if="pageTitle" />
 		<router-view class="view" />
-		<Footer class="footer" />
+		<Footer class="footer" v-if="!lightMode" />
 		<Confirm />
 		<Alert />
 		<Tooltip />
@@ -17,6 +17,7 @@ import Alert from "./views/AlertView.vue";
 import Footer from "./components/Footer.vue";
 import Tooltip from "./components/Tooltip.vue";
 import Config from "./utils/Config";
+import Utils from "./utils/Utils";
 
 @Component({
 	components:{
@@ -29,6 +30,10 @@ import Config from "./utils/Config";
 export default class App extends Vue {
 
 	public pageTitle:string = null;
+
+	public get lightMode():boolean {
+		return Utils.getRouteMetaValue(this.$route, "lightMode") === true;
+	}
 
 	public async mounted():Promise<void> {
 		if(Config.profile) {

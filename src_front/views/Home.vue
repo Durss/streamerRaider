@@ -1,5 +1,5 @@
 <template>
-	<div class="home">
+	<div :class="classes">
 		<transition name="fade">
 			<div class="loader" v-if="loading">
 				<img src="@/assets/loader/loader.svg">
@@ -17,10 +17,17 @@
 				<h1>{{title}} Raider</h1>
 			</div>
 
-			<AuthForm class="menu" v-if="!connected" />
+			<AuthForm class="menu"
+				v-if="!connected"
+				:lightMode="lightMode" />
+			
+			<!-- OBS PANEL INFO -->
+			<OBSPanelInfo v-if="showOBSPanel" @close="showOBSPanel=false" />
 
+			<!-- USER FORM (edit description) -->
 			<StreamerForm v-if="showProfileForm" @close="showProfileForm=false" />
 			
+			<!-- MAIN MENU -->
 			<div v-if="connected" class="menu">
 				<Button title="Lancer un raid aléatoire" v-if="onlineUsers.length > 0" white
 					@click="randomRaid()"
@@ -35,11 +42,12 @@
 					@click="getOBSPanel()"
 					:icon="require('@/assets/icons/obs.svg')" />
 
-				<Button title="Logout" highlight
+				<Button :title="lightMode? '' : 'Logout'" highlight class="logout"
 					@click="logout()"
 					:icon="require('@/assets/icons/cross_white.svg')" />
 			</div>
 			
+			<!-- ONLINE USERS -->
 			<div class="block">
 				<div class="title" v-if="!lightMode">
 					<span class="line"></span>
@@ -57,8 +65,7 @@
 						:userName="u.userName"
 						:streamInfos="u.stream"
 						:userInfos="u.user"
-						:lightMode="lightMode"
-						:small="true" />
+						:lightMode="lightMode" />
 				</transition-group>
 				<div class="noResult" v-if="onlineUsers.length == 0">
 					<img src="@/assets/icons/sadFace.svg" class="icon">
@@ -66,6 +73,7 @@
 				</div>
 			</div>
 
+			<!-- OFFLINE USERS -->
 			<div class="block offline" v-if="!lightMode">
 				<div class="title">
 					<span class="line"></span>
@@ -102,6 +110,7 @@ import Utils from "@/utils/Utils";
 import gsap from "gsap/all";
 import { Component, Prop, Vue } from "vue-property-decorator";
 import Config from "@/utils/Config";
+import OBSPanelInfo from "@/components/OBSPanelInfo.vue";
 
 @Component({
 	components: {
@@ -109,11 +118,13 @@ import Config from "@/utils/Config";
 		AuthForm,
 		StreamInfo,
 		StreamerForm,
+		OBSPanelInfo,
 	},
 })
 export default class Home extends Vue {
 
 	public loading:boolean = true;
+	public showOBSPanel:boolean = false;
 	public showProfileForm:boolean = false;
 	public missingTwitchKeys:boolean = false;
 	public missingTwitchUsers:boolean = false;
@@ -124,6 +135,12 @@ export default class Home extends Vue {
 	
 	private mouseMoveHandler:any;
 	private refreshTimeout:number;
+
+	public get classes():string[] {
+		let res = ["home"];
+		if(this.lightMode) res.push("light");
+		return res;
+	}
 
 	public get lightMode():boolean {
 		return Utils.getRouteMetaValue(this.$route, "lightMode") === true;
@@ -303,11 +320,13 @@ export default class Home extends Vue {
 	}
 
 	public logout():void {
-		this.$store.dispatch("logout");
+		Utils.confirm("Deconnexion", "Souhaites-tu te déconnecter ?").then(()=>{
+			this.$store.dispatch("logout");
+		}).catch(()=>{});
 	}
 
 	public getOBSPanel():void {
-		
+		this.showOBSPanel = true;
 	}
 
 }
@@ -315,6 +334,48 @@ export default class Home extends Vue {
 
 <style scoped lang="less">
 .home {
+
+	&.light {
+		width: 100%;
+		max-width: 350px;
+		margin: auto;
+		// border: 1px dashed rgba(255, 255, 255, .2);
+		button {
+			padding: 5px 10px;
+			font-size: 16px;
+			/deep/ .icon {
+				height:15px;
+				margin-right: 5px;
+			}
+		}
+	
+		.page {
+			.menu {
+				.logout {
+					position: absolute;
+					top: 0;
+					right: 0;
+					border-radius: 0;
+					border-bottom-left-radius: 15px;
+					width: 30px;
+					height: 30px;
+					/deep/ .icon {
+						margin-right: 0;
+					}
+				}
+			}
+
+			.block {
+				padding-top: 0px;
+				.list {
+					display: flex;
+					flex-direction: row;
+					flex-wrap: wrap;
+					padding: 20px 5px;
+				}
+			}
+		}
+	}
 
 	.loader {
 		.center();
@@ -380,6 +441,8 @@ export default class Home extends Vue {
 				color: @mainColor_normal;
 				text-shadow: #ffffff55 0px 0px 5px;
 				font-style: italic;
+				display: flex;
+				flex-direction: column;
 				.icon {
 					max-height: 150px;
 				}

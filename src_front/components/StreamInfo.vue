@@ -18,12 +18,11 @@
 				:to="'https://twitch.tv/'+userName" />
 		</div>
 		
-		<div class="detailsHolder content" v-if="!lightMode && streamInfos">
+		<div class="detailsHolder content" v-if="streamInfos">
 			<div class="infos">
 				<div class="title">{{streamInfos.title}}</div>
 				<div class="category" v-if="streamInfos.game_name && !lightMode">{{streamInfos.game_name}}</div>
 				<div v-if="!lightMode" class="duration">{{streamDuration}}</div>
-				<div v-if="lightMode" class="viewersCount">{{streamInfos.viewer_count}} viewers</div>
 			</div>
 			<div class="preview" @mouseenter="hoverItem()" v-if="!lightMode">
 				<div class="streamImage" v-if="!showLive"><img :src="previewUrl"></div>
@@ -40,7 +39,12 @@
 			<div class="description" v-if="!lightMode && streamInfos.description && !showLive">{{streamInfos.description}}</div>
 		</div>
 
-		<Button v-if="!lightMode && streamInfos" :title="'Raid '" class="raid" @click="startRaid()" :disabled="!canRaid" :data-tooltip="connected? null : 'Connecte toi en haut de page pour lancer un raid chez '+userName" />
+		<Button v-if="streamInfos && !isSelf"
+			:title="'Raid '"
+			class="raid"
+			@click="startRaid()"
+			:disabled="!canRaid"
+			:data-tooltip="connected? null : 'Connecte toi en haut de page pour lancer un raid chez '+userName" />
 	</div>
 </template>
 
@@ -86,6 +90,10 @@ export default class StreamInfo extends Vue {
 		return document.location.hostname;
 	}
 
+	public get isSelf():boolean {
+		return this.userInfos.login.toLowerCase() == this.$store.state.userLogin.toLowerCase();
+	}
+
 	public get userPicture():string {
 		return this.userInfos.profile_image_url.replace("300x300", "70x70");
 	}
@@ -99,7 +107,7 @@ export default class StreamInfo extends Vue {
 	}
 
 	public get canRaid():boolean {
-		return this.$store.state.OAuthToken || this.userName.toLowerCase() == this.$store.state.userLogin?.toLowerCase();
+		return this.$store.state.OAuthToken;
 	}
 
 	public get streamDuration():string {
@@ -168,8 +176,10 @@ export default class StreamInfo extends Vue {
 	}
 
 	&.small, &.light {
-		width: 250px;
 		margin-bottom: 10px !important;//ooouh...bad bad me :)
+		&.small {
+			width: 250px;
+		}
 		.head {
 			padding: 0;
 			.avatar {
@@ -188,15 +198,25 @@ export default class StreamInfo extends Vue {
 		}
 		.detailsHolder {
 			.infos {
+				width: 100%;
 				max-width: 100%;
 				margin-right: 0;
 				.title {
-					font-size: 16px;
+					width: 100%;
+					font-size: 14px;
+					font-weight: normal;
+					text-align: center;
+					margin-bottom: 0;
 				}
 				.duration {
 					font-size: 12px;
 				}
 			}
+		}
+		.raid {
+			font-size: 15px;
+			padding: 5px 20px;
+			margin-bottom: 10px;
 		}
 	}
 
@@ -230,14 +250,15 @@ export default class StreamInfo extends Vue {
 		
 	.viewersCount {
 		font-style: italic;
-		font-size: 14px;
+		font-size: 12px;
 		text-align: center;
+		padding-right: 5px;
 		&.small {
 			color: white;
 			opacity: 0.5;
 			.icon {
-				height: 12px;
-				margin-left: 5px;
+				height: 10px;
+				margin-left: 3px;
 			}
 		}
 	}

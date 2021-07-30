@@ -1,7 +1,6 @@
 import store from '@/store';
 import Utils from "@/utils/Utils";
 import Home from '@/views/Home.vue';
-import OBSPanel from '@/views/OBSPanel.vue';
 import Vue from 'vue';
 import VueRouter, { RouteConfig } from 'vue-router';
 
@@ -26,13 +25,14 @@ const routes: Array<RouteConfig> = [
 		name: 'oauth',
 		beforeEnter: (to,from,next)=> {
 			let token = Utils.getQueryParameterByName("access_token");
+			let state = Utils.getQueryParameterByName("state");//Contains the route's name before auth flow
 			// let error = Utils.getQueryParameterByName("error");
 			if(token) {
 				store.dispatch("setOAuthToken", token);
 			}else{
 				store.dispatch("alert", "Vous avez refusé l'accès à l'application Twitch.");
 			}
-			router.push({name:"home"});
+			router.push({name:state});
 		},
 	},
 	{

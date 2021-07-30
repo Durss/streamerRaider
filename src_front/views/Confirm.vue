@@ -162,7 +162,12 @@ export default class ConfirmView extends Vue {
 			width: 90vw;
 
 			.title {
-				font-size: 22px;
+				font-size: 30px;
+			}
+
+			.description {
+				font-size: 20px;
+				margin-top: 10px;
 			}
 
 			.buttons {
@@ -182,9 +187,6 @@ export default class ConfirmView extends Vue {
 			padding: 15px;
 			width: 90vw;
 
-			.title {
-				font-size: 20px;
-			}
 
 			.buttons {
 				margin-top: 15px;
