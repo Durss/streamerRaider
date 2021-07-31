@@ -7,7 +7,7 @@
 			</div>
 			<div class="content">
 				<div>
-					<p>En activant le bot<sup>*</sup>, tu pourras effectuer des shoutouts personnalisés avec la description de la personne, si elle en en a définit une.</p>
+					<p>En activant le bot<sup>*</sup>, tu pourras effectuer des shoutouts personnalisés avec la description de la personne, si elle en a définit une.</p>
 					<p>Le message sera envoyé en ton nom.</p>
 				</div>
 				
