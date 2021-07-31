@@ -415,6 +415,17 @@ export default class Utils  {
 	}
 
 	private static profileCache:{[key:string]:string} = null;
+	public static getProfileList():{[key:string]:string} {
+		if(!this.profileCache) {
+			try {
+				this.profileCache = JSON.parse(fs.readFileSync(Config.AVAILABLE_PROFILES_LIST, "utf8"));
+			}catch(error) {
+				Logger.error("Unable to parse JSON file: "+Config.AVAILABLE_PROFILES_LIST);
+				return null;
+			}
+		}
+		return this.profileCache;
+	}
 	public static getProfile(req:Request, discordGuildID?:string):string {
 		if(!this.profileCache) {
 			try {
@@ -429,7 +440,7 @@ export default class Utils  {
 		if(req && req.hostname) {
 			profile = req.hostname;
 			for (const p in this.profileCache) {
-				if(RegExp(p.replace(/(\.|\/|\?)/gi, "\$1"), "gi").test(profile)) {
+				if(RegExp(p.replace(/(\.|\/|\?)/gi, "\\$1"), "gi").test(profile)) {
 					profile = this.profileCache[p];
 					break;
 				}

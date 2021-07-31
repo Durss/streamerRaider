@@ -4,6 +4,7 @@
 		<vue-headful :title="pageTitle" v-if="pageTitle" />
 		<router-view class="view" />
 		<Footer class="footer" v-if="!lightMode" />
+		<ProfileSwitcher :lightMode="lightMode" />
 		<Confirm />
 		<Alert />
 		<Tooltip />
@@ -13,13 +14,13 @@
 
 <script lang="ts">
 import { Component, Vue, Watch } from "vue-property-decorator";
-import Confirm from "./views/Confirm.vue";
-import Alert from "./views/AlertView.vue";
 import Footer from "./components/Footer.vue";
-import Tooltip from "./components/Tooltip.vue";
-import Config from "./utils/Config";
-import Utils from "./utils/Utils";
 import MainLoader from "./components/MainLoader.vue";
+import Tooltip from "./components/Tooltip.vue";
+import Utils from "./utils/Utils";
+import Alert from "./views/AlertView.vue";
+import Confirm from "./views/Confirm.vue";
+import ProfileSwitcher from "./views/ProfileSwitcher.vue";
 
 @Component({
 	components:{
@@ -28,6 +29,7 @@ import MainLoader from "./components/MainLoader.vue";
 		Tooltip,
 		Confirm,
 		MainLoader,
+		ProfileSwitcher,
 	}
 })
 export default class App extends Vue {
