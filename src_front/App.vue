@@ -12,7 +12,7 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from "vue-property-decorator";
+import { Component, Vue, Watch } from "vue-property-decorator";
 import Confirm from "./views/Confirm.vue";
 import Alert from "./views/AlertView.vue";
 import Footer from "./components/Footer.vue";
@@ -43,14 +43,19 @@ export default class App extends Vue {
 	}
 
 	public async mounted():Promise<void> {
-		if(Config.profile) {
-			let p = Config.profile;
-			p = p.replace(/^\w/, (c) => c.toUpperCase());
-			this.pageTitle = p+" Raider";
+		if(this.$store.state.profileName) {
+			this.onReady();
 		}
 	}
 
 	public beforeDestroy():void {
+	}
+
+	@Watch("$store.state.initComplete", { immediate: true, deep: true })
+	public onReady():void {
+		let p = this.$store.state.profileName;
+		p = p.replace(/^\w/, (c) => c.toUpperCase());
+		this.pageTitle = p+" Raider";
 	}
 
 }

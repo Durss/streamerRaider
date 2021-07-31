@@ -30,6 +30,8 @@ export default class APIController {
 	******************/
 	public create(app:Express):void {
 		this._app = app;
+		this._app.get("/api/profile_name", (req:Request, res:Response) => this.getProfileName(req,res));
+
 		this._app.get("/api/client_id", (req:Request, res:Response) => this.getClientID(req,res));
 
 		this._app.get("/api/user_infos", (req:Request, res:Response) => this.getUserInfos(req,res));
@@ -54,6 +56,17 @@ export default class APIController {
 	* PRIVATE METHODS *
 	*******************/
 	private initialize():void {
+	}
+
+	/**
+	 * Gets the current profile name
+	 * 
+	 * @param req 
+	 * @param res 
+	 */
+	private async getProfileName(req:Request, res:Response):Promise<void> {
+		let profile = Utils.getProfile(req);
+		res.status(200).json({success:true, profile:profile});
 	}
 
 	/**

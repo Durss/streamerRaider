@@ -425,15 +425,35 @@ export default class Utils  {
 			}
 		}
 		let profile:string = null;
-		if(req && req.hostname && req.hostname.indexOf("durss") > -1) {
-			profile = req.hostname.replace(/([a-z]+).durss.[a-z]+/gi, "$1");
+		//Check if domain matches a profile
+		if(req && req.hostname) {
+			profile = req.hostname;
+			for (const p in this.profileCache) {
+				if(RegExp(p.replace(/(\.|\/|\?)/gi, "\$1"), "gi").test(profile)) {
+					profile = this.profileCache[p];
+					break;
+				}
+			}
 		}
+		//Get if discord ID matches a profile
 		if(!profile && discordGuildID) profile = Config.DISCORD_GUILD_ID_TO_PROFILE(discordGuildID);
+		//Allow GET override with "profile" var
 		if(req && !profile) profile = <string>req.query.profile;
+		//Allow POST override with "profile" var
 		if(req && !profile) profile = <string>req.body.profile;
 		
 		//Make sure the requested profile actually exists to avoid some sort of injection
-		if(!this.profileCache[profile]) profile = null;
+		let profileFound = false;
+		for (const p in this.profileCache) {
+			if(this.profileCache[p] === profile) {
+				profileFound = true;
+				break;
+			}
+		}
+		if(!profileFound) profile = null;
+
+		console.log(profile);
+		
 		return profile;
 	}
 

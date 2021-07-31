@@ -35,10 +35,10 @@ export default class Api {
 		};
 		
 		//Inject current profile if necessary
-		if(Config.profile) {
-			if(!params) params = {};
-			params.profile = Config.profile;
-		}
+		// if(Config.profile) {
+		// 	if(!params) params = {};
+		// 	params.profile = Config.profile;
+		// }
 		
 		let url = endpoint;
 		if(autoPrefixApiPath) url = Config.API_PATH + "/" + url;

@@ -170,19 +170,19 @@ export default class Home extends Vue {
 
 	public get title():string {
 		let res = "";
-		if(Config.profile) res = Config.profile;
+		if(this.$store.state.profileName) res = this.$store.state.profileName;
 		return res;
 	}
 
 	public get userFile():string {
 		let res = "userList";
-		if(Config.profile) res += "_"+Config.profile;
+		if(this.$store.state.profileName) res += "_"+this.$store.state.profileName;
 		return res;
 	}
 
 	public get logoPath():string {
-		if(Config.profile) {
-			return require("@/assets/logos/"+Config.profile+".png");
+		if(this.$store.state.profileName) {
+			return require("@/assets/logos/"+this.$store.state.profileName+".png");
 		}else{
 			return require("@/assets/logos/protopotes.png");
 		}

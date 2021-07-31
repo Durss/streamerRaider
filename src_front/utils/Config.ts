@@ -16,15 +16,19 @@ export default class Config {
 	 * This actually allows me to have one instance of the server
 	 * to run multiple frontends. The data will be split in files which names
 	 * will be based on the value returned by this method.
+	 * 
+	 * [EDIT] everything has been moved as a backend logic. Profiles are selected
+	 * from the domain name.
 	 */
-	public static get profile():string {
-		if(document.location.host.indexOf("durss") == -1
-		&& document.location.host.indexOf("localhost") == -1) return null;
-		return this.getEnvData({
-			dev: null,
-			prod: document.location.host.replace(/([a-z]+).durss.[a-z]+/gi, "$1"),
-		});
-	}
+	// public static get profile():string {
+	// 	return null;
+	// 	if(document.location.host.indexOf("durss") > -1
+	// 	&& document.location.host.indexOf("localhost") == -1) return null;
+	// 	return this.getEnvData({
+	// 		dev: null,
+	// 		prod: document.location.host.replace(/([a-z]+).durss.[a-z]+/gi, "$1"),
+	// 	});
+	// }
 
 	public static init():void {
 		let prod = this.IS_PROD;//document.location.port == "";
