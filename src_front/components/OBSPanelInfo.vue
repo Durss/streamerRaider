@@ -11,7 +11,11 @@
 				<p class="spacer">Pour cela rendez-vous ici dans OBS :</p>
 				<p class="path"><strong>View</strong> -> <strong>Docks</strong> -> <strong>Custom Browser Dock</strong></p>
 				<p>Ajoutez une nouvelle ligne avec l'URL suivante :</p>
-				<p class="path"><strong>{{obsPanelURL}}</strong></p>
+				<p class="path" ref="url">
+					<strong @click="selectText()" ref="actualURL" v-if="!copiedText">{{obsPanelURL}}</strong>
+					<strong v-if="copiedText">URL copiée !</strong>
+					<Button :icon="require('@/assets/icons/copy.svg')" class="copy" @click="copyLink()" highlight data-tooltip="Copy" />
+				</p>
 				<p>Vous pouvez maintenant ajouter ce panneau où vous le souhaitez dans l'interface d'OBS.</p>
 				<p class="spacer">Dans ce panneau vous aurez en plus la possibilité d'activer un bot pour effectuer des shoutouts personnalisés avec les descriptions de chaque personne.</p>
 			</div>
@@ -20,6 +24,7 @@
 </template>
 
 <script lang="ts">
+import Utils from "@/utils/Utils";
 import gsap from "gsap/all";
 import { Component, Vue } from "vue-property-decorator";
 import Button from "./Button.vue";
@@ -31,6 +36,8 @@ import Button from "./Button.vue";
 })
 export default class OBSPanelInfo extends Vue {
 
+	public copiedText:boolean = false;
+
 	private keyUpHandler:any;
 
 	public get obsPanelURL():string {
@@ -39,7 +46,6 @@ export default class OBSPanelInfo extends Vue {
 	}
 
 	public mounted():void {
-		console.log("ok");
 		gsap.killTweensOf([this.$refs.holder, this.$refs.dimmer]);
 		gsap.set(this.$refs.holder, {marginTop:0, opacity:1});
 		gsap.to(this.$refs.dimmer, {duration:.25, opacity:1});
@@ -60,6 +66,23 @@ export default class OBSPanelInfo extends Vue {
 		gsap.to(this.$refs.holder, {duration:.25, marginTop:100, opacity:0, ease:"back.out", onComplete:()=> {
 			this.$emit("close");
 		}});
+	}
+
+	public copyLink():void {
+		Utils.copyToClipboard(this.obsPanelURL);
+		gsap.set(this.$refs.url, {filter:"brightness(1) saturate(1)", background:"rgba(255,255,255,0)"});
+		gsap.from(this.$refs.url, {duration:.5, filter:"brightness(2) saturate(0)", background:"rgba(255,255,255,1)"});
+		this.copiedText = true;
+		setTimeout(()=> {
+			this.copiedText = false;
+		}, 1000);
+	}
+
+	public selectText():void {
+        var range = document.createRange();
+        range.selectNode(<HTMLParagraphElement>this.$refs.actualURL);
+        window.getSelection().removeAllRanges();
+        window.getSelection().addRange(range);
 	}
 
 }
@@ -114,9 +137,19 @@ export default class OBSPanelInfo extends Vue {
 			}
 			.path {
 				margin: 10px 0;
+				display: inline-block;
+				border-radius: 10px;
 			}
 			strong {
 				color: @mainColor_warn;
+			}
+
+			.copy {
+				padding: 5px;
+				/deep/ .icon {
+					width: 14px;
+					height: 14px;
+				}
 			}
 		}
 	}
