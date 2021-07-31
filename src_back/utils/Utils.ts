@@ -452,8 +452,6 @@ export default class Utils  {
 		}
 		if(!profileFound) profile = null;
 
-		console.log(profile);
-		
 		return profile;
 	}
 
