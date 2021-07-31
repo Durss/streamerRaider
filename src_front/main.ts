@@ -9,6 +9,7 @@ import vueHeadful from 'vue-headful';
 import IRCClient from './utils/IRCClient';
 import IRCEvent from './utils/IRCEvent';
 import Api from './utils/Api';
+import Utils from './utils/Utils';
 
 Vue.config.productionTip = false;
 Vue.component('vue-headful', vueHeadful);
@@ -28,9 +29,12 @@ router.beforeEach(async (to: Route, from: Route, next: Function) => {
 //Used if bot is enabled to make custom shoutouts
 IRCClient.instance.addEventListener(IRCEvent.MESSAGE, async (event:IRCEvent)=> {
 	let message = event.message.toLowerCase().trim();
-	if(store.state.botEnabled && message.indexOf(store.state.botCommand.toLowerCase().trim()) === 0) {
+	let chunks = message.split(/ /gi);
+	if(store.state.botEnabled
+	&& chunks[0] == store.state.botCommand.toLowerCase().trim()
+	&& Utils.getRouteMetaValue(router.currentRoute, "lightMode") === true) {
 		let description:string;
-		let login = message.split(/ /gi)[1];
+		let login = chunks[1];
 		try {
 			description = await Api.get("description", {login});
 		}catch(error) {
@@ -46,7 +50,7 @@ IRCClient.instance.addEventListener(IRCEvent.MESSAGE, async (event:IRCEvent)=> {
 		}
 		if(description) {
 			let chatMessage = store.state.botText.replace(/{description}/gi, description);
-			chatMessage = chatMessage.replace(/{pseudo}/gi, event.channel.substr(1));
+			chatMessage = chatMessage.replace(/{pseudo}/gi, login);
 			await IRCClient.instance.sendMessage(chatMessage);
 		}
 	}
