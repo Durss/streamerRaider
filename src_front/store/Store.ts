@@ -5,6 +5,7 @@
 export default class Store {
 
 	private static store:Storage;
+	private static dataPrefix:string = "raider_";
 	
 	constructor() {
 	
@@ -21,15 +22,15 @@ export default class Store {
 	******************/
 	public static get(key:string):string {
 		if(!this.store) this.init();
-		return this.store.getItem(key);
+		return this.store.getItem(this.dataPrefix + key);
 	}
 	public static set(key:string, value:string):void {
 		if(!this.store) this.init();
-		this.store.setItem(key, value);
+		this.store.setItem(this.dataPrefix + key, value);
 	}
 	public static remove(key:string):void {
 		if(!this.store) this.init();
-		this.store.removeItem(key);
+		this.store.removeItem(this.dataPrefix + key);
 	}
 	public static clear():void {
 		if(!this.store) this.init();
