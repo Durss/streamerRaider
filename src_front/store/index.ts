@@ -15,6 +15,7 @@ export default new Vuex.Store({
 		userLogin: "",//Stores the current user's login
 		initComplete: false,
 		botEnabled: false,
+		botDescriptionFallback: true,
 		botCommand: "",
 		botText: "",
 		tooltip: null,
@@ -76,12 +77,19 @@ export default new Vuex.Store({
 			}
 		},
 		
+		setBotDescriptionFallback(state, payload) {
+			state.botDescriptionFallback = payload;
+			Store.set("botDescriptionFallback", payload);
+		},
+		
 		resetBotConfig(state, clearStorage) {
 			state.botCommand = "!so";
-			state.botText = "Je vous conseille de follow {PSEUDO} dont voici une description : {DESCRIPTION}";
+			state.botText = "Allez follow www.twitch.tv/{PSEUDO} dont voici une description : {DESCRIPTION}";
+			state.botDescriptionFallback = true;
 			if(clearStorage === true) {
 				Store.remove("botCommand");
 				Store.remove("botText");
+				Store.remove("botDescriptionFallback");
 			}
 		},
 
@@ -120,11 +128,16 @@ export default new Vuex.Store({
 			let botCommand = Store.get("botCommand");
 			if(botCommand) state.botCommand = botCommand;
 			
+			let botDescriptionFallback = Store.get("botDescriptionFallback");
+			if(botCommand!=undefined) state.botDescriptionFallback = botDescriptionFallback ==='true';
+			
 			let botText = Store.get("botText");
 			if(botText) state.botText = botText;
-
-			let res = await Api.get("client_id");
-			commit("setClientID", res.id);
+			
+			try {
+				let res = await Api.get("client_id");
+				commit("setClientID", res.id);
+			}catch(error) {}
 
 			state.initComplete = true;
 			return true;
@@ -149,6 +162,8 @@ export default new Vuex.Store({
 		setBotCommand({commit}, payload) { commit("setBotCommand", payload); },
 
 		setBotText({commit}, payload) { commit("setBotText", payload); },
+
+		setBotDescriptionFallback({commit}, payload) { commit("setBotDescriptionFallback", payload); },
 
 		resetBotConfig({commit}) { commit("resetBotConfig", true); },
 

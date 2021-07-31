@@ -1,5 +1,6 @@
 <template>
 	<div :class="classes" @mouseleave="outItem()">
+		<!-- HEADER -->
 		<div class="userName head">
 			<img v-if="userInfos" :src="userPicture" alt="avatar" class="avatar">
 			
@@ -18,11 +19,12 @@
 				:to="'https://twitch.tv/'+userName" />
 		</div>
 		
+		<!-- CONTENT -->
 		<div class="detailsHolder content" v-if="streamInfos">
 			<div class="infos">
 				<div class="title">{{streamInfos.title}}</div>
 				<div class="category" v-if="streamInfos.game_name && !lightMode">{{streamInfos.game_name}}</div>
-				<div v-if="!lightMode" class="duration">{{streamDuration}}</div>
+				<div class="duration">{{streamDuration}}</div>
 			</div>
 			<div class="preview" @mouseenter="hoverItem()" v-if="!lightMode">
 				<div class="streamImage" v-if="!showLive"><img :src="previewUrl"></div>
@@ -38,7 +40,8 @@
 			</div>
 			<div class="description" v-if="!lightMode && streamInfos.description && !showLive">{{streamInfos.description}}</div>
 		</div>
-
+		
+		<!-- RAID BUTTON -->
 		<Button v-if="streamInfos && !isSelf"
 			:title="'Raid '"
 			class="raid"
@@ -176,6 +179,7 @@ export default class StreamInfo extends Vue {
 	}
 
 	&.small, &.light {
+		width: 100%;
 		margin-bottom: 10px !important;//ooouh...bad bad me :)
 		&.small {
 			width: 250px;
@@ -203,13 +207,22 @@ export default class StreamInfo extends Vue {
 				margin-right: 0;
 				.title {
 					width: 100%;
-					font-size: 14px;
+					font-size: 12px;
 					font-weight: normal;
 					text-align: center;
 					margin-bottom: 0;
 				}
 				.duration {
-					font-size: 12px;
+					font-family: "Nunito Light";
+					margin: auto;
+					font-size: 10px;
+					background-color: rgba(255, 255, 255, .25);
+					padding: 2px 4px;
+					position: absolute;
+					bottom: 0;
+					right: 0;
+					border-radius: 0;
+					border-top-left-radius: 7px;
 				}
 			}
 		}

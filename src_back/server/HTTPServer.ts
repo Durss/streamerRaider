@@ -152,6 +152,5 @@ export default class HTTPServer {
 	private async createEndpoints():Promise<void> {
 		new APIController().create(this.app);
 		new DiscordController().create(this.app);
-		
 	}
 }

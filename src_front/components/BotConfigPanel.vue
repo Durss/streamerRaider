@@ -6,23 +6,33 @@
 				<Button :icon="require('@/assets/icons/cross_white.svg')" @click="close()" class="close"/>
 			</div>
 			<div class="content">
-				<div>En activant le bot, tu pourras effectuer des shoutouts personnalisés avec la description de la personne, si elle en en a définit une.</div>
+				<div>
+					<p>En activant le bot<sup>*</sup>, tu pourras effectuer des shoutouts personnalisés avec la description de la personne, si elle en en a définit une.</p>
+					<p>Le message sera envoyé en ton nom.</p>
+				</div>
 				
 				<Button type="checkbox" title="Activer" class="toggle" v-model="enabled" />
 				
 				<div :class="formClasses">
 					<div class="row">
-						<label for="command">Commande</label>
+						<label for="command">Commande :</label>
 						<input type="text" id="command" v-model="command">
 					</div>
 					
 					<div class="row">
-						<label for="text">Texte</label>
+						<label for="text">Message :</label>
 						<textarea id="text" v-model="text" rows="4"></textarea>
+					</div>
+					
+					<div class="row fallback">
+						<Button type="checkbox" class="toggle" v-model="botDescriptionFallback" name="botDescriptionFallback" />
+						<label for="botDescriptionFallback">Si la personne n'a pas renseigné de description, afficher la description de sa chaîne twitch à la place.</label>
 					</div>
 					
 					<Button title="Reset" highlight @click="reset()" />
 				</div>
+
+				<div class="infos"><sup>*</sup> : Le bot ne peut fonctionner que si cette page est présente dans un panneau OBS ou ouverte dans un onglet de navigateur !</div>
 
 			</div>
 		</div>
@@ -41,6 +51,7 @@ import Button from "./Button.vue";
 export default class BotConfigPanel extends Vue {
 
 	public enabled:boolean = false
+	public botDescriptionFallback:boolean = false
 	public command:string = "";
 	public text:string = "";
 
@@ -57,6 +68,7 @@ export default class BotConfigPanel extends Vue {
 
 		this.command = this.$store.state.botCommand;
 		this.text = this.$store.state.botText;
+		this.botDescriptionFallback = this.$store.state.botDescriptionFallback;
 	}
 
 	public beforeDestroy():void {
@@ -82,10 +94,16 @@ export default class BotConfigPanel extends Vue {
 		this.$store.dispatch("setBotText", this.text);
 	}
 
+	@Watch("botDescriptionFallback")
+	public onbotDescriptionFallbackChange():void {
+		this.$store.dispatch("setBotDescriptionFallback", this.botDescriptionFallback);
+	}
+
 	public reset():void {
 		this.$store.dispatch("resetBotConfig");
 		this.command = this.$store.state.botCommand;
 		this.text = this.$store.state.botText;
+		this.botDescriptionFallback = this.$store.state.botDescriptionFallback;
 	}
 
 }
@@ -93,7 +111,7 @@ export default class BotConfigPanel extends Vue {
 
 <style scoped lang="less">
 .botconfigpanel{
-	width: 100%;
+	width: calc(100% - 20px);
 	.holder {
 		.block();
 		width: 100%;
@@ -120,6 +138,7 @@ export default class BotConfigPanel extends Vue {
 		}
 
 		.content {
+			font-size: 16px;
 			.toggle {
 				margin: 10px 0;
 			}
@@ -132,20 +151,44 @@ export default class BotConfigPanel extends Vue {
 				}
 				.row {
 					display: flex;
-					flex-direction: row;
-					margin-bottom: 5px;
+					flex-direction: column;
+					margin-bottom: 15px;
+					width: 100%;
 					label {
-						text-align: right;
+						text-align: left;
 						font-size: 16px;
 						margin-right: 10px;
-						width: 100px;
 						display: inline-block;
 					}
+					input {
+						margin-left: 10px;
+					}
 					textarea {
+						margin-left: 10px;
 						font-size: 16px;
 						font-family: "Futura";
 					}
+
+					&.fallback {
+						flex-direction: row;
+						align-items: flex-start;
+						label {
+							font-size: 13px;
+							cursor: pointer;
+						}
+						.button {
+							min-width: 30px;
+							margin: 0;
+						}
+					}
 				}
+			}
+
+			.infos {
+				text-align: left;
+				font-size: 13px;
+				margin-top: 10px;
+				color: @mainColor_warn;
 			}
 		}
 

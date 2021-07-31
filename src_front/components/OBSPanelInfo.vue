@@ -13,11 +13,11 @@
 				<p>Ajoutez une nouvelle ligne avec l'URL suivante :</p>
 				<p class="path" ref="url">
 					<strong @click="selectText()" ref="actualURL" v-if="!copiedText">{{obsPanelURL}}</strong>
-					<strong v-if="copiedText">URL copiée !</strong>
-					<Button :icon="require('@/assets/icons/copy.svg')" class="copy" @click="copyLink()" highlight data-tooltip="Copy" />
+					<strong v-if="copiedText" class="copied">URL copiée !</strong>
+					<Button :icon="require('@/assets/icons/copy.svg')" class="copy" @click="copyLink()" data-tooltip="Copy" />
 				</p>
 				<p>Vous pouvez maintenant ajouter ce panneau où vous le souhaitez dans l'interface d'OBS.</p>
-				<p class="spacer">Dans ce panneau vous aurez en plus la possibilité d'activer un bot pour effectuer des shoutouts personnalisés avec les descriptions de chaque personne.</p>
+				<p class="spacer">Dans ce panneau vous aurez en plus la possibilité d'activer un bot pour effectuer des shoutouts personnalisés avec la description de chaque personne.</p>
 			</div>
 		</div>
 	</div>
@@ -71,7 +71,7 @@ export default class OBSPanelInfo extends Vue {
 	public copyLink():void {
 		Utils.copyToClipboard(this.obsPanelURL);
 		gsap.set(this.$refs.url, {filter:"brightness(1) saturate(1)", background:"rgba(255,255,255,0)"});
-		gsap.from(this.$refs.url, {duration:.5, filter:"brightness(2) saturate(0)", background:"rgba(255,255,255,1)"});
+		gsap.from(this.$refs.url, {duration:.5, ease:"sine.in", filter:"brightness(2) saturate(0)", background:"rgba(255,255,255,1)"});
 		this.copiedText = true;
 		setTimeout(()=> {
 			this.copiedText = false;
@@ -139,6 +139,9 @@ export default class OBSPanelInfo extends Vue {
 				margin: 10px 0;
 				display: inline-block;
 				border-radius: 10px;
+				.copied {
+					padding: 0 58px;
+				}
 			}
 			strong {
 				color: @mainColor_warn;

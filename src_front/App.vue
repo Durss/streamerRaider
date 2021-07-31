@@ -7,6 +7,7 @@
 		<Confirm />
 		<Alert />
 		<Tooltip />
+		<MainLoader v-if="!storeInitComplete" />
 	</div>
 </template>
 
@@ -18,6 +19,7 @@ import Footer from "./components/Footer.vue";
 import Tooltip from "./components/Tooltip.vue";
 import Config from "./utils/Config";
 import Utils from "./utils/Utils";
+import MainLoader from "./components/MainLoader.vue";
 
 @Component({
 	components:{
@@ -25,11 +27,16 @@ import Utils from "./utils/Utils";
 		Footer,
 		Tooltip,
 		Confirm,
+		MainLoader,
 	}
 })
 export default class App extends Vue {
 
 	public pageTitle:string = null;
+
+	public get storeInitComplete():boolean {
+		return this.$store.state.initComplete;
+	}
 
 	public get lightMode():boolean {
 		return Utils.getRouteMetaValue(this.$route, "lightMode") === true;

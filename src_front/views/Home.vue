@@ -1,17 +1,16 @@
 <template>
 	<div :class="classes">
 		<transition name="fade">
-			<div class="loader" v-if="loading">
-				<img src="@/assets/loader/loader.svg">
-				<div class="label">...chargement des chaînes...</div>
-			</div>
+			<MainLoader v-if="loading" />
 		</transition>
 
 		<div class="confError" v-if="missingTwitchKeys">Please fill in the <strong>client_id</strong> and <strong>secret_id</strong> values inside the file <strong>data/credentials.json</strong> created at the root of the project!</div>
 		
 		<div class="confError" v-if="missingTwitchUsers">Please add users to the file <strong>data/{{userFile}}.json</strong> at the root of the project</div>
+		
+		<div class="confError" v-if="loadError">Oops... something went wrong while loading data from server...</div>
 
-		<div v-if="!loading && !missingTwitchKeys && !missingTwitchUsers" class="page">
+		<div v-if="!loading && !missingTwitchKeys && !missingTwitchUsers && !loadError" class="page">
 			<div v-if="!lightMode">
 				<img :src="logoPath" height="100">
 				<h1>{{title}} Raider</h1>
@@ -27,7 +26,7 @@
 					@click="randomRaid()"
 					:icon="require('@/assets/icons/random.svg')" />
 
-				<Button v-if="isAStreamer && !lightMode" title="Mes infos" white
+				<Button v-if="isAStreamer && !lightMode" title="Ma description" white
 					@click="showProfileForm=true"
 					:icon="require('@/assets/icons/edit.svg')" />
 
@@ -36,8 +35,9 @@
 					@click="getOBSPanel()"
 					:icon="require('@/assets/icons/obs.svg')" />
 
-				<Button title="Bot Config" white
-					v-if="lightMode && !showBotConfigPanel"
+				<Button :title="botEnabled? 'Bot actif' : 'Bot inactif'"
+					:white="!botEnabled"
+					v-if="lightMode"
 					@click="getBotConfigPanel()"
 					:icon="require('@/assets/icons/twitch.svg')" />
 
@@ -120,12 +120,14 @@ import { Component, Prop, Vue } from "vue-property-decorator";
 import Config from "@/utils/Config";
 import OBSPanelInfo from "@/components/OBSPanelInfo.vue";
 import BotConfigPanel from "@/components/BotConfigPanel.vue";
+import MainLoader from "@/components/MainLoader.vue";
 
 @Component({
 	components: {
 		Button,
 		AuthForm,
 		StreamInfo,
+		MainLoader,
 		StreamerForm,
 		OBSPanelInfo,
 		BotConfigPanel,
@@ -134,6 +136,7 @@ import BotConfigPanel from "@/components/BotConfigPanel.vue";
 export default class Home extends Vue {
 
 	public loading:boolean = true;
+	public loadError:boolean = false;
 	public showOBSPanel:boolean = false;
 	public showBotConfigPanel:boolean = false;
 	public showProfileForm:boolean = false;
@@ -155,6 +158,10 @@ export default class Home extends Vue {
 
 	public get lightMode():boolean {
 		return Utils.getRouteMetaValue(this.$route, "lightMode") === true;
+	}
+
+	public get botEnabled():boolean {
+		return this.$store.state.botEnabled;
 	}
 
 	public get connected():boolean {
@@ -236,12 +243,19 @@ export default class Home extends Vue {
 	 */
 	private async loadData(isFirstLoad:boolean = false):Promise<void> {
 		if(isFirstLoad)  {
-			//Avoid showing the loader when doing background reload
+			//Avoids showing the loader when doing background reload
 			this.loading = true;
 		}
 		
 		//Load user name list from server
-		let channelList = await Api.get("user_names");
+		let channelList
+		try {
+			channelList = await Api.get("user_names");
+		}catch(error) {
+			this.loading = false;
+			this.loadError = true;
+			return;
+		}
 		if(!(channelList instanceof Array) || channelList.length == 0) {
 			this.loading = false;
 			this.missingTwitchUsers = true;
@@ -252,6 +266,7 @@ export default class Home extends Vue {
 		let maxBatch = 100;//Twitch API cannot get more than 100 users at once
 		let onlineUsers = [];
 		let offlineUsers = [];
+		this.loadError = false;
 		do{
 			let channels = channelList.splice(0, maxBatch);
 			try {
@@ -261,10 +276,14 @@ export default class Home extends Vue {
 				try {
 					result = await Api.get("user_infos", {channels});
 				}catch(error) {
+					this.loading = false;
 					if(error.error_code == "INVALID_TWITCH_KEYS") {
 						//Show configuration tips
 						this.missingTwitchKeys = true;
 						this.loading = false;
+						return;
+					}else{
+						this.loadError = true;
 						return;
 					}
 				}
@@ -288,7 +307,9 @@ export default class Home extends Vue {
 					}
 				}
 			}catch(error) {
-
+				this.loadError = true;
+				this.loading = false;
+				return;
 			}
 		}while(channelList.length > 0);
 
@@ -341,7 +362,7 @@ export default class Home extends Vue {
 	}
 
 	public getBotConfigPanel():void {
-		this.showBotConfigPanel = true;
+		this.showBotConfigPanel = !this.showBotConfigPanel;
 	}
 
 }
@@ -353,6 +374,7 @@ export default class Home extends Vue {
 	&.light {
 		width: 100%;
 		max-width: 350px;
+		min-width: 200px;
 		margin: auto;
 		// border: 1px dashed rgba(255, 255, 255, .2);
 		button {
@@ -386,24 +408,9 @@ export default class Home extends Vue {
 					display: flex;
 					flex-direction: row;
 					flex-wrap: wrap;
-					padding: 20px 5px;
+					padding: 20px 0;
 				}
 			}
-		}
-	}
-
-	.loader {
-		.center();
-		position: absolute;
-		img {
-			width: 100px;
-			height: 100px;
-		}
-		.label {
-			color: @mainColor_light;
-			font-family: "Nunito light";
-			font-size: 16px;
-			margin-top: 15px;
 		}
 	}
 
