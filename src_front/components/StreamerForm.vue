@@ -205,7 +205,6 @@ export default class StreamerForm extends Vue {
 @media only screen and (max-width: 500px) {
 	.streamerform{
 		.holder {
-			width: 90%;
 			.content {
 				.description {
 					width: 100%;

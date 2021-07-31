@@ -21,12 +21,6 @@
 				v-if="!connected"
 				:lightMode="lightMode" />
 			
-			<!-- OBS PANEL INFO -->
-			<OBSPanelInfo v-if="showOBSPanel" @close="showOBSPanel=false" />
-
-			<!-- USER FORM (edit description) -->
-			<StreamerForm v-if="showProfileForm" @close="showProfileForm=false" />
-			
 			<!-- MAIN MENU -->
 			<div v-if="connected" class="menu">
 				<Button title="Lancer un raid aléatoire" v-if="onlineUsers.length > 0" white
@@ -42,10 +36,24 @@
 					@click="getOBSPanel()"
 					:icon="require('@/assets/icons/obs.svg')" />
 
+				<Button title="Bot Config" white
+					v-if="lightMode && !showBotConfigPanel"
+					@click="getBotConfigPanel()"
+					:icon="require('@/assets/icons/twitch.svg')" />
+
 				<Button :title="lightMode? '' : 'Logout'" highlight class="logout"
 					@click="logout()"
 					:icon="require('@/assets/icons/cross_white.svg')" />
 			</div>
+			
+			<!-- OBS PANEL INFO -->
+			<OBSPanelInfo v-if="showOBSPanel" @close="showOBSPanel=false" />
+			
+			<!-- TWITCH BOT CONFIG PANEL -->
+			<BotConfigPanel v-if="showBotConfigPanel" @close="showBotConfigPanel=false" />
+
+			<!-- USER FORM (edit description) -->
+			<StreamerForm v-if="showProfileForm" @close="showProfileForm=false" />
 			
 			<!-- ONLINE USERS -->
 			<div class="block">
@@ -111,6 +119,7 @@ import gsap from "gsap/all";
 import { Component, Prop, Vue } from "vue-property-decorator";
 import Config from "@/utils/Config";
 import OBSPanelInfo from "@/components/OBSPanelInfo.vue";
+import BotConfigPanel from "@/components/BotConfigPanel.vue";
 
 @Component({
 	components: {
@@ -119,12 +128,14 @@ import OBSPanelInfo from "@/components/OBSPanelInfo.vue";
 		StreamInfo,
 		StreamerForm,
 		OBSPanelInfo,
+		BotConfigPanel,
 	},
 })
 export default class Home extends Vue {
 
 	public loading:boolean = true;
 	public showOBSPanel:boolean = false;
+	public showBotConfigPanel:boolean = false;
 	public showProfileForm:boolean = false;
 	public missingTwitchKeys:boolean = false;
 	public missingTwitchUsers:boolean = false;
@@ -327,6 +338,10 @@ export default class Home extends Vue {
 
 	public getOBSPanel():void {
 		this.showOBSPanel = true;
+	}
+
+	public getBotConfigPanel():void {
+		this.showBotConfigPanel = true;
 	}
 
 }

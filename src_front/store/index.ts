@@ -14,6 +14,9 @@ export default new Vuex.Store({
 		clientID: "",//Store the twitch app client ID loaded from server
 		userLogin: "",//Stores the current user's login
 		initComplete: false,
+		botEnabled: false,
+		botCommand: "",
+		botText: "",
 		tooltip: null,
 		alert: null,
 		confirm:{
@@ -53,6 +56,34 @@ export default new Vuex.Store({
 		openTooltip(state, payload) { state.tooltip = payload; },
 		
 		closeTooltip(state) { state.tooltip = null; },
+		
+		setBotEnabled(state, payload) {
+			state.botEnabled = payload;
+			Store.set("botEnabled", payload? 'true' : 'false');
+		},
+		
+		setBotCommand(state, payload) {
+			if(payload) {
+				state.botCommand = payload;
+				Store.set("botCommand", payload);
+			}
+		},
+		
+		setBotText(state, payload) {
+			if(payload) {
+				state.botText = payload;
+				Store.set("botText", payload);
+			}
+		},
+		
+		resetBotConfig(state, clearStorage) {
+			state.botCommand = "!so";
+			state.botText = "Je vous conseille de follow {PSEUDO} dont voici une description : {DESCRIPTION}";
+			if(clearStorage === true) {
+				Store.remove("botCommand");
+				Store.remove("botText");
+			}
+		},
 
 	},
 	actions: {
@@ -80,6 +111,17 @@ export default new Vuex.Store({
 					commit("setOAuthToken", token);
 				}
 			}
+			
+			commit("resetBotConfig", false);
+
+			let botEnabled = Store.get("botEnabled");
+			if(botEnabled === "true") state.botEnabled = true;
+			
+			let botCommand = Store.get("botCommand");
+			if(botCommand) state.botCommand = botCommand;
+			
+			let botText = Store.get("botText");
+			if(botText) state.botText = botText;
 
 			let res = await Api.get("client_id");
 			commit("setClientID", res.id);
@@ -101,6 +143,14 @@ export default new Vuex.Store({
 		closeTooltip({commit}) { commit("closeTooltip", null); },
 		
 		logout({commit}) { commit("setOAuthToken", null); },
+		
+		setBotEnabled({commit}, payload) { commit("setBotEnabled", payload); },
+		
+		setBotCommand({commit}, payload) { commit("setBotCommand", payload); },
+
+		setBotText({commit}, payload) { commit("setBotText", payload); },
+
+		resetBotConfig({commit}) { commit("resetBotConfig", true); },
 
 	},
 })
