@@ -29,8 +29,11 @@ input, textarea, select {
 		background-color: #000;
 	}
 	
-	&::-webkit-scrollbar {
-		display: none;
+	&::-webkit-scrollbar-thumb {
+		border-radius:20px;
+		background-color: @mainColor_light;
+		background-color: darken(@mainColor_normal, 10%);
+	//   box-shadow: rgba(255, 255, 255, 0.25) 0px 0px 1px 1px;
 	}
 
 	&:disabled {

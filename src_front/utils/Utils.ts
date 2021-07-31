@@ -570,7 +570,10 @@ export default class Utils {
 		let h = Math.floor(seconds / 3600000);
 		let m = Math.floor((seconds - h * 3600000) / 60000);
 		let s = Math.round((seconds - h * 3600000 - m * 60000) / 1000);
-		return this.toDigits(h) + ":" + this.toDigits(m) + ":" + this.toDigits(s);
+		let res = this.toDigits(s);
+		if(m > 0 || h > 0) res = this.toDigits(m) + ":" + res;
+		if(h > 0) res = this.toDigits(h) + ":" + res;
+		return res;
 	}
 
 	public static promisedTimeout(delay: number): Promise<void> {

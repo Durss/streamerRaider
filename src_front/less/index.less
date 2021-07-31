@@ -41,6 +41,22 @@ strong {
 }
 
 
+*::-webkit-scrollbar {
+	width: 10px;
+}
+
+*::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+	border-radius:20px;
+	background-color: rgb(31, 31, 35);
+	border: 1px solid rgba(255, 255, 255, 0.25);
+//   box-shadow: rgba(255, 255, 255, 0.25) 0px 0px 1px 1px;
+}
+
+
 //Expose color theme to JS
 #lessVars {
 	.mainColor_light{ color:@mainColor_light; }
