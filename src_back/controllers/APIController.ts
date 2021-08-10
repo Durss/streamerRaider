@@ -30,7 +30,7 @@ export default class APIController {
 	******************/
 	public create(app:Express):void {
 		this._app = app;
-		this._app.get("/api/profile_name", (req:Request, res:Response) => this.getProfileName(req,res));
+		this._app.get("/api/profile/name", (req:Request, res:Response) => this.getProfileName(req,res));
 		this._app.get("/api/profile/list", (req:Request, res:Response) => this.getProfileList(req,res));
 
 		this._app.get("/api/client_id", (req:Request, res:Response) => this.getClientID(req,res));

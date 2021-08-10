@@ -414,8 +414,8 @@ export default class Utils  {
 		})
 	}
 
-	private static profileCache:{[key:string]:string} = null;
-	public static getProfileList():{[key:string]:string} {
+	private static profileCache:{domains:string[], profile:string}[] = null;
+	public static getProfileList():{domains:string[], profile:string}[] {
 		if(!this.profileCache) {
 			try {
 				this.profileCache = JSON.parse(fs.readFileSync(Config.AVAILABLE_PROFILES_LIST, "utf8"));
@@ -439,9 +439,10 @@ export default class Utils  {
 		//Check if domain matches a profile
 		if(req && req.hostname) {
 			profile = req.hostname;
-			for (const p in this.profileCache) {
-				if(RegExp(p.replace(/(\.|\/|\?)/gi, "\\$1"), "gi").test(profile)) {
-					profile = this.profileCache[p];
+			for (let i = 0; i < this.profileCache.length; i++) {
+				const p = this.profileCache[i];
+				if(p.domains.indexOf(profile) > -1) {
+					profile = p.profile;
 					break;
 				}
 			}
@@ -455,8 +456,9 @@ export default class Utils  {
 		
 		//Make sure the requested profile actually exists to avoid some sort of injection
 		let profileFound = false;
-		for (const p in this.profileCache) {
-			if(this.profileCache[p] === profile) {
+		for (let i = 0; i < this.profileCache.length; i++) {
+			const p = this.profileCache[i];
+			if(p.profile===profile) {
 				profileFound = true;
 				break;
 			}

@@ -27,6 +27,7 @@
 import Button from "@/components/Button.vue";
 import ProfileNavButton from "@/components/ProfileNavButton.vue";
 import Api from "@/utils/Api";
+import Utils from "@/utils/Utils";
 import { Component, Inject, Model, Prop, Vue, Watch, Provide } from "vue-property-decorator";
 
 @Component({
@@ -43,7 +44,7 @@ export default class ProfileSwitcher extends Vue {
 	public nextProfile:Profile = null;
 	public prevProfile:Profile = null;
 	public hasProfile:boolean = false;
-	public profiles:{[key:string]:string} = null;
+	public profiles:{domains:string[], profile:string}[] = null;
 
 	public mounted():void {
 		if(this.$store.state.initComplete) {
@@ -73,20 +74,47 @@ export default class ProfileSwitcher extends Vue {
 			let list:Profile[] = [];
 			let tld = null;
 			//Search for current domain on available profiles
-			for (const p in this.profiles) {
+			// for (const p in this.profiles) {
+			// 	//Remove "localhost" profile if not testing locally
+			// 	if(dns.indexOf("localhost") == -1 && p.indexOf("localhost") > -1) continue;
+			// 	let reg = p.replace(/(\.|\/|\?)/gi, "\\$1").replace(/\*/gi, "(.*)");
+			// 	if(!tld && RegExp(reg, "gi").test(dns)) {
+			// 		tld = dns.replace(RegExp(reg, "gi"), "$1");;
+			// 	}
+			// 	list.push({
+			// 		dns:p,
+			// 		url: "",
+			// 		name:this.profiles[p],
+			// 		icon: require("@/assets/logos/"+this.profiles[p]+".png")
+			// 	});
+			// 	if(RegExp(p.replace(/(\.|\/|\?)/gi, "\\$1"), "gi").test(dns)) {
+			// 		currentIndex = list.length - 1;
+			// 	}
+			// }
+			for (let i = 0; i < this.profiles.length; i++) {
+				const p = this.profiles[i];
+				let minDist:number = 99999;
+				let closestDNS:string = null;
 				//Remove "localhost" profile if not testing locally
-				if(dns.indexOf("localhost") == -1 && p.indexOf("localhost") > -1) continue;
-				let reg = p.replace(/(\.|\/|\?)/gi, "\\$1").replace(/\*/gi, "(.*)");
-				if(!tld && RegExp(reg, "gi").test(dns)) {
-					tld = dns.replace(RegExp(reg, "gi"), "$1");;
+				if(dns.indexOf("localhost") == -1 && p.domains.indexOf("localhost") > -1) continue;
+
+				//Search for the closest domain name on available profiles
+				//This makes sure to redirect to the alternative that resembles the most
+				for (let j = 0; j < p.domains.length; j++) {
+					const dn = p.domains[j];
+					const dist = Utils.levenshtein(dn, dns);
+					if(dist < minDist) {
+						minDist = dist;
+						closestDNS = dn;
+					}
 				}
 				list.push({
-					dns:p,
+					dns:closestDNS,
 					url: "",
-					name:this.profiles[p],
-					icon: require("@/assets/logos/"+this.profiles[p]+".png")
+					name:p.profile,
+					icon: require("@/assets/logos/"+p.profile+".png")
 				});
-				if(RegExp(p.replace(/(\.|\/|\?)/gi, "\\$1"), "gi").test(dns)) {
+				if(p.domains.indexOf(dns) > -1) {
 					currentIndex = list.length - 1;
 				}
 			}

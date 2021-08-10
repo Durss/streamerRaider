@@ -22,7 +22,7 @@ import Button from '@/components/Button.vue';
 		Button
 	}
 })
-export default class ConfirmView extends Vue {
+export default class Confirm extends Vue {
 	public title:string = "";
 	public description:string = "";
 	public yesLabel:string = "";
