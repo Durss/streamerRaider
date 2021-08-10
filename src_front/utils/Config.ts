@@ -6,7 +6,7 @@ export default class Config {
 	
 	private static _ENV_NAME: EnvName;
 
-	public static IS_PROD:boolean = /.*\.(com|fr|net|org|ninja|st)$/gi.test(window.location.hostname);
+	public static IS_PROD:boolean = /.*\.(com|fr|net|org|ninja|st|stream)$/gi.test(window.location.hostname);
 
 	public static TWITCH_SCOPES:string[] = ["chat:read","chat:edit","channel_editor"];
 

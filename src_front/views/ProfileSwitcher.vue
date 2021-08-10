@@ -98,18 +98,8 @@ export default class ProfileSwitcher extends Vue {
 				//Remove "localhost" profile if not testing locally
 				if(dns.indexOf("localhost") == -1 && p.domains.indexOf("localhost") > -1) continue;
 
-				//Search for the closest domain name on available profiles
-				//This makes sure to redirect to the alternative that resembles the most
-				for (let j = 0; j < p.domains.length; j++) {
-					const dn = p.domains[j];
-					const dist = Utils.levenshtein(dn, dns);
-					if(dist < minDist) {
-						minDist = dist;
-						closestDNS = dn;
-					}
-				}
 				list.push({
-					dns:closestDNS,
+					dns:p.domains[0],
 					url: "",
 					name:p.profile,
 					icon: require("@/assets/logos/"+p.profile+".png")
