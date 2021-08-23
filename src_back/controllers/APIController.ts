@@ -48,7 +48,7 @@ export default class APIController {
 		this._app.get("/api/private/profile/list", (req:Request, res:Response) => this.getProfileList(req,res));
 		//Get twitch app client ID
 		this._app.get("/api/private/client_id", (req:Request, res:Response) => this.getClientID(req,res));
-		//Get on twitch user info
+		//Get a twitch user info
 		this._app.get("/api/private/user_infos", (req:Request, res:Response) => this.getUserInfos(req,res));
 		//Get stream infos for current profile
 		this._app.get("/api/private/stream_infos", (req:Request, res:Response) => this.getStreamInfos(req,res));
@@ -285,17 +285,16 @@ export default class APIController {
 	 * @param res 
 	 */
 	private async getUserInfos(req:Request, res:Response):Promise<void> {
-		// let channels:string = <string>req.query.channels;
-		let channels = Utils.getUserList(req);
+		let channels:string = <string>req.query.channels;
 
-		let result = await TwitchUtils.loadChannelsInfo(channels);
+		let result = await TwitchUtils.loadChannelsInfo(channels.split(","));
 
 		if(result.status != 200) {
 			let txt = await result.text();
 			res.status(result.status).send(txt);
 		}else{
 			let json = await result.json();
-			res.status(200).send(JSON.stringify({success:true, data:json}));
+			res.status(200).send(JSON.stringify({success:true, data:json.data}));
 		}
 	}
 
