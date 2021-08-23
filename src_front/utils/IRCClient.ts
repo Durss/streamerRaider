@@ -115,6 +115,8 @@ export declare module IRCTypes {
 
     export interface Badges {
         broadcaster: string;
+        vip: string;
+        moderator: string;
     }
 
     export interface Tag {

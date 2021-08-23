@@ -298,7 +298,7 @@ export default class Home extends Vue {
 		clearTimeout(this.refreshTimeout);
 		this.refreshTimeout = setTimeout(_=> {
 			this.loadData();
-		}, 2 * 60 * 1000);
+		}, 2 * 120 * 1000);
 	}
 
 	public logout():void {

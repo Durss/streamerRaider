@@ -22,11 +22,27 @@
 					<div class="row">
 						<label for="text">Message :</label>
 						<textarea id="text" v-model="text" rows="4"></textarea>
+					
+						<div class="fallback">
+							<Button type="checkbox" class="toggle" v-model="botDescriptionFallback" name="botDescriptionFallback" />
+							<label for="botDescriptionFallback">Si la personne n'a pas renseigné de description, afficher la description de sa chaîne twitch à la place.</label>
+						</div>
 					</div>
 					
-					<div class="row fallback">
-						<Button type="checkbox" class="toggle" v-model="botDescriptionFallback" name="botDescriptionFallback" />
-						<label for="botDescriptionFallback">Si la personne n'a pas renseigné de description, afficher la description de sa chaîne twitch à la place.</label>
+					<div class="row roles">
+						<label for="text">Rôles autorisés :</label>
+						<div class="role">
+							<Button type="checkbox" class="toggle" v-model="botRoleModerators" name="botRoleModerators" />
+							<label for="botRoleModerators">Modérateurs/trices</label>
+						</div>
+						<div class="role">
+							<Button type="checkbox" class="toggle" v-model="botRoleVIP" name="botRoleVIP" />
+							<label for="botRoleVIP">VIP</label>
+						</div>
+						<div class="role">
+							<Button type="checkbox" class="toggle" v-model="botRoleViewers" name="botRoleViewers" />
+							<label for="botRoleViewers">Viewers</label>
+						</div>
 					</div>
 					
 					<Button title="Reset" highlight @click="reset()" />
@@ -54,6 +70,9 @@ export default class BotConfigPanel extends Vue {
 	public botDescriptionFallback:boolean = false
 	public command:string = "";
 	public text:string = "";
+	public botRoleModerators:boolean = false;
+	public botRoleVIP:boolean = false;
+	public botRoleViewers:boolean = false;
 
 	public get formClasses():string[] {
 		let res = ["form"]
@@ -66,9 +85,14 @@ export default class BotConfigPanel extends Vue {
 			this.enabled = true;
 		}
 
+		//Prefill form from store
 		this.command = this.$store.state.botCommand;
 		this.text = this.$store.state.botText;
 		this.botDescriptionFallback = this.$store.state.botDescriptionFallback;
+		let roles = this.$store.state.botRoles;
+		this.botRoleModerators = roles.includes("moderator");
+		this.botRoleVIP = roles.includes("vip");
+		this.botRoleViewers = roles.includes("viewer");
 	}
 
 	public beforeDestroy():void {
@@ -95,15 +119,37 @@ export default class BotConfigPanel extends Vue {
 	}
 
 	@Watch("botDescriptionFallback")
-	public onbotDescriptionFallbackChange():void {
+	public onBotDescriptionFallbackChange():void {
 		this.$store.dispatch("setBotDescriptionFallback", this.botDescriptionFallback);
 	}
+
+	@Watch("botRoleModerators")
+	public onBotRoleModeratorsChange():void { this.updateRolesList(); }
+	@Watch("botRoleVIP")
+	public onBotRoleVIPChange():void { this.updateRolesList(); }
+	@Watch("botRoleViewers")
+	public onBotRoleViewersChange():void { this.updateRolesList(); }
 
 	public reset():void {
 		this.$store.dispatch("resetBotConfig");
 		this.command = this.$store.state.botCommand;
 		this.text = this.$store.state.botText;
 		this.botDescriptionFallback = this.$store.state.botDescriptionFallback;
+		let roles = this.$store.state.botRoles;
+		this.botRoleModerators = roles.includes("moderator");
+		this.botRoleVIP = roles.includes("vip");
+		this.botRoleViewers = roles.includes("viewer");
+	}
+
+	/**
+	 * Called anytime a role is checked or unchecked
+	 */
+	private updateRolesList():void {
+		let roles = [];
+		if(this.botRoleModerators) roles.push("moderator");
+		if(this.botRoleVIP) roles.push("vip");
+		if(this.botRoleViewers) roles.push("viewer");
+		this.$store.dispatch("setBotRoles", roles);
 	}
 
 }
@@ -169,9 +215,13 @@ export default class BotConfigPanel extends Vue {
 						font-family: "Futura";
 					}
 
-					&.fallback {
+					.fallback {
+						display: flex;
 						flex-direction: row;
 						align-items: flex-start;
+						justify-content: flex-start;
+						margin-left: 10px;
+						margin-top: 10px;
 						label {
 							font-size: 13px;
 							cursor: pointer;
@@ -179,6 +229,24 @@ export default class BotConfigPanel extends Vue {
 						.button {
 							min-width: 30px;
 							margin: 0;
+						}
+					}
+
+					&.roles {
+						.role {
+							display: flex;
+							flex-direction: row;
+							align-items: center;
+							justify-content: flex-start;
+							label {
+								margin: 0;
+								font-size: 13px;
+								cursor: pointer;
+							}
+							.button {
+								margin: 0;
+								margin-left: 10px;
+							}
 						}
 					}
 				}

@@ -17,6 +17,7 @@ export default new Vuex.Store({
 		initComplete: false,
 		botEnabled: false,
 		botDescriptionFallback: true,
+		botRoles: ["moderator"],
 		botCommand: "",
 		botText: "",
 		tooltip: null,
@@ -85,14 +86,21 @@ export default new Vuex.Store({
 			Store.set("botDescriptionFallback", payload);
 		},
 		
+		setBotRoles(state, payload) {
+			state.botRoles = payload;
+			Store.set("botRoles", payload.join(','));
+		},
+		
 		resetBotConfig(state, clearStorage) {
 			state.botCommand = "!so";
 			state.botText = "Allez follow www.twitch.tv/{PSEUDO} dont voici une description : {DESCRIPTION}";
 			state.botDescriptionFallback = true;
+			state.botRoles = ["moderator"];
 			if(clearStorage === true) {
 				Store.remove("botCommand");
 				Store.remove("botText");
 				Store.remove("botDescriptionFallback");
+				Store.remove("botRoles");
 			}
 		},
 
@@ -132,7 +140,11 @@ export default new Vuex.Store({
 			if(botCommand) state.botCommand = botCommand;
 			
 			let botDescriptionFallback = Store.get("botDescriptionFallback");
-			if(botCommand!=undefined) state.botDescriptionFallback = botDescriptionFallback ==='true';
+			if(botDescriptionFallback!=undefined) state.botDescriptionFallback = botDescriptionFallback ==='true';
+			
+			let botRoles = Store.get("botRoles");
+			
+			if(botRoles!=undefined) state.botRoles = botRoles.split(",");
 			
 			let botText = Store.get("botText");
 			if(botText) state.botText = botText;
@@ -174,6 +186,8 @@ export default new Vuex.Store({
 		setBotText({commit}, payload) { commit("setBotText", payload); },
 
 		setBotDescriptionFallback({commit}, payload) { commit("setBotDescriptionFallback", payload); },
+
+		setBotRoles({commit}, payload) { commit("setBotRoles", payload); },
 
 		resetBotConfig({commit}) { commit("resetBotConfig", true); },
 

@@ -274,7 +274,6 @@ export default class APIController {
 				res.status(500).send(error);
 			}
 		}while(channels.length > 0);
-		console.log("LEN ::", result.length);
 		res.status(200).send(JSON.stringify({success:true, data:result}));
 	}
 
