@@ -2,13 +2,13 @@ import * as historyApiFallback from 'connect-history-api-fallback';
 import { SHA256 } from "crypto-js";
 import * as express from "express";
 import { Express, NextFunction, Request, Response } from "express-serve-static-core";
-import * as fs from "fs";
 import * as http from "http";
 import APIController from '../controllers/APIController';
 import DiscordController from '../controllers/DiscordController';
 import Config from '../utils/Config';
 import Logger, { LogStyle } from '../utils/Logger';
 import TwitchUtils from '../utils/TwitchUtils';
+import Utils from "../utils/Utils"
 
 export default class HTTPServer {
 
@@ -38,7 +38,7 @@ export default class HTTPServer {
 			//Invalid token
 			Logger.error("Invalid twitch tokens. Please check the client_id and secret_id values in the file twitch_keys.json")
 		}
-		
+
 		//Redirect to homepage invalid requests
 		this.app.use(historyApiFallback({
 			index:"/index.html",
@@ -64,7 +64,15 @@ export default class HTTPServer {
 			// Set CORS headers
 			res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,PATCH,DELETE,OPTIONS');
 			res.header('Access-Control-Allow-Headers', 'Content-type,Accept,X-Access-Token,X-Key,X-AUTH-TOKEN');
-			res.header("Access-Control-Allow-Origin", "*");
+			if(req.url.indexOf("/api/private") > -1) {
+				let profile = Utils.getProfile(req);
+				if(profile) {
+					//If a profile is found, that's because domain origin is valid, allow the request
+					res.header('Access-Control-Allow-Origin', "*");
+				}
+			}else{
+				res.header("Access-Control-Allow-Origin", "*");
+			}
 			if (req.method == 'OPTIONS') {
 				res.status(200).end();
 				return;

@@ -55,5 +55,6 @@ export declare module TwitchTypes {
 		offline_image_url: string;
 		view_count:        number;
 		created_at:        string;
+		streamInfos:       StreamInfo;
 	}
 }

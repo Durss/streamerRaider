@@ -69,10 +69,10 @@
 				v-on:leave="leave">
 					<StreamInfo class="stream" v-for="(u, index) in onlineUsers"
 						:data-index="index"
-						:key="u.userName"
-						:userName="u.userName"
-						:streamInfos="u.stream"
-						:userInfos="u.user"
+						:key="u.id"
+						:userName="u.display_name"
+						:streamInfos="u.streamInfos"
+						:userInfos="u"
 						:lightMode="lightMode" />
 				</transition-group>
 				<div class="noResult" v-if="onlineUsers.length == 0">
@@ -96,9 +96,9 @@
 				v-on:leave="leave">
 					<StreamInfo class="stream" v-for="(u, index) in offlineUsers"
 						:data-index="index*.25"
-						:key="u.userName"
-						:userName="u.userName"
-						:userInfos="u.user"
+						:key="u.id"
+						:userName="u.display_name"
+						:userInfos="u"
 						small />
 				</transition-group>
 			</div>
@@ -108,19 +108,18 @@
 
 <script lang="ts">
 import AuthForm from "@/components/AuthForm.vue";
+import BotConfigPanel from "@/components/BotConfigPanel.vue";
 import Button from "@/components/Button.vue";
-import StreamInfo from "@/components/StreamInfo.vue";
+import MainLoader from "@/components/MainLoader.vue";
+import OBSPanelInfo from "@/components/OBSPanelInfo.vue";
 import StreamerForm from "@/components/StreamerForm.vue";
+import StreamInfo from "@/components/StreamInfo.vue";
 import Api from "@/utils/Api";
 import IRCClient from "@/utils/IRCClient";
 import { TwitchTypes } from "@/utils/TwitchUtils";
 import Utils from "@/utils/Utils";
 import gsap from "gsap/all";
-import { Component, Prop, Vue } from "vue-property-decorator";
-import Config from "@/utils/Config";
-import OBSPanelInfo from "@/components/OBSPanelInfo.vue";
-import BotConfigPanel from "@/components/BotConfigPanel.vue";
-import MainLoader from "@/components/MainLoader.vue";
+import { Component, Vue } from "vue-property-decorator";
 
 @Component({
 	components: {
@@ -143,9 +142,8 @@ export default class Home extends Vue {
 	public missingTwitchKeys:boolean = false;
 	public missingTwitchUsers:boolean = false;
 
-	public userNameToInfos:TwitchTypes.UserInfo[] = [];
-	public onlineUsers:{userName:string, user?:TwitchTypes.UserInfo, stream?:TwitchTypes.StreamInfo}[] = [];
-	public offlineUsers:{userName:string, user?:TwitchTypes.UserInfo, stream?:TwitchTypes.StreamInfo}[] = [];
+	public onlineUsers:TwitchTypes.UserInfo[] = [];
+	public offlineUsers:TwitchTypes.UserInfo[] = [];
 	
 	private mouseMoveHandler:any;
 	private refreshTimeout:number;
@@ -190,10 +188,10 @@ export default class Home extends Vue {
 	}
 
 	public get isAStreamer():boolean {
-		let authLogin = IRCClient.instance.authenticatedUserLogin;
+		let authLogin = IRCClient.instance.authenticatedUserLogin?.toLowerCase();
 
-		return this.onlineUsers.findIndex(v => v.userName == authLogin) > -1
-		|| this.offlineUsers.findIndex(v => v.userName == authLogin) > -1;
+		return this.onlineUsers.findIndex(v => v.display_name.toLowerCase() == authLogin) > -1
+		|| this.offlineUsers.findIndex(v => v.display_name.toLowerCase() == authLogin) > -1;
 	}
 
 	public async mounted():Promise<void> {
@@ -247,88 +245,40 @@ export default class Home extends Vue {
 			this.loading = true;
 		}
 		
-		//Load user name list from server
-		let channelList
-		try {
-			channelList = await Api.get("user_names");
-		}catch(error) {
-			this.loading = false;
-			this.loadError = true;
-			return;
-		}
-		if(!(channelList instanceof Array) || channelList.length == 0) {
-			this.loading = false;
-			this.missingTwitchUsers = true;
-			return;
-		}
-		
-		let channelListBackup = channelList.concat();
-		let maxBatch = 100;//Twitch API cannot get more than 100 users at once
-		let onlineUsers = [];
-		let offlineUsers = [];
+		let onlineUsers:TwitchTypes.UserInfo[] = [];
+		let offlineUsers:TwitchTypes.UserInfo[] = [];
 		this.loadError = false;
-		do{
-			let channels = channelList.splice(0, maxBatch);
-			try {
-				
-				//Get users infos
-				let result;
-				try {
-					result = await Api.get("user_infos", {channels});
-				}catch(error) {
-					this.loading = false;
-					if(error.error_code == "INVALID_TWITCH_KEYS") {
-						//Show configuration tips
-						this.missingTwitchKeys = true;
-						this.loading = false;
-						return;
+		try {
+			//Get channels list and states
+			let result = await Api.get("private/stream_infos");
+			if(result?.length > 0) {
+				for (let i = 0; i < result.length; i++) {
+					const user:TwitchTypes.UserInfo = result[i];
+					if(user.streamInfos) {
+						onlineUsers.push(user);
 					}else{
-						this.loadError = true;
-						return;
+						offlineUsers.push(user);
 					}
 				}
-				if(result.data?.length > 0) {
-					for (let i = 0; i < result.data.length; i++) {
-						const infos:TwitchTypes.UserInfo = result.data[i];
-						this.userNameToInfos[infos.login.toLowerCase()] = infos;
-					}
-				}
-
-				//Get channels states
-				result = await Api.get("stream_infos", {channels});
-				if(result.data?.length > 0) {
-					for (let i = 0; i < result.data.length; i++) {
-						const infos:TwitchTypes.StreamInfo = result.data[i];
-						onlineUsers.push({
-							userName:infos.user_login,
-							stream:infos,
-							user: this.userNameToInfos[infos.user_login.toLowerCase()]
-						});
-					}
-				}
-			}catch(error) {
-				this.loadError = true;
-				this.loading = false;
-				return;
+			}else{
+				this.missingTwitchUsers = true;
 			}
-		}while(channelList.length > 0);
+		}catch(error) {
+			this.loadError = true;
+			this.loading = false;
+			console.log(error);
+			return;
+		}
 
 		onlineUsers.sort((a, b) => {
-			if(a.stream.viewer_count > b.stream.viewer_count) return 1;
-			if(a.stream.viewer_count < b.stream.viewer_count) return -1;
+			if(a.streamInfos?.viewer_count > b.streamInfos?.viewer_count) return 1;
+			if(a.streamInfos?.viewer_count < b.streamInfos?.viewer_count) return -1;
 			return 0;
 		})
-		
-		for (let i = 0; i < channelListBackup.length; i++) {
-			if(onlineUsers.findIndex((v)=>{ return v.userName == channelListBackup[i]; }) == -1) {
-				let login = channelListBackup[i];
-				offlineUsers.push({userName:login, user:this.userNameToInfos[login.toLowerCase()]});
-			}
-		}
 
 		offlineUsers.sort((a, b) => {
-			if(a.userName.toLowerCase() > b.userName.toLowerCase()) return 1;
-			if(a.userName.toLowerCase() < b.userName.toLowerCase()) return -1;
+			if(a.login.toLowerCase() > b.login.toLowerCase()) return 1;
+			if(a.login.toLowerCase() < b.login.toLowerCase()) return -1;
 			return 0;
 		})
 

@@ -30,20 +30,42 @@ export default class APIController {
 	******************/
 	public create(app:Express):void {
 		this._app = app;
-		this._app.get("/api/profile/name", (req:Request, res:Response) => this.getProfileName(req,res));
-		this._app.get("/api/profile/list", (req:Request, res:Response) => this.getProfileList(req,res));
 
-		this._app.get("/api/client_id", (req:Request, res:Response) => this.getClientID(req,res));
-
-		this._app.get("/api/user_infos", (req:Request, res:Response) => this.getUserInfos(req,res));
-		this._app.get("/api/stream_infos", (req:Request, res:Response) => this.getStreamInfos(req,res));
+		//==============
+		//PUBLIC ROUTES
+		//==============
+		//Get all users of current profile
 		this._app.get("/api/user_names", (req:Request, res:Response) => this.getUserNames(req,res));
+		//Get description of a specific user
 		this._app.get("/api/description", (req:Request, res:Response) => this.getUserDescription(req,res));
 		
+		//==============
+		//PRIVATE ROUTES
+		//==============
+		//Get current profile name from domain origin
+		this._app.get("/api/private/profile/current", (req:Request, res:Response) => this.getProfileName(req,res));
+		//Get all profiles list
+		this._app.get("/api/private/profile/list", (req:Request, res:Response) => this.getProfileList(req,res));
+		//Get twitch app client ID
+		this._app.get("/api/private/client_id", (req:Request, res:Response) => this.getClientID(req,res));
+		//Get on twitch user info
+		this._app.get("/api/private/user_infos", (req:Request, res:Response) => this.getUserInfos(req,res));
+		//Get stream infos for current profile
+		this._app.get("/api/private/stream_infos", (req:Request, res:Response) => this.getStreamInfos(req,res));
+		
+		//====================
+		//PUBLIC PROTECTED API
+		//====================
+		//These services are protected by a token.
+		//Check app.all("/api/*") middleware on HTTPServer.ts
+		
+		//Add a user
 		this._app.post("/api/user", (req:Request, res:Response) => this.postUser(req,res));
+		//Delete a user
 		this._app.delete("/api/user", (req:Request, res:Response) => this.deleteUser(req,res));
-
+		//Add a description to a user
 		this._app.post("/api/description", (req:Request, res:Response) => this.postUserDescription(req,res));
+		//Remove the description from a user
 		this._app.delete("/api/description", (req:Request, res:Response) => this.deleteUserDescription(req,res));
 	}
 
@@ -219,22 +241,41 @@ export default class APIController {
 	 * @param res 
 	 */
 	private async getStreamInfos(req:Request, res:Response):Promise<void> {
-		let channels:string = <string>req.query.channels;
-		try {
-			let json = await TwitchUtils.getStreamsInfos(channels.split(","));
-			let descs = this.getDescriptionCache(req);
-			//Inject descriptions for users that specified it
-			for (let i = 0; i < json.data.length; i++) {
-				const el = json.data[i];
-				if(descs[el.user_login.toLowerCase()]) { 
-					el.description = descs[el.user_login.toLowerCase()];
+		// let channels:string = <string>req.query.channels;
+		let channels = Utils.getUserList(req);
+		let result = [];
+		let batchSize = 100;
+		do {
+			let list = channels.splice(0,batchSize);
+			try {
+				let channelRequest = await TwitchUtils.loadChannelsInfo(list);
+				let channelJson = await channelRequest.json();
+				let channelDetails = channelJson.data;
+				result = result.concat(channelDetails);
+
+				let jsonStreams = await TwitchUtils.getStreamsInfos(list);
+				let descs = this.getDescriptionCache(req);
+				//Inject descriptions for users that specified it
+				for (let i = 0; i < jsonStreams.data.length; i++) {
+					const el = jsonStreams.data[i];
+					if(descs[el.user_login.toLowerCase()]) { 
+						el.description = descs[el.user_login.toLowerCase()];
+					}
+					for (let j = 0; j < channelDetails.length; j++) {
+						const c = channelDetails[j];
+						if(c.login.toLowerCase() === el.user_login.toLowerCase()) {
+							channelDetails[j].streamInfos = el;
+							break;
+						}
+					}
 				}
+			}catch(error){
+				console.log(error);
+				res.status(500).send(error);
 			}
-			res.status(200).send(JSON.stringify({success:true, data:json}));
-		}catch(error){
-			console.log(error);
-			res.status(500).send(error);
-		}
+		}while(channels.length > 0);
+		console.log("LEN ::", result.length);
+		res.status(200).send(JSON.stringify({success:true, data:result}));
 	}
 
 	/**
@@ -244,8 +285,10 @@ export default class APIController {
 	 * @param res 
 	 */
 	private async getUserInfos(req:Request, res:Response):Promise<void> {
-		let channels:string = <string>req.query.channels;
-		let result = await TwitchUtils.loadChannelsInfo(channels.split(","));
+		// let channels:string = <string>req.query.channels;
+		let channels = Utils.getUserList(req);
+
+		let result = await TwitchUtils.loadChannelsInfo(channels);
 
 		if(result.status != 200) {
 			let txt = await result.text();
@@ -256,6 +299,9 @@ export default class APIController {
 		}
 	}
 
+	/**
+	 * Gets a description from cache
+	 */
 	private getDescriptionCache(req:Request):{[key:string]:string} {
 		let profile:string = Utils.getProfile(req);
 		if(APIController._DESCRIPTION_CACHE_INVALIDATED) {

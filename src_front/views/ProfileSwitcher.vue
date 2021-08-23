@@ -60,7 +60,7 @@ export default class ProfileSwitcher extends Vue {
 	public async loadProfiles():Promise<void> {
 		let res;
 		try {
-			res = await Api.get("profile/list");
+			res = await Api.get("private/profile/list");
 		}catch(e) {
 			return;
 		}

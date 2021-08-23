@@ -138,12 +138,12 @@ export default new Vuex.Store({
 			if(botText) state.botText = botText;
 			
 			try {
-				let res = await Api.get("client_id");
+				let res = await Api.get("private/client_id");
 				commit("setClientID", res.id);
 			}catch(error) {}
 			
 			try {
-				let res = await Api.get("profile/name");
+				let res = await Api.get("private/profile/current");
 				commit("setProfileName", res.profile);
 			}catch(error) {}
 

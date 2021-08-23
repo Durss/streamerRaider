@@ -167,10 +167,10 @@ ${users.join(", ")}
 				if(!this.isWatchingChannel(message) && !isAdmin) return;
 				message.channel.send(`Voici les commandes disponibles :\`\`\`
 !raider-add
-	Ajouter le bot à un chan
+	(admin)Ajouter le bot à un chan
 
 !raider-del
-	Supprimer le bot d'un chan
+	(admin)Supprimer le bot d'un chan
 
 !raider-list
 	Liste toutes les personnes enregistrées
@@ -185,7 +185,7 @@ ${users.join(", ")}
 	Ajouter une description à un·e utilisateur/trice twitch
 
 !del-description TWITCH_LOGIN DESCRIPTION
-	Supprimer une description à un·e utilisateur/trice twitch
+	Supprimer la description d'un·e utilisateur/trice twitch
 \`\`\`
 `);
 				break;

@@ -437,7 +437,7 @@ export default class Utils  {
 		}
 		let profile:string = null;
 		//Check if domain matches a profile
-		if(req && req.hostname) {
+		if(req?.hostname) {
 			profile = req.hostname;
 			for (let i = 0; i < this.profileCache.length; i++) {
 				const p = this.profileCache[i];

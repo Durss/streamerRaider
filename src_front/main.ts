@@ -40,8 +40,7 @@ IRCClient.instance.addEventListener(IRCEvent.MESSAGE, async (event:IRCEvent)=> {
 		}catch(error) {
 			//Ignore
 			if(!store.state.botDescriptionFallback) return;
-			let infos = await Api.get("user_infos", {channels:[login]});
-			console.log(infos);
+			let infos = await Api.get("private/user_infos", {channels:[login]});
 			if(infos?.data?.length > 0) {
 				description = infos.data[0].description;
 			}else{
