@@ -48,6 +48,8 @@
 			@click="startRaid()"
 			:disabled="!canRaid"
 			:data-tooltip="connected? null : 'Connecte toi en haut de page pour lancer un raid chez '+userName" />
+		
+		<div class="newUser" v-if="isNewUser">NEW</div>
 	</div>
 </template>
 
@@ -88,6 +90,8 @@ export default class StreamInfo extends Vue {
 	private pictureRefreshInc:number = 0;
 
 	public get connected():boolean { return this.$store.state.OAuthToken; }
+	
+	public get isNewUser():boolean { return Date.now() - this.streamInfos?.rawData.created_at < 31*24*60*60*1000; }
 
 	public get twitchParent():string {
 		return document.location.hostname;
@@ -161,6 +165,7 @@ export default class StreamInfo extends Vue {
 <style scoped lang="less">
 .streaminfo{
 	.block();
+	position: relative;
 	
 	&.expand {
 		.detailsHolder {
@@ -236,14 +241,15 @@ export default class StreamInfo extends Vue {
 	.userName {
 		display: flex;
 		flex-direction: row;
+		justify-content: space-between;
 		.avatar {
 			width: 30px;
 			height: 30px;
 			border-radius: 50%;
 			vertical-align: top;
-			margin-right: 10px;
 			border: 1px solid @mainColor_normal;
 		}
+
 		.name {
 			flex-grow: 1;
 			text-transform: capitalize;
@@ -254,6 +260,8 @@ export default class StreamInfo extends Vue {
 		.link {
 			width: 30px;
 			height: 30px;
+			min-width: 30px;
+			min-height: 30px;
 			max-width: 30px;
 			max-height: 30px;
 			padding: 5px;
@@ -282,6 +290,8 @@ export default class StreamInfo extends Vue {
 		flex-wrap: wrap;
 		text-align: left;
 		justify-content: space-between;
+		position: relative;
+
 		.infos {
 			max-width: 50%;
 			display: flex;
@@ -346,6 +356,18 @@ export default class StreamInfo extends Vue {
 		padding-left: 50px;
 		padding-right: 50px;
 		margin-bottom: 20px;
+	}
+
+	.newUser {
+		position: absolute;
+		bottom: 0;
+		left: 0;
+		transform: translate(-20px, -10px) rotate(45deg);
+		color: #fff;
+		font-family: "Nunito Black";
+		background-color: @mainColor_warn;
+		padding: 3px 25px;
+		font-size: 14px;
 	}
 
 }
