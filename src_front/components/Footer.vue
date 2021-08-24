@@ -1,6 +1,6 @@
 <template>
 	<div class="footer">
-		<div>Sources on <a href="https://github.com/Durss/protopotesRaider" target="_blank"><img src="@/assets/icons/github.svg" alt="logo" height="18">Github</a></div>
+		<div>Sources on <a href="https://github.com/Durss/streamerRaider" target="_blank"><img src="@/assets/icons/github.svg" alt="logo" height="18">Github</a></div>
 	</div>
 </template>
 

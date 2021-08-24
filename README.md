@@ -1,5 +1,5 @@
 
-# Community Raider
+# Streamer Raider
 
 Web app to list twitch buddies in order to find out who's streaming at anytime and allow to raid them easily.\
 https://protopotes.durss.ninja
