@@ -195,7 +195,7 @@ export default class HTTPServer {
 					if(description) {
 						newUser.description = description;
 					}
-					newUser.created_at = Date.now() - 31*24*60*60*1000;//set it 31 days ago to avoid "new" marker
+					newUser.created_at = Date.now() - 32*24*60*60*1000;//set it 32 days ago to avoid "new" marker
 					newUsers.push(newUser);
 				}
 				fs.writeFileSync(usersPath, JSON.stringify(newUsers));
