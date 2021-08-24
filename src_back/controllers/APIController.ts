@@ -249,39 +249,35 @@ export default class APIController {
 	 */
 	private async getStreamInfos(req:Request, res:Response):Promise<void> {
 		// let channels:string = <string>req.query.channels;
-		let channels = Utils.getUserList(req);
+		let userList = this.getCachedUserList(req);
+		let userListRef = userList.concat();
 		let result = [];
 		let batchSize = 100;
 		do {
-			let list = channels.splice(0,batchSize).map(v => v.name);
+			let list = userList.splice(0,batchSize).map(v => v.name);
 			try {
 				let channelRequest = await TwitchUtils.loadChannelsInfo(list);
 				let channelJson = await channelRequest.json();
-				let channelDetails = channelJson.data;
-				result = result.concat(channelDetails);
+				let channelsInfos = channelJson.data;
+				result = result.concat(channelsInfos);
 
 				let jsonStreams = await TwitchUtils.getStreamsInfos(list);
-				let users = this.getCachedUserList(req);
-				//Inject descriptions for users that specified it
-				for (let i = 0; i < jsonStreams.data.length; i++) {
-					const el = jsonStreams.data[i];
-					let userIndex = users.findIndex(v => v.name.toLowerCase() == el.user_login.toLowerCase());
+				//Inject local user infos to data
+				for (let j = 0; j < channelsInfos.length; j++) {
+					const c = channelsInfos[j];
+					let userIndex = userListRef.findIndex(v => v.name.toLowerCase() == c.display_name.toLowerCase());
+					c.rawData = userListRef[userIndex];
+
+					let streamindex = jsonStreams.data.findIndex(v => v.user_name.toLowerCase() == c.display_name.toLowerCase());
 					if(userIndex > -1) {
-						el.rawData = users[userIndex];
+						c.streamInfos = jsonStreams.data[streamindex];
 					}
-					for (let j = 0; j < channelDetails.length; j++) {
-						const c = channelDetails[j];
-						if(c.login.toLowerCase() === el.user_login.toLowerCase()) {
-							channelDetails[j].streamInfos = el;
-							break;
-						}
-					}
-				}
+			}
 			}catch(error){
 				console.log(error);
 				res.status(500).send(error);
 			}
-		}while(channels.length > 0);
+		}while(userList.length > 0);
 		res.status(200).send(JSON.stringify({success:true, data:result}));
 	}
 
@@ -318,7 +314,7 @@ export default class APIController {
 			let users = Utils.getUserList(req);
 			this._usersCache[profile] = users;
 		}
-		return this._usersCache[profile];
+		return this._usersCache[profile].concat();
 	}
 
 }

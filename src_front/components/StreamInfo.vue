@@ -38,7 +38,7 @@
 				</iframe>
 				<div v-if="!lightMode && streamInfos" class="viewersCount">{{streamInfos.viewer_count}} viewers</div>
 			</div>
-			<div class="description" v-if="!lightMode && streamInfos.rawData.description && !showLive">{{streamInfos.rawData.description}}</div>
+			<div class="description" v-if="!lightMode && userInfos.rawData.description && !showLive">{{userInfos.rawData.description}}</div>
 		</div>
 		
 		<!-- RAID BUTTON -->
@@ -74,9 +74,6 @@ export default class StreamInfo extends Vue {
 	public small!:boolean;
 
 	@Prop()
-	public streamInfos:TwitchTypes.StreamInfo;
-
-	@Prop()
 	public userInfos:TwitchTypes.UserInfo;
 
 	@Prop()
@@ -90,8 +87,10 @@ export default class StreamInfo extends Vue {
 	private pictureRefreshInc:number = 0;
 
 	public get connected():boolean { return this.$store.state.OAuthToken; }
+
+	public get streamInfos():TwitchTypes.StreamInfo { return this.userInfos.streamInfos; }
 	
-	public get isNewUser():boolean { return Date.now() - this.streamInfos?.rawData.created_at < 31*24*60*60*1000; }
+	public get isNewUser():boolean { return Date.now() - this.userInfos?.rawData.created_at < 31*24*60*60*1000; }
 
 	public get twitchParent():string {
 		return document.location.hostname;
@@ -118,12 +117,12 @@ export default class StreamInfo extends Vue {
 	}
 
 	public get streamDuration():string {
-		let ellapsed = Date.now() - new Date(this.streamInfos.started_at).getTime() + this.increment;
+		let ellapsed = Date.now() - new Date(this.userInfos.streamInfos.started_at).getTime() + this.increment;
 		return Utils.formatDuration(ellapsed)
 	}
 
 	public get previewUrl():string {
-		return this.streamInfos.thumbnail_url.replace(/\{width\}/gi, "340").replace(/\{height\}/gi, "190")+"?ck="+this.pictureRefreshInc;
+		return this.userInfos.streamInfos.thumbnail_url.replace(/\{width\}/gi, "340").replace(/\{height\}/gi, "190")+"?ck="+this.pictureRefreshInc;
 	}
 
 	public async mounted():Promise<void> {
@@ -235,6 +234,23 @@ export default class StreamInfo extends Vue {
 			font-size: 15px;
 			padding: 5px 20px;
 			margin-bottom: 10px;
+		}
+
+		.newUser {
+			position: absolute;
+			top: 0;
+			left: 30px;
+			transform: unset;
+			transform: rotate(90deg) translate(0, -100%);
+			transform-origin: top left;
+			color: #fff;
+			height: 10px;
+			width: 30px;
+			color: @mainColor_dark;
+			background-color: @mainColor_warn;
+			font-family: "Nunito Black";
+			padding: 1px 1px;
+			font-size: 11px;
 		}
 	}
 

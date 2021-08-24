@@ -176,7 +176,7 @@ export default class HTTPServer {
 	 * as we want for every user.
 	 */
 	private async migrateData():Promise<void> {
-		let root = path.join( path.dirname(require.main.filename), "../data/");
+		let root = Config.ROOT_FOLDER;
 		let files = fs.readdirSync( root );
 		let hasMigrated = false;
 		for(let i = 0; i < files.length; i++) {

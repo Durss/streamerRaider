@@ -1,5 +1,6 @@
 import { Request } from "express-serve-static-core";
 import * as fs from "fs";
+import * as path from "path";
 import Logger, { LogStyle } from "../utils/Logger";
 import Utils from "./Utils";
 /**
@@ -16,6 +17,7 @@ export default class Config {
 	public static AVAILABLE_PROFILES_LIST: string = "data/dnsToProfile.json";
 	public static DISCORD_CHANNELS_LISTENED:string = "data/discordChannels.json";
 	public static DISCORD_CHANNELS_ADMINS:string = "data/discordGuilIdToAdmins.json";
+	public static APP_VERSION:number = 1;
 
 	public static TWITCH_USERS_FILE(req:Request, discordGuildID?:string):string {
 		let profile:string = Utils.getProfile(req, discordGuildID);
@@ -70,6 +72,14 @@ export default class Config {
 	public static get envName(): string {
 		return this._ENV_NAME;
 	}
+
+	public static get ROOT_FOLDER(): string {
+		return this.getEnvData({
+			dev: path.join( path.dirname(require.main.filename), "../data/"),
+			prod: path.join( path.dirname(require.main.filename), "/data/"),
+		});
+	}
+
 
 	public static get LOGS_ENABLED(): boolean {
 		return this.getEnvData({

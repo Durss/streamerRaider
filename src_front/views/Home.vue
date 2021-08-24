@@ -8,7 +8,7 @@
 		
 		<div class="confError" v-if="missingTwitchUsers">Please add users to the file <strong>data/{{userFile}}.json</strong> at the root of the project</div>
 		
-		<div class="confError" v-if="loadError">Oops... something went wrong while loading data from server...</div>
+		<div class="confError" v-if="loadError">Woops... une erreur est survenue lors du chargement des données... Il y a peut-être eu une mise à jour, essaie de rafraîchir la page !</div>
 
 		<div v-if="!loading && !missingTwitchKeys && !missingTwitchUsers && !loadError" class="page">
 			<div v-if="!lightMode">
@@ -71,7 +71,6 @@
 						:data-index="index"
 						:key="u.id"
 						:userName="u.display_name"
-						:streamInfos="u.streamInfos"
 						:userInfos="u"
 						:lightMode="lightMode" />
 				</transition-group>

@@ -41,12 +41,6 @@ export declare module TwitchTypes {
 		language:      string;
 		thumbnail_url: string;
 		tag_ids:       string[];
-		//Custom injected data from server.
-		rawData:       {
-			name:string;
-			created_at:number;//Timestamp
-			description?:string;
-		};
 	}
 
 	export interface UserInfo {
@@ -60,6 +54,14 @@ export declare module TwitchTypes {
 		offline_image_url: string;
 		view_count:        number;
 		created_at:        string;
+		
+		//Custom injected data from server.
 		streamInfos:       StreamInfo;
+		//Custom injected data from server.
+		rawData:       {
+			name:string;
+			created_at:number;//Timestamp
+			description?:string;
+		};
 	}
 }
