@@ -203,9 +203,9 @@ export default class APIController {
 	private async getUserDescription(req:Request, res:Response):Promise<void> {
 		let login = (<string>req.query.login)?.toLowerCase();
 		let users = this.getCachedUserList(req);
-		let userIndex = users.findIndex(v => v.name?.toLowerCase() == login?.toLowerCase());
-		if(users && userIndex > -1) {
-			res.status(200).send(users.find(v => v.name == login).description);
+		let userIndex = users?.findIndex(v => v.name?.toLowerCase() == login?.toLowerCase());
+		if(userIndex > -1 && users[userIndex].description) {
+			res.status(200).send(users[userIndex].description);
 		}else{
 			res.status(404).send("");
 		}
@@ -270,13 +270,11 @@ export default class APIController {
 		// let channels:string = <string>req.query.channels;
 		let expireDuration = (Date.now() - this._streamInfosCache?.expires_at) / 1000;
 		let timeLeft = Config.STREAMERS_CACHE_DURATION - expireDuration;
-		console.log(">", timeLeft);
 		if(timeLeft <= 0) {
 			this._streamInfosCache = null;//Force cache refresh
 		}
 
 		if(this._streamInfosCache) {
-			console.log("load from cache");
 			res.header("Cache-Control", "max-age="+Math.ceil(timeLeft));
 			res.status(200).send(JSON.stringify({success:true, data:this._streamInfosCache.data}));
 			return;
