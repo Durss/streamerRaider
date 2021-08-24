@@ -14,7 +14,7 @@ export default class APIController {
 
 	private _app:Express;
 	private _usersCache:{[key:string]:UserData[]} = {};
-	private _streamInfosCache:{expires_at:number, data:any} = null;
+	private _streamInfosCache:{[key:string]:{expires_at:number, data:any}} = {};
 	private static _CACHE_INVALIDATED:boolean;
 	
 	constructor() {
@@ -268,15 +268,16 @@ export default class APIController {
 	 */
 	private async getStreamInfos(req:Request, res:Response):Promise<void> {
 		// let channels:string = <string>req.query.channels;
-		let expireDuration = (Date.now() - this._streamInfosCache?.expires_at) / 1000;
+		let profile = Utils.getProfile(req);
+		let expireDuration = (Date.now() - this._streamInfosCache[profile]?.expires_at) / 1000;
 		let timeLeft = Config.STREAMERS_CACHE_DURATION - expireDuration;
 		if(timeLeft <= 0) {
-			this._streamInfosCache = null;//Force cache refresh
+			this._streamInfosCache[profile] = null;//Force cache refresh
 		}
 
-		if(this._streamInfosCache) {
+		if(this._streamInfosCache[profile]) {
 			res.header("Cache-Control", "max-age="+Math.ceil(timeLeft));
-			res.status(200).send(JSON.stringify({success:true, data:this._streamInfosCache.data}));
+			res.status(200).send(JSON.stringify({success:true, data:this._streamInfosCache[profile].data}));
 			return;
 		}
 
@@ -310,7 +311,7 @@ export default class APIController {
 			}
 		}while(userList.length > 0);
 
-		this._streamInfosCache = {
+		this._streamInfosCache[profile] = {
 			expires_at:Date.now(),
 			data:result,
 		};
