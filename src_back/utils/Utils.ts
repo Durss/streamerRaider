@@ -2,6 +2,7 @@ import { Request } from "express-serve-static-core";
 import Config from "./Config";
 import * as fs from "fs";
 import Logger from "./Logger";
+import UserData from "./UserData";
 
 /**
  * Created by François
@@ -469,13 +470,10 @@ export default class Utils  {
 	}
 
 
-	public static getUserList(req:Request, discordGuildID?:string):string[] {
-		return this.getFileContent(Config.TWITCH_USER_NAMES_FILE(req, discordGuildID), []);
+	public static getUserList(req:Request, discordGuildID?:string):UserData[] {
+		return this.getFileContent(Config.TWITCH_USERS_FILE(req, discordGuildID), []);
 	}
 
-	public static getUserDescriptions(req:Request, discordGuildID?:string):{[key:string]:string} {
-		return this.getFileContent(Config.TWITCH_USER_DESCRIPTIONS_FILE(req, discordGuildID), {});
-	}
 
 	private static getFileContent(path:string, defaultValue:any):any {
 		if(!fs.existsSync(path)) {

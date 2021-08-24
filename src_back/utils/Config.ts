@@ -17,17 +17,9 @@ export default class Config {
 	public static DISCORD_CHANNELS_LISTENED:string = "data/discordChannels.json";
 	public static DISCORD_CHANNELS_ADMINS:string = "data/discordGuilIdToAdmins.json";
 
-	public static TWITCH_USER_NAMES_FILE(req:Request, discordGuildID?:string):string {
+	public static TWITCH_USERS_FILE(req:Request, discordGuildID?:string):string {
 		let profile:string = Utils.getProfile(req, discordGuildID);
 		let path = "data/userList{PROFILE}.json";
-		if(profile) path = path.replace(/\{PROFILE\}/gi, "_"+profile);
-		else        path = path.replace(/\{PROFILE\}/gi, "");
-		return path;
-	}
-
-	public static TWITCH_USER_DESCRIPTIONS_FILE(req:Request, discordGuildID?:string):string {
-		let profile:string = Utils.getProfile(req, discordGuildID);
-		let path = "data/userDescriptions{PROFILE}.json";
 		if(profile) path = path.replace(/\{PROFILE\}/gi, "_"+profile);
 		else        path = path.replace(/\{PROFILE\}/gi, "");
 		return path;

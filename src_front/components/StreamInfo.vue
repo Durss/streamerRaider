@@ -38,7 +38,7 @@
 				</iframe>
 				<div v-if="!lightMode && streamInfos" class="viewersCount">{{streamInfos.viewer_count}} viewers</div>
 			</div>
-			<div class="description" v-if="!lightMode && streamInfos.description && !showLive">{{streamInfos.description}}</div>
+			<div class="description" v-if="!lightMode && streamInfos.rawData.description && !showLive">{{streamInfos.rawData.description}}</div>
 		</div>
 		
 		<!-- RAID BUTTON -->

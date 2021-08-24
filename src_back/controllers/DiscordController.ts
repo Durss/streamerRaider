@@ -184,7 +184,7 @@ ${users.join(", ")}
 !add-description TWITCH_LOGIN DESCRIPTION
 	Ajouter une description à un·e utilisateur/trice twitch
 
-!del-description TWITCH_LOGIN DESCRIPTION
+!del-description TWITCH_LOGIN
 	Supprimer la description d'un·e utilisateur/trice twitch
 \`\`\`
 `);
@@ -276,18 +276,22 @@ ${users.join(", ")}
 
 		//Add or remove the user from the JSON file
 		let users = Utils.getUserList(null, message.guild.id);
-		let userIndex = users.indexOf(login);
-		Logger.info(`Add user: ${login}`);
+		let userIndex = users.findIndex(v => v.name?.toLowerCase() == login?.toLowerCase());
+		Logger.info(`Add/Del user: ${login}`);
 		if( (cmd == "add-user" && userIndex == -1)
 		|| (cmd == "del-user" && userIndex > -1)) {
 			if(cmd == "add-user") {
-				users.push(login);
+				users.push({
+					name: login,
+					created_at: Date.now(),
+				});
 				message.reply("Le compte Twitch **\""+login+"\"** a bien été ajouté à la liste.");
 			}else{
 				users.splice(userIndex, 1);
 				message.reply("Le compte Twitch **\""+login+"\"** a bien été supprimé de la liste.");
 			}
-			fs.writeFileSync(Config.TWITCH_USER_NAMES_FILE(null, message.guild.id), JSON.stringify(users));
+			fs.writeFileSync(Config.TWITCH_USERS_FILE(null, message.guild.id), JSON.stringify(users));
+			APIController.invalidateCache();
 		}else{
 			if(cmd == "add-user") {
 				message.reply("Le compte Twitch **\""+login+"\"** est déjà ajouté à la liste.");
@@ -307,15 +311,13 @@ ${users.join(", ")}
 	private async addDelDescription(message:Discord.Message, chunks:string[]):Promise<void> {
 		if(!this.isWatchingChannel(message)) return;
 
-		let cmd = chunks[0];
-
 		//Check if twitch user actually exists
 		let login = chunks[1];
 		try {
 			let result = await TwitchUtils.loadChannelsInfo([login]);
 			let json = await result.json();
 			if(json.data.length == 0) {
-				message.reply("Le compte Twitch **\""+login+"\"** n'existe pas.");
+				message.reply("Le compte Twitch **\""+login+"\"** n'existe pas. Voici ce qque tu dois m'envoyer : `!add-description TWITCH_LOGIN DESCRIPTION`");
 				return;
 			}
 		}catch(error) {
@@ -324,17 +326,34 @@ ${users.join(", ")}
 		}
 
 		//Add or remove the description from the JSON file
-		let descriptions = Utils.getUserDescriptions(null, message.guild.id);
-		Logger.info(`Add description: ${login}`);
+		let users = Utils.getUserList(null, message.guild.id);
+		let userIndex = users.findIndex(v => v.name?.toLowerCase() == login?.toLowerCase());
+
+		if(userIndex == -1) {
+			//User not found on local DB
+			message.reply("Le compte **\""+login+"\"** n'est pas enregistré. Commence par l'ajouter via cette commande : `!user-add "+login+"`");
+			return;
+		}
+
+		let cmd = chunks[0];
 		if(cmd == "add-description") {
-			descriptions[login] = chunks.splice(2).join(" ");
-			message.reply("La description a bien été enregistrée pour le compte **\""+login+"\"**.");
+			Logger.info(`Add description: ${login}`);
+			//Add description to user
+			let description = chunks.splice(2).join(" ");
+			if(description?.length > 0) {
+				users[userIndex].description = description;
+				message.reply("La description a bien été enregistrée pour le compte **\""+login+"\"**.");
+			}else{
+				message.reply("Il faut me donner ta description comme ceci : `!add-description "+login+" DESCRIPTION`");
+			}
 		}else{
-			delete descriptions[login];
+			Logger.info(`Delete description: ${login}`);
+			//Delete description from user
+			delete users[userIndex].description;
 			message.reply("La description a bien été supprimée pour le compte **\""+login+"\"**.");
 		}
-		fs.writeFileSync(Config.TWITCH_USER_DESCRIPTIONS_FILE(null, message.guild.id), JSON.stringify(descriptions));
-		APIController.invalidateDescriptionCache();
+		fs.writeFileSync(Config.TWITCH_USERS_FILE(null, message.guild.id), JSON.stringify(users));
+		APIController.invalidateCache();
 	}
 
 }

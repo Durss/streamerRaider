@@ -4,6 +4,7 @@ import fetch, { Response as FetchResponse } from "node-fetch";
 import Config from "../utils/Config";
 import Logger from "../utils/Logger";
 import TwitchUtils from "../utils/TwitchUtils";
+import UserData from "../utils/UserData";
 import Utils from "../utils/Utils";
 
 /**
@@ -12,8 +13,8 @@ import Utils from "../utils/Utils";
 export default class APIController {
 
 	private _app:Express;
-	private _descriptionsCaches:{[key:string]:{[key:string]:string}} = {};
-	private static _DESCRIPTION_CACHE_INVALIDATED:boolean;
+	private _usersCache:{[key:string]:UserData[]} = {};
+	private static _CACHE_INVALIDATED:boolean;
 	
 	constructor() {
 		this.initialize();
@@ -69,8 +70,8 @@ export default class APIController {
 		this._app.delete("/api/description", (req:Request, res:Response) => this.deleteUserDescription(req,res));
 	}
 
-	public static invalidateDescriptionCache():void {
-		this._DESCRIPTION_CACHE_INVALIDATED = true;
+	public static invalidateCache():void {
+		this._CACHE_INVALIDATED = true;
 	}
 	
 	
@@ -138,11 +139,14 @@ export default class APIController {
 	private async postUser(req:Request, res:Response):Promise<void> {
 		let login = (<string>req.query.login)?.toLowerCase();
 		let users = Utils.getUserList(req);
-		let userIndex = users.indexOf(login);
+		let userIndex = users.findIndex(v => v.name?.toLowerCase() == login?.toLowerCase());
 		Logger.info(`Add user: ${login}`);
 		if(userIndex == -1) {
-			users.push(login);
-			fs.writeFileSync(Config.TWITCH_USER_NAMES_FILE(req), JSON.stringify(users));
+			users.push({
+				name:login,
+				created_at:Date.now(),
+			});
+			fs.writeFileSync(Config.TWITCH_USERS_FILE(req), JSON.stringify(users));
 			res.status(200).send(JSON.stringify({success:true, data:users}));
 		}else{
 			Logger.warn(`User ${login} already added`);
@@ -158,12 +162,12 @@ export default class APIController {
 	 */
 	private async deleteUser(req:Request, res:Response):Promise<void> {
 		let login = (<string>req.query.login)?.toLowerCase();
-		let users:string[] = Utils.getUserList(req);
-		let userIndex = users.indexOf(login);
+		let users = Utils.getUserList(req);
+		let userIndex = users.findIndex(v => v.name?.toLowerCase() == login?.toLowerCase());
 		Logger.info(`Delete user: ${login}`);
 		if(userIndex > -1) {
 			users.splice(userIndex, 1);
-			fs.writeFileSync(Config.TWITCH_USER_NAMES_FILE(req), JSON.stringify(users));
+			fs.writeFileSync(Config.TWITCH_USERS_FILE(req), JSON.stringify(users));
 			res.status(200).send(JSON.stringify({success:true, data:users}));
 		}else{
 			Logger.warn(`User ${login} not found`);
@@ -179,9 +183,10 @@ export default class APIController {
 	 */
 	private async getUserDescription(req:Request, res:Response):Promise<void> {
 		let login = (<string>req.query.login)?.toLowerCase();
-		let descriptions = this.getDescriptionCache(req);
-		if(descriptions && descriptions[ login ]) {
-			res.status(200).send(descriptions[ login ]);
+		let users = this.getCachedUserList(req);
+		let userIndex = users.findIndex(v => v.name?.toLowerCase() == login?.toLowerCase());
+		if(users && userIndex > -1) {
+			res.status(200).send(users.find(v => v.name == login).description);
 		}else{
 			res.status(404).send("");
 		}
@@ -199,12 +204,13 @@ export default class APIController {
 		if(!description) description = <string>req.body.description;
 		Logger.info(`Add user description: ${login}`);
 		if(description) {
-			let descriptions:{[key:string]:string} = this.getDescriptionCache(req);
-			descriptions[login] = description;
+			let users = this.getCachedUserList(req);
+			let userIndex = users.findIndex(v => v.name?.toLowerCase() == login?.toLowerCase());
+			users[userIndex].description = description;
 			let profile:string = Utils.getProfile(req);
-			this._descriptionsCaches[profile] = descriptions;
-			fs.writeFileSync(Config.TWITCH_USER_DESCRIPTIONS_FILE(req), JSON.stringify(descriptions));
-			res.status(200).send(JSON.stringify({success:true, data:descriptions}));
+			this._usersCache[profile] = users;
+			fs.writeFileSync(Config.TWITCH_USERS_FILE(req), JSON.stringify(users));
+			res.status(200).send(JSON.stringify({success:true, data:users[userIndex]}));
 		}else{
 			Logger.warn(`Missing description param`);
 			res.status(200).send(JSON.stringify({success:false, error:"Missing \"description\" parameter", error_code:"MISSING_DESCRIPTION"}));
@@ -219,14 +225,15 @@ export default class APIController {
 	 */
 	private async deleteUserDescription(req:Request, res:Response):Promise<void> {
 		let login = (<string>req.query.login)?.toLowerCase();
-		let descriptions:{[key:string]:string} = this.getDescriptionCache(req);
+		let users = this.getCachedUserList(req);
+		let userIndex = users.findIndex(v => v.name?.toLowerCase() == login?.toLowerCase());
 		Logger.info(`Delete user description: ${login}`);
-		if(descriptions[login]) {
-			delete descriptions[login];
+		if(userIndex > -1) {
+			delete users[userIndex].description;
 			let profile:string = Utils.getProfile(req);
-			this._descriptionsCaches[profile] = descriptions;
-			fs.writeFileSync(Config.TWITCH_USER_DESCRIPTIONS_FILE(req), JSON.stringify(descriptions));
-			res.status(200).send(JSON.stringify({success:true, data:descriptions}));
+			this._usersCache[profile] = users;
+			fs.writeFileSync(Config.TWITCH_USERS_FILE(req), JSON.stringify(users));
+			res.status(200).send(JSON.stringify({success:true, data:users}));
 		}else{
 			Logger.warn(`User ${login} not found`);
 			res.status(200).send(JSON.stringify({success:false, error:"DNo description found for this user", error_code:"USER_NOT_FOUND"}));
@@ -246,7 +253,7 @@ export default class APIController {
 		let result = [];
 		let batchSize = 100;
 		do {
-			let list = channels.splice(0,batchSize);
+			let list = channels.splice(0,batchSize).map(v => v.name);
 			try {
 				let channelRequest = await TwitchUtils.loadChannelsInfo(list);
 				let channelJson = await channelRequest.json();
@@ -254,12 +261,13 @@ export default class APIController {
 				result = result.concat(channelDetails);
 
 				let jsonStreams = await TwitchUtils.getStreamsInfos(list);
-				let descs = this.getDescriptionCache(req);
+				let users = this.getCachedUserList(req);
 				//Inject descriptions for users that specified it
 				for (let i = 0; i < jsonStreams.data.length; i++) {
 					const el = jsonStreams.data[i];
-					if(descs[el.user_login.toLowerCase()]) { 
-						el.description = descs[el.user_login.toLowerCase()];
+					let userIndex = users.findIndex(v => v.name.toLowerCase() == el.user_login.toLowerCase());
+					if(userIndex > -1) {
+						el.rawData = users[userIndex];
 					}
 					for (let j = 0; j < channelDetails.length; j++) {
 						const c = channelDetails[j];
@@ -300,17 +308,17 @@ export default class APIController {
 	/**
 	 * Gets a description from cache
 	 */
-	private getDescriptionCache(req:Request):{[key:string]:string} {
+	private getCachedUserList(req:Request):UserData[] {
 		let profile:string = Utils.getProfile(req);
-		if(APIController._DESCRIPTION_CACHE_INVALIDATED) {
-			this._descriptionsCaches[profile] = null;
-			APIController._DESCRIPTION_CACHE_INVALIDATED = false;
+		if(APIController._CACHE_INVALIDATED) {
+			this._usersCache[profile] = null;
+			APIController._CACHE_INVALIDATED = false;
 		}
-		if(!this._descriptionsCaches[profile]) {
-			let descriptions:{[key:string]:string} = Utils.getUserDescriptions(req);
-			this._descriptionsCaches[profile] = descriptions;
+		if(!this._usersCache[profile]) {
+			let users = Utils.getUserList(req);
+			this._usersCache[profile] = users;
 		}
-		return this._descriptionsCaches[profile];
+		return this._usersCache[profile];
 	}
 
 }
