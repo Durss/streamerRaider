@@ -17,7 +17,7 @@ export default class Config {
 	public static AVAILABLE_PROFILES_LIST: string = "data/dnsToProfile.json";
 	public static DISCORD_CHANNELS_LISTENED:string = "data/discordChannels.json";
 	public static DISCORD_CHANNELS_ADMINS:string = "data/discordGuilIdToAdmins.json";
-	public static APP_VERSION:number = 1;
+	public static STREAMERS_CACHE_DURATION:number = 10;
 
 	public static TWITCH_USERS_FILE(req:Request, discordGuildID?:string):string {
 		let profile:string = Utils.getProfile(req, discordGuildID);

@@ -109,6 +109,7 @@ export default class StreamInfo extends Vue {
 		if(this.showLive) res.push("expand");
 		if(this.small !== false) res.push("small");
 		if(this.lightMode !== false) res.push("light");
+		if(this.isNewUser !== false) res.push("isNew");
 		return res;
 	}
 
@@ -178,6 +179,16 @@ export default class StreamInfo extends Vue {
 					width: calc(340px * @ratio);
 					height: calc(190px * @ratio);
 				}
+			}
+		}
+	}
+
+	&.isNew {
+		background-color: mix(@mainColor_dark_light, @mainColor_warn_light, 80%);
+		.head {
+			background-color: mix(@mainColor_dark_extralight, @mainColor_warn, 50%);
+			.name {
+				color: @mainColor_normal_extralight;
 			}
 		}
 	}

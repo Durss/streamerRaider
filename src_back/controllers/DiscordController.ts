@@ -47,14 +47,14 @@ export default class DiscordController {
 			this.adminsCache = JSON.parse(fs.readFileSync(Config.DISCORD_CHANNELS_ADMINS, "utf8"));
 		}
 
-		this.client = new Discord.Client();
+		this.client = new Discord.Client({ intents: [Discord.Intents.FLAGS.GUILD_MESSAGES, Discord.Intents.FLAGS.GUILDS, Discord.Intents.FLAGS.DIRECT_MESSAGES] });
 		try {
 			await this.client.login(this.BOT_TOKEN);
 		}catch(error) {
 			Logger.error("Invalid discord token !");
 		}
 
-		this.client.on("message", (message) => this.onMessage(message));
+		this.client.on("messageCreate", (message) => this.onMessage(message));
 
 		this.client.on("ready", ()=> this.onReady());
 
@@ -84,7 +84,7 @@ export default class DiscordController {
 	 */
 	private async onMessage(message:Discord.Message):Promise<void> {
 		if (message.author.bot) return;
-		if (message.channel.type == "dm") return
+		if (message.channel.type == "DM") return
 		
 		if(message.content.indexOf("!") == 0) this.parseCommand(message);
 		
@@ -95,7 +95,7 @@ export default class DiscordController {
 	 * @param member 
 	 */
 	private onAddMember(member:Discord.GuildMember | Discord.PartialGuildMember) {
-		console.log("New member ! ", member.lastMessageChannelID);
+		// console.log("New member ! ", member);
 		// console.log(member.guild.channels)
 		// console.log(member)
 		// member.guild.channels.cache.find((c) => c.name == "general").send("Hello <@"+member.id+"> ! ");
@@ -146,7 +146,7 @@ export default class DiscordController {
 					message.channel.send(`Il n'y a actuellement personne d'enregistré.`);
 				}else{
 					message.channel.send(`Il y a actuellement ${users.length} personnes enregistrées :\`\`\`
-${users.join(", ")}
+${users.map(v => v.name).join(", ")}
 \`\`\``);
 				}
 				break;

@@ -481,4 +481,16 @@ export default class Utils  {
 		}
 		return JSON.parse(fs.readFileSync(path, "utf8"));
 	}
+
+	/**
+	 * Gets the user's IP address
+	 * 
+	 * @param request
+	 */
+	public static getIpFromRequest(request:Request):string {
+		let ip :string = <string>request.headers['x-forwarded-for'];
+		if(!ip && request.ip) ip = request.ip;
+		if((ip == "127.0.0.1" && Config.envName == "prod") || !ip) Logger.warn("No IP detected ! If behind a proxy, make sure you enabled 'x-forwarded-for' header on the proxy !")
+		return ip;
+	}
 }

@@ -14,6 +14,7 @@ export default class APIController {
 
 	private _app:Express;
 	private _usersCache:{[key:string]:UserData[]} = {};
+	private _streamInfosCache:{expires_at:number, data:any} = null;
 	private static _CACHE_INVALIDATED:boolean;
 	
 	constructor() {
@@ -37,6 +38,8 @@ export default class APIController {
 		//==============
 		//Get all users of current profile
 		this._app.get("/api/user_names", (req:Request, res:Response) => this.getUserNames(req,res));
+		//Get all users of current profile
+		this._app.get("/api/user_list", (req:Request, res:Response) => this.getUserList(req,res));
 		//Get description of a specific user
 		this._app.get("/api/description", (req:Request, res:Response) => this.getUserDescription(req,res));
 		
@@ -121,6 +124,22 @@ export default class APIController {
 	 * @param res 
 	 */
 	private async getUserNames(req:Request, res:Response):Promise<void> {
+		let users;
+		try {
+			users = Utils.getUserList(req).map(user => user.name);
+		}catch(err){
+			users = [];
+		}
+		res.status(200).send(JSON.stringify({success:true, data:users}));
+	}
+
+	/**
+	 * Gets all user infos
+	 * 
+	 * @param req 
+	 * @param res 
+	 */
+	private async getUserList(req:Request, res:Response):Promise<void> {
 		let users;
 		try {
 			users = Utils.getUserList(req);
@@ -249,6 +268,20 @@ export default class APIController {
 	 */
 	private async getStreamInfos(req:Request, res:Response):Promise<void> {
 		// let channels:string = <string>req.query.channels;
+		let expireDuration = (Date.now() - this._streamInfosCache?.expires_at) / 1000;
+		let timeLeft = Config.STREAMERS_CACHE_DURATION - expireDuration;
+		console.log(">", timeLeft);
+		if(timeLeft <= 0) {
+			this._streamInfosCache = null;//Force cache refresh
+		}
+
+		if(this._streamInfosCache) {
+			console.log("load from cache");
+			res.header("Cache-Control", "max-age="+Math.ceil(timeLeft));
+			res.status(200).send(JSON.stringify({success:true, data:this._streamInfosCache.data}));
+			return;
+		}
+
 		let userList = this.getCachedUserList(req);
 		let userListRef = userList.concat();
 		let result = [];
@@ -278,6 +311,13 @@ export default class APIController {
 				res.status(500).send(error);
 			}
 		}while(userList.length > 0);
+
+		this._streamInfosCache = {
+			expires_at:Date.now(),
+			data:result,
+		};
+
+		res.header("Cache-Control", "max-age="+Math.ceil(Config.STREAMERS_CACHE_DURATION));
 		res.status(200).send(JSON.stringify({success:true, data:result}));
 	}
 

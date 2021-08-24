@@ -1,24 +1,24 @@
 import * as historyApiFallback from 'connect-history-api-fallback';
 import { SHA256 } from "crypto-js";
 import * as express from "express";
-import { Express, NextFunction, Request, Response } from "express-serve-static-core";
-import * as http from "http";
+import { Express, NextFunction, Request, Response } from "express";
 import * as fs from "fs";
-import * as path from "path";
+import * as http from "http";
 import APIController from '../controllers/APIController';
 import DiscordController from '../controllers/DiscordController';
 import Config from '../utils/Config';
 import Logger, { LogStyle } from '../utils/Logger';
 import TwitchUtils from '../utils/TwitchUtils';
-import Utils from "../utils/Utils"
 import UserData from '../utils/UserData';
+import Utils from "../utils/Utils";
+import * as rateLimit from "express-rate-limit";
+import * as speedLimit from "express-slow-down";
 
 export default class HTTPServer {
 
 	private app:Express;
 
 	constructor(public port:number) {
-
 		this.app = <Express>express();
 		let server = http.createServer(<any>this.app);
 		server.listen(Config.SERVER_PORT, '0.0.0.0', null, ()=> {
@@ -81,6 +81,8 @@ export default class HTTPServer {
 			
 			next();
 		});
+		
+		this.initAntiSpam();
 
 		//SERVE PUBLIC FILES
 		this.app.use("/", express.static(Config.PUBLIC_PATH));
@@ -206,5 +208,44 @@ export default class HTTPServer {
 		if(hasMigrated) {
 			Logger.success("Migration complete");
 		}
+	}
+
+	/**
+	 * Init rate and speed limiter to reduce spam possibilities
+	 */
+	private initAntiSpam():void {
+		this.app.set('trust proxy', 1);
+		this.app.enable('trust proxy');
+
+		const speedLimiter = speedLimit({
+			windowMs: 1 * 1000, // time frame
+			delayAfter: 5, //max requests per windowMs time frame
+			delayMs:500,
+			skip:(req:Request, res:Response)=> {
+				return req.method == "OPTIONS" || req.ip == "127.0.0.1";//No restrictions when testing locally
+			},
+			keyGenerator: (req:Request, res:Response)=> { return Utils.getIpFromRequest(req); },
+			onLimitReached:(req:speedLimit.RequestWithSlowDown, res:Response, options:any)=> {
+				Logger.info("Speed limit request ", req.url);
+			}
+		});
+
+		const rateLimiter = rateLimit({
+			windowMs: 1 * 60 * 1000, // time frame
+			max: 60, //max requests per windowMs time frame
+			skip:(req:Request, res)=> {
+				return req.method == "OPTIONS" || req.ip == "127.0.0.1";//No restrictions when testing locally
+			},
+			keyGenerator: (req:Request, res:Response)=> { return Utils.getIpFromRequest(req); },
+			handler:(req:Request, res:Response, next:NextFunction)=> {
+				let status = (<any>req).rateLimit;
+				Logger.info("Rate limit reached ! ", status.current+"/"+status.limit)
+				let duration = (<Date>status.resetTime).getTime() - new Date().getTime();
+				res.status(429).send(JSON.stringify({success:false, error:"TOO_MANY_REQUESTS", retryAfter:duration}));
+			},
+		});
+		
+		this.app.use("/api/", rateLimiter);
+		this.app.use("/api/", speedLimiter);
 	}
 }
