@@ -52,6 +52,7 @@ export default class DiscordController {
 			await this.client.login(this.BOT_TOKEN);
 		}catch(error) {
 			Logger.error("Invalid discord token !");
+			console.log(error);
 		}
 
 		this.client.on("messageCreate", (message) => this.onMessage(message));
@@ -83,11 +84,12 @@ export default class DiscordController {
 	 * @param message 
 	 */
 	private async onMessage(message:Discord.Message):Promise<void> {
+		// console.log("Message received : ", message.author.bot, message.channel.type, message.content);
+		
 		if (message.author.bot) return;
 		if (message.channel.type == "DM") return
 		
 		if(message.content.indexOf("!") == 0) this.parseCommand(message);
-		
 	}
 
 	/**

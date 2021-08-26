@@ -26,6 +26,7 @@
 				<div class="category" v-if="streamInfos.game_name && !lightMode">{{streamInfos.game_name}}</div>
 				<div class="duration">{{streamDuration}}</div>
 			</div>
+			
 			<div class="preview" @mouseenter="hoverItem()" v-if="!lightMode">
 				<div class="streamImage" v-if="!showLive"><img :src="previewUrl"></div>
 				<iframe
@@ -38,16 +39,17 @@
 				</iframe>
 				<div v-if="!lightMode && streamInfos" class="viewersCount">{{streamInfos.viewer_count}} viewers</div>
 			</div>
+
 			<div class="description" v-if="!lightMode && userInfos.rawData.description && !showLive">{{userInfos.rawData.description}}</div>
-		</div>
 		
-		<!-- RAID BUTTON -->
-		<Button v-if="streamInfos && !isSelf"
-			:title="'Raid '"
-			class="raid"
-			@click="startRaid()"
-			:disabled="!canRaid"
-			:data-tooltip="connected? null : 'Connecte toi en haut de page pour lancer un raid chez '+userName" />
+			<!-- RAID BUTTON -->
+			<Button v-if="streamInfos && !isSelf"
+				:title="'Raid '"
+				class="raid"
+				@click="startRaid()"
+				:disabled="!canRaid"
+				:data-tooltip="connected? null : 'Connecte toi en haut de page pour lancer un raid chez '+userName" />
+		</div>
 		
 		<div class="newUser" v-if="isNewUser">NEW</div>
 	</div>
@@ -238,13 +240,15 @@ export default class StreamInfo extends Vue {
 					right: 0;
 					border-radius: 0;
 					border-top-left-radius: 7px;
+					position: absolute;
+					bottom: 0;
+					right: 0;
 				}
 			}
-		}
-		.raid {
-			font-size: 15px;
-			padding: 5px 20px;
-			margin-bottom: 10px;
+			.raid {
+				font-size: 15px;
+				padding: 5px 20px;
+			}
 		}
 
 		.newUser {
@@ -377,12 +381,13 @@ export default class StreamInfo extends Vue {
 				position: absolute;
 			}
 		}
-	}
 
-	.raid {
-		padding-left: 50px;
-		padding-right: 50px;
-		margin-bottom: 20px;
+		.raid {
+			padding-left: 50px;
+			padding-right: 50px;
+			margin: 0 auto;
+			margin-top: 10px;
+		}
 	}
 
 	.newUser {
