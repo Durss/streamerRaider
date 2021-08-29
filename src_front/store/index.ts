@@ -93,7 +93,7 @@ export default new Vuex.Store({
 		
 		resetBotConfig(state, clearStorage) {
 			state.botCommand = "!so";
-			state.botText = "Allez follow www.twitch.tv/{PSEUDO} dont voici une description : {DESCRIPTION}";
+			state.botText = "Allez follow twitch.tv/{PSEUDO} dont voici une description : {DESCRIPTION}";
 			state.botDescriptionFallback = true;
 			state.botRoles = ["moderator"];
 			if(clearStorage === true) {

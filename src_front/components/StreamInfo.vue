@@ -48,7 +48,7 @@
 				class="raid"
 				@click="startRaid()"
 				:disabled="!canRaid"
-				:data-tooltip="connected? null : 'Connecte toi en haut de page pour lancer un raid chez '+userName" />
+				:data-tooltip="connected? null : 'Connecte toi en haut de page pour lancer un raid en un clic chez '+userName" />
 		</div>
 		
 		<div class="newUser" v-if="isNewUser">NEW</div>
