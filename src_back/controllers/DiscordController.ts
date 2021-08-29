@@ -245,7 +245,6 @@ ${users.map(v => v.name).join(", ")}
 	 * @returns 
 	 */
 	private isGuildValid(message:Discord.Message):boolean {
-		Utils.getProfile(null, message.guild.id)
 		return this.watchListCache[message.guild.id]?.indexOf(message.channel.id) > -1;
 	}
 

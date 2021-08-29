@@ -433,10 +433,10 @@ export default class Utils  {
 				this.profileCache = JSON.parse(fs.readFileSync(Config.AVAILABLE_PROFILES_LIST, "utf8"));
 			}catch(error) {
 				Logger.error("Unable to parse JSON file: "+Config.AVAILABLE_PROFILES_LIST);
-				return "default";
+				return null;
 			}
 		}
-		let profile:string = "default";
+		let profile:string = null;
 		//Check if domain matches a profile
 		if(req?.hostname) {
 			profile = req.hostname;
