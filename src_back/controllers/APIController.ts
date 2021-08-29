@@ -301,15 +301,15 @@ export default class APIController {
 				let channelJson = await channelRequest.json();
 				let channelsInfos = channelJson.data;
 				result = result.concat(channelsInfos);
-
+				
 				let jsonStreams = await TwitchUtils.getStreamsInfos(null, list);
 				//Inject local user infos to data
 				for (let j = 0; j < channelsInfos.length; j++) {
 					const c = channelsInfos[j];
-					let userIndex = userListRef.findIndex(v => v.id.toLowerCase() == c.id.toLowerCase());
+					let userIndex = userListRef.findIndex(v => v.id == c.id);
 					c.rawData = userListRef[userIndex];
 
-					let streamindex = jsonStreams.data.findIndex(v => v.id.toLowerCase() == c.id.toLowerCase());
+					let streamindex = jsonStreams.data.findIndex(v => v.user_id == c.id);
 					if(userIndex > -1) {
 						c.streamInfos = jsonStreams.data[streamindex];
 					}
