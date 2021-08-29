@@ -295,28 +295,30 @@ export default class APIController {
 		let result = [];
 		let batchSize = 100;
 		do {
-			let list = userList.splice(0,batchSize).map(v => v.name);
+			let list = userList.splice(0,batchSize).map(v => v.id);
 			try {
-				let channelRequest = await TwitchUtils.loadChannelsInfo(list);
+				let channelRequest = await TwitchUtils.loadChannelsInfo(null, list);
 				let channelJson = await channelRequest.json();
 				let channelsInfos = channelJson.data;
 				result = result.concat(channelsInfos);
 
-				let jsonStreams = await TwitchUtils.getStreamsInfos(list);
+				let jsonStreams = await TwitchUtils.getStreamsInfos(null, list);
 				//Inject local user infos to data
 				for (let j = 0; j < channelsInfos.length; j++) {
 					const c = channelsInfos[j];
-					let userIndex = userListRef.findIndex(v => v.name.toLowerCase() == c.display_name.toLowerCase());
+					let userIndex = userListRef.findIndex(v => v.id.toLowerCase() == c.id.toLowerCase());
 					c.rawData = userListRef[userIndex];
 
-					let streamindex = jsonStreams.data.findIndex(v => v.user_name.toLowerCase() == c.display_name.toLowerCase());
+					let streamindex = jsonStreams.data.findIndex(v => v.id.toLowerCase() == c.id.toLowerCase());
 					if(userIndex > -1) {
 						c.streamInfos = jsonStreams.data[streamindex];
 					}
-			}
+				}
 			}catch(error){
+				Logger.error("Error while loading channels infos")
 				console.log(error);
 				res.status(500).send(error);
+				return;
 			}
 		}while(userList.length > 0);
 

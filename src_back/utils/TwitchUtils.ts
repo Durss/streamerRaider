@@ -56,12 +56,19 @@ export default class TwitchUtils {
 		}
 	}
 
-	public static async loadChannelsInfo(logins:string[], ids?:string[]):Promise<FetchResponse> {
+	public static async loadChannelsInfo(logins:string[], ids?:string[], failSafe:boolean = true):Promise<FetchResponse> {
 		await this.getClientCredentialToken();//This will refresh the token if necessary
 
 		if(logins?.length > 100 || ids?.length > 100) {
 			Logger.warn("You cannot load more than 100 profiles at once !");
 			throw("You cannot load more than 100 profiles at once !");
+		}
+
+		if(ids) {
+			ids = ids.filter(v => v != null && v != undefined);
+		}
+		if(logins) {
+			logins = logins.filter(v => v != null && v != undefined);
 		}
 		
 		let params = logins ? "login="+logins.join("&login=") : "id="+ids.join("&id=");
@@ -75,14 +82,27 @@ export default class TwitchUtils {
 		});
 		//Token seem to expire before it's actual EOL date.
 		//Make sure here the next request will work.
-		if(result.status == 401) this.getClientCredentialToken(true);
+		if(result.status == 401) {
+			this.getClientCredentialToken(true);
+			if(failSafe) {
+				return await this.loadChannelsInfo(logins, ids, false);
+			}
+		}
 		return result;
 	}
 
-	public static async getStreamsInfos(channels:string[]):Promise<any> {
+	public static async getStreamsInfos(logins:string[], ids?:string[], failSafe:boolean = true):Promise<any> {
 		await this.getClientCredentialToken();//This will refresh the token if necessary
 
-		let url = "https://api.twitch.tv/helix/streams?user_login="+channels.join("&user_login=");
+		if(ids) {
+			ids = ids.filter(v => v != null && v != undefined);
+		}
+		if(logins) {
+			logins = logins.filter(v => v != null && v != undefined);
+		}
+
+		let params = logins ? "user_login="+logins.join("&user_login=") : "user_id="+ids.join("&user_id=");
+		let url = "https://api.twitch.tv/helix/streams?"+params;
 		
 		let result = await fetch(url, {
 			headers:{
@@ -95,7 +115,12 @@ export default class TwitchUtils {
 		if(result.status != 200) {
 			//Token seem to expire before it's actual EOL date.
 			//Make sure here the next request will work.
-			if(result.status == 401) this.getClientCredentialToken(true);
+			if(result.status == 401) {
+				this.getClientCredentialToken(true);
+				if(failSafe) {
+					return await this.getStreamsInfos(logins, ids, false);
+				}
+			}
 			let txt = await result.text();
 			throw(txt);
 		}else{

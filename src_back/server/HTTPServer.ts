@@ -222,6 +222,8 @@ export default class HTTPServer {
 			if(!/userList(_.*?)?\.json/gi.test(files[i])) continue;
 			let users = JSON.parse(fs.readFileSync(root + files[i], "utf8"));
 			if(users.length == 0) continue;
+			//Check if file is already migrated
+			if(users[0].id != undefined) continue;
 
 			let twitchUsersReq = await TwitchUtils.loadChannelsInfo(users.map(u => u.name));
 			let twitchUsers = (await twitchUsersReq.json()).data;
