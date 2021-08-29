@@ -264,6 +264,7 @@ ${users.map(v => v.name).join(", ")}
 
 		//Check if twitch user actually exists
 		let login = chunks[1];
+		let twitchUser;
 		try {
 			let result = await TwitchUtils.loadChannelsInfo([login]);
 			let json = await result.json();
@@ -271,6 +272,7 @@ ${users.map(v => v.name).join(", ")}
 				message.reply("Le compte Twitch **\""+login+"\"** n'existe pas.");
 				return;
 			}
+			twitchUser = json.data[0];
 		}catch(error) {
 			message.reply("Woops... y a eu une erreur pas prévue :(");
 			return;
@@ -278,13 +280,14 @@ ${users.map(v => v.name).join(", ")}
 
 		//Add or remove the user from the JSON file
 		let users = Utils.getUserList(null, message.guild.id);
-		let userIndex = users.findIndex(v => v.name?.toLowerCase() == login?.toLowerCase());
+		let userIndex = users.findIndex(v => v.id == twitchUser.id);
 		Logger.info(`Add/Del user: ${login}`);
 		if( (cmd == "add-user" && userIndex == -1)
 		|| (cmd == "del-user" && userIndex > -1)) {
 			if(cmd == "add-user") {
 				users.push({
-					name: login,
+					id:twitchUser.id,
+					name:twitchUser.display_name,
 					created_at: Date.now(),
 				});
 				message.reply("Le compte Twitch **\""+login+"\"** a bien été ajouté à la liste.");

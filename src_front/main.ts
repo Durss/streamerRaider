@@ -51,8 +51,6 @@ IRCClient.instance.addEventListener(IRCEvent.MESSAGE, async (event:IRCEvent)=> {
 		//User not allowed, stop there !
 		if(!allowed) return;
 
-		console.log("DO SHOUTOU");
-
 		//User allowed, execute shoutout
 		let description:string;
 		let login = chunks[1];

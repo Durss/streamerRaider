@@ -52,7 +52,7 @@ export default class APIController {
 		this._app.get("/api/private/profile/list", (req:Request, res:Response) => this.getProfileList(req,res));
 		//Get twitch app client ID
 		this._app.get("/api/private/client_id", (req:Request, res:Response) => this.getClientID(req,res));
-		//Get a twitch user info
+		//Get a twitch user info (used by shoutout bot)
 		this._app.get("/api/private/user_infos", (req:Request, res:Response) => this.getUserInfos(req,res));
 		//Get stream infos for current profile
 		this._app.get("/api/private/stream_infos", (req:Request, res:Response) => this.getStreamInfos(req,res));
@@ -161,12 +161,21 @@ export default class APIController {
 		let userIndex = users.findIndex(v => v.name?.toLowerCase() == login?.toLowerCase());
 		Logger.info(`Add user: ${login}`);
 		if(userIndex == -1) {
-			users.push({
-				name:login,
-				created_at:Date.now(),
-			});
-			fs.writeFileSync(Config.TWITCH_USERS_FILE(req), JSON.stringify(users));
-			res.status(200).send(JSON.stringify({success:true, data:users}));
+			let twitchUserReq = await TwitchUtils.loadChannelsInfo([login]);
+			let twitchUserData = await twitchUserReq.json();
+			if(twitchUserData.data.length == 0) {
+				//User not found on twitch
+				res.status(500).send(JSON.stringify({success:false, message:"Twitch user "+login+" not found", error:"TWITCH_USER_NOT_FOUND"}));
+			}else{
+				//User found on twitch, save it
+				users.push({
+					id:twitchUserData.data[0].id,
+					name:twitchUserData.data[0].display_name,
+					created_at:Date.now(),
+				});
+				fs.writeFileSync(Config.TWITCH_USERS_FILE(req), JSON.stringify(users));
+				res.status(200).send(JSON.stringify({success:true, data:users}));
+			}
 		}else{
 			Logger.warn(`User ${login} already added`);
 			res.status(200).send(JSON.stringify({success:false, error:"User already added", error_code:"USER_ALREADY_ADDED"}));

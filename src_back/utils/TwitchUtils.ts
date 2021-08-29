@@ -1,5 +1,6 @@
 import fetch, { Response as FetchResponse } from "node-fetch";
 import Config from "./Config";
+import Logger from "./Logger";
 
 /**
 * Created : 08/07/2021 
@@ -55,11 +56,16 @@ export default class TwitchUtils {
 		}
 	}
 
-	public static async loadChannelsInfo(channels:string[]):Promise<FetchResponse> {
+	public static async loadChannelsInfo(logins:string[], ids?:string[]):Promise<FetchResponse> {
 		await this.getClientCredentialToken();//This will refresh the token if necessary
 
-		let url = "https://api.twitch.tv/helix/users?login="+channels.join("&login=");
-		// let url = "https://api.twitch.tv/helix/users?login="+user;
+		if(logins?.length > 100 || ids?.length > 100) {
+			Logger.warn("You cannot load more than 100 profiles at once !");
+			throw("You cannot load more than 100 profiles at once !");
+		}
+		
+		let params = logins ? "login="+logins.join("&login=") : "id="+ids.join("&id=");
+		let url = "https://api.twitch.tv/helix/users?"+params;
 		let result = await fetch(url, {
 			headers:{
 				"Client-ID": Config.TWITCHAPP_CLIENT_ID,

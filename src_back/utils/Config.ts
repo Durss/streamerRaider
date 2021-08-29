@@ -73,7 +73,7 @@ export default class Config {
 		return this._ENV_NAME;
 	}
 
-	public static get ROOT_FOLDER(): string {
+	public static get DATA_FOLDER(): string {
 		return this.getEnvData({
 			dev: path.join( path.dirname(require.main.filename), "../data/"),
 			prod: path.join( path.dirname(require.main.filename), "/data/"),

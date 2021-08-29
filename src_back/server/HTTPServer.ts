@@ -166,7 +166,8 @@ export default class HTTPServer {
 	 * Creates API endpoints
 	 */
 	private async createEndpoints():Promise<void> {
-		this.migrateData();
+		this.migrateFileStructures();
+		this.migrateUserNamesToIDs();
 		new APIController().create(this.app);
 		new DiscordController().create(this.app);
 	}
@@ -177,8 +178,8 @@ export default class HTTPServer {
 	 * This migration merges both files into one, adding possibility to have as many props
 	 * as we want for every user.
 	 */
-	private async migrateData():Promise<void> {
-		let root = Config.ROOT_FOLDER;
+	private async migrateFileStructures():Promise<void> {
+		let root = Config.DATA_FOLDER;
 		let files = fs.readdirSync( root );
 		let hasMigrated = false;
 		for(let i = 0; i < files.length; i++) {
@@ -207,6 +208,28 @@ export default class HTTPServer {
 		}
 		if(hasMigrated) {
 			Logger.success("Migration complete");
+		}
+	}
+
+	/**
+	 * Injects twitch user IDs to users list
+	 */
+	private async migrateUserNamesToIDs():Promise<void> {
+		let root = Config.DATA_FOLDER;
+		let files = fs.readdirSync( root );
+		for (let i = 0; i < files.length; i++) {
+			//Only parse user list files
+			if(!/userList(_.*?)?\.json/gi.test(files[i])) continue;
+			let users = JSON.parse(fs.readFileSync(root + files[i], "utf8"));
+			if(users.length == 0) continue;
+
+			let twitchUsersReq = await TwitchUtils.loadChannelsInfo(users.map(u => u.name));
+			let twitchUsers = (await twitchUsersReq.json()).data;
+			twitchUsers.forEach(u => {
+				let userLoc = users.find(user => user.name.toLowerCase() == u.login.toLowerCase());
+				userLoc.id = u.id;
+			});
+			fs.writeFileSync(root + files[i], JSON.stringify(users));
 		}
 	}
 
