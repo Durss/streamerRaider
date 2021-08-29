@@ -6,7 +6,6 @@ import Config from "./Config";
 */
 export default class TwitchUtils {
 
-	private static _instance:TwitchUtils;
 	private static _token:string;
 	private static _token_invalidation_date:number;
 	
@@ -17,13 +16,6 @@ export default class TwitchUtils {
 	/********************
 	* GETTER / SETTERS *
 	********************/
-	static get instance():TwitchUtils {
-		if(!TwitchUtils._instance) {
-			TwitchUtils._instance = new TwitchUtils();
-			TwitchUtils._instance.initialize();
-		}
-		return TwitchUtils._instance;
-	}
 
 	public static get ready():boolean {
 		return this._token != null && this._token != undefined;
@@ -133,7 +125,4 @@ export default class TwitchUtils {
 	/*******************
 	* PRIVATE METHODS *
 	*******************/
-	private initialize():void {
-		
-	}
 }
