@@ -1,6 +1,5 @@
 import { Express, Request, Response } from "express-serve-static-core";
 import * as fs from "fs";
-import fetch, { Response as FetchResponse } from "node-fetch";
 import Config from "../utils/Config";
 import Logger from "../utils/Logger";
 import TwitchUtils from "../utils/TwitchUtils";
@@ -15,7 +14,7 @@ export default class APIController {
 	private _app:Express;
 	private _usersCache:{[key:string]:UserData[]} = {};
 	private _streamInfosCache:{[key:string]:{expires_at:number, data:any}} = {};
-	private static _CACHE_INVALIDATED:boolean;
+	private static _CACHE_INVALIDATED:{[key:string]:boolean} = {};
 	
 	constructor() {
 		this.initialize();
@@ -73,8 +72,8 @@ export default class APIController {
 		this._app.delete("/api/description", (req:Request, res:Response) => this.deleteUserDescription(req,res));
 	}
 
-	public static invalidateCache():void {
-		this._CACHE_INVALIDATED = true;
+	public static invalidateCache(profile:string):void {
+		this._CACHE_INVALIDATED[profile] = true;
 	}
 	
 	
@@ -356,9 +355,9 @@ export default class APIController {
 	 */
 	private getCachedUserList(req:Request):UserData[] {
 		let profile:string = Utils.getProfile(req);
-		if(APIController._CACHE_INVALIDATED) {
+		if(APIController._CACHE_INVALIDATED[profile] !== false) {
 			this._usersCache[profile] = null;
-			APIController._CACHE_INVALIDATED = false;
+			APIController._CACHE_INVALIDATED[profile] = false;
 		}
 		if(!this._usersCache[profile]) {
 			let users = Utils.getUserList(req);

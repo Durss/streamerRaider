@@ -295,7 +295,8 @@ ${users.map(v => v.name).join(", ")}
 				message.reply("Le compte Twitch **\""+login+"\"** a bien été supprimé de la liste.");
 			}
 			fs.writeFileSync(Config.TWITCH_USERS_FILE(null, message.guild.id), JSON.stringify(users));
-			APIController.invalidateCache();
+			let profile = Utils.getProfile(null, message.guild.id);
+			APIController.invalidateCache(profile);
 		}else{
 			if(cmd == "add-user") {
 				message.reply("Le compte Twitch **\""+login+"\"** est déjà ajouté à la liste.");
@@ -357,7 +358,8 @@ ${users.map(v => v.name).join(", ")}
 			message.reply("La description a bien été supprimée pour le compte **\""+login+"\"**.");
 		}
 		fs.writeFileSync(Config.TWITCH_USERS_FILE(null, message.guild.id), JSON.stringify(users));
-		APIController.invalidateCache();
+		let profile = Utils.getProfile(null, message.guild.id)
+		APIController.invalidateCache(profile);
 	}
 
 }
