@@ -195,13 +195,13 @@ export default class Home extends Vue {
 
 	public async mounted():Promise<void> {
 		this.loadData(true);
-		this.mouseMoveHandler = (e:MouseEvent) => this.onMouseMove(e);
-		document.body.addEventListener("mousemove", this.mouseMoveHandler);
+		// this.mouseMoveHandler = (e:MouseEvent) => this.onMouseMove(e);
+		// document.body.addEventListener("mousemove", this.mouseMoveHandler);
 	}
 
 	public beforeDestroy(): void {
 		clearTimeout(this.refreshTimeout);
-		document.body.removeEventListener("mousemove", this.mouseMoveHandler);
+		// document.body.removeEventListener("mousemove", this.mouseMoveHandler);
 	}
 
 	public randomRaid():void {
@@ -231,9 +231,9 @@ export default class Home extends Vue {
 	/**
 	 * Called on mouse move event.
 	 */
-	private onMouseMove(e:MouseEvent):void {
-		this.sheduleReload();
-	}
+	// private onMouseMove(e:MouseEvent):void {
+	// 	this.scheduleReload();
+	// }
 
 	/**
 	 * Loads all the data from server
@@ -286,18 +286,18 @@ export default class Home extends Vue {
 		this.onlineUsers = onlineUsers;
 		this.offlineUsers = offlineUsers;
 		
-		this.sheduleReload();
+		this.scheduleReload();
 	}
 
 	/**
-	 * Schedule a data reload in 10min
-	 * Clears the previous schedule.
+	 * Schedule a data reload in 2min
+	 * Clears the previous schedule just in case.
 	 */
-	private sheduleReload():void {
+	private scheduleReload():void {
 		clearTimeout(this.refreshTimeout);
 		this.refreshTimeout = setTimeout(_=> {
 			this.loadData();
-		}, 2 * 120 * 1000);
+		}, 2 * 60 * 1000);
 	}
 
 	public logout():void {
