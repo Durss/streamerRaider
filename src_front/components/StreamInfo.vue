@@ -21,23 +21,25 @@
 		
 		<!-- CONTENT -->
 		<div class="detailsHolder content" v-if="streamInfos">
-			<div class="infos">
-				<div class="title">{{streamInfos.title}}</div>
-				<div class="category" v-if="streamInfos.game_name && !lightMode">{{streamInfos.game_name}}</div>
-				<div class="duration">{{streamDuration}}</div>
-			</div>
-			
-			<div class="preview" @mouseenter="hoverItem()" v-if="!lightMode">
-				<div class="streamImage" v-if="!showLive"><img :src="previewUrl"></div>
-				<iframe
-					class="streamImage"
-					v-if="showLive"
-					:src="'https://player.twitch.tv/?channel='+userName+'&parent='+twitchParent+'&autoplay=true'"
-					height="190"
-					width="340"
-					allowfullscreen="true">
-				</iframe>
-				<div v-if="!lightMode && streamInfos" class="viewersCount">{{streamInfos.viewer_count}} viewers</div>
+			<div class="row">
+				<div class="infos">
+					<div class="title">{{streamInfos.title}}</div>
+					<div class="category" v-if="streamInfos.game_name && !lightMode">{{streamInfos.game_name}}</div>
+					<div class="duration">{{streamDuration}}</div>
+				</div>
+				
+				<div class="preview" @mouseenter="hoverItem()" v-if="!lightMode">
+					<div class="streamImage" v-if="!showLive"><img :src="previewUrl"></div>
+					<iframe
+						class="streamImage"
+						v-if="showLive"
+						:src="'https://player.twitch.tv/?channel='+userName+'&parent='+twitchParent+'&autoplay=true'"
+						height="190"
+						width="340"
+						allowfullscreen="true">
+					</iframe>
+					<div v-if="!lightMode && streamInfos" class="viewersCount">{{streamInfos.viewer_count}} viewers</div>
+				</div>
 			</div>
 
 			<div class="description" v-if="!lightMode && userInfos.rawData.description && !showLive">{{userInfos.rawData.description}}</div>
@@ -171,15 +173,17 @@ export default class StreamInfo extends Vue {
 	
 	&.expand {
 		.detailsHolder {
-			.infos {
-				max-width: 25%;
-			}
-			.preview {
-				max-width: 75%;
-				.streamImage {
-					@ratio: 1;
-					width: calc(340px * @ratio);
-					height: calc(190px * @ratio);
+			.row {
+				.infos {
+					max-width: 25%;
+				}
+				.preview {
+					max-width: 75%;
+					.streamImage {
+						@ratio: 1;
+						width: calc(340px * @ratio);
+						height: calc(190px * @ratio);
+					}
 				}
 			}
 		}
@@ -218,36 +222,38 @@ export default class StreamInfo extends Vue {
 			}
 		}
 		.detailsHolder {
-			.infos {
-				width: 100%;
-				max-width: 100%;
-				margin-right: 0;
-				.title {
+			.row {
+				.infos {
 					width: 100%;
-					font-size: 12px;
-					font-weight: normal;
-					text-align: center;
-					margin-bottom: 0;
+					max-width: 100%;
+					margin-right: 0;
+					.title {
+						width: 100%;
+						font-size: 12px;
+						font-weight: normal;
+						text-align: center;
+						margin-bottom: 0;
+					}
+					.duration {
+						font-family: "Nunito Light";
+						margin: auto;
+						font-size: 10px;
+						background-color: rgba(255, 255, 255, .25);
+						padding: 2px 4px;
+						position: absolute;
+						bottom: 0;
+						right: 0;
+						border-radius: 0;
+						border-top-left-radius: 7px;
+						position: absolute;
+						bottom: 0;
+						right: 0;
+					}
 				}
-				.duration {
-					font-family: "Nunito Light";
-					margin: auto;
-					font-size: 10px;
-					background-color: rgba(255, 255, 255, .25);
-					padding: 2px 4px;
-					position: absolute;
-					bottom: 0;
-					right: 0;
-					border-radius: 0;
-					border-top-left-radius: 7px;
-					position: absolute;
-					bottom: 0;
-					right: 0;
+				.raid {
+					font-size: 15px;
+					padding: 5px 20px;
 				}
-			}
-			.raid {
-				font-size: 15px;
-				padding: 5px 20px;
 			}
 		}
 
@@ -317,68 +323,72 @@ export default class StreamInfo extends Vue {
 
 	.detailsHolder {
 		display: flex;
-		flex-direction: row;
-		flex-wrap: wrap;
-		text-align: left;
-		justify-content: space-between;
+		flex-direction: column;
 		position: relative;
-
-		.infos {
-			max-width: 50%;
+		.row {
 			display: flex;
-			flex-direction: column;
-			align-items: flex-start;
-			margin-right: 10px;
-			.title {
-				font-size: 20px;
-				font-weight: bold;
-				margin-bottom: 10px;
-			}
-			.category {
-				font-size: 14px;
-				margin-bottom: 10px;
-			}
-			.duration {
-				font-size: 14px;
-			}
-		}
-		.preview {
-			max-width: 50%;
-			.streamImage {
-				@ratio: .5;
-				width: calc(340px * @ratio);
-				height: calc(190px * @ratio);
-				background-color: #cccccc;
-				padding: 0;
-				margin: auto;
-				border: none;
-				img, iframe {
-					width: calc(340px * @ratio);
-					height: calc(190px * @ratio);
+			flex-direction: row;
+			flex-wrap: wrap;
+			text-align: left;
+			justify-content: space-between;
+
+			.infos {
+				max-width: 50%;
+				display: flex;
+				flex-direction: column;
+				align-items: flex-start;
+				margin-right: 10px;
+				.title {
+					font-size: 20px;
+					font-weight: bold;
+					margin-bottom: 10px;
+				}
+				.category {
+					font-size: 14px;
+					margin-bottom: 10px;
+				}
+				.duration {
+					font-size: 14px;
 				}
 			}
-		}
+			.preview {
+				max-width: 50%;
+				.streamImage {
+					@ratio: .5;
+					width: calc(340px * @ratio);
+					height: calc(190px * @ratio);
+					background-color: #cccccc;
+					padding: 0;
+					margin: auto;
+					border: none;
+					img, iframe {
+						width: calc(340px * @ratio);
+						height: calc(190px * @ratio);
+					}
+				}
+			}
 
-		.description {
-			font-size: 17px;
-			font-style: italic;
-			padding-left: 40px;
-			position: relative;
-			margin-top: 10px;
-			opacity: .6;
-			font-family: "Nunito Light";
-			width: 100%;
-			box-sizing: border-box;
-			&::before {
-				content: "";
-				background: url("../assets/icons/quote.svg");
-				background-size: 30px 30px;
-				width: 30px;
-				height: 30px;
-				display: block;
-				top: 0;
-				left: 0;
-				position: absolute;
+			.description {
+				font-size: 17px;
+				font-style: italic;
+				padding-left: 40px;
+				position: relative;
+				margin-top: 10px;
+				opacity: .6;
+				font-family: "Nunito Light";
+				width: 100%;
+				box-sizing: border-box;
+				&::before {
+					content: "";
+					background: url("../assets/icons/quote.svg");
+					background-size: 30px 30px;
+					width: 30px;
+					height: 30px;
+					display: block;
+					top: 0;
+					left: 0;
+					position: absolute;
+				}
 			}
 		}
 
@@ -412,19 +422,22 @@ export default class StreamInfo extends Vue {
 			flex-wrap: wrap;
 			text-align: left;
 			justify-content: space-between;
-			.infos,.preview {
-				max-width: 100%;
-			}
-			.preview {
-				.streamImage {
-					@ratio: 1;
+
+			.row {
+				.infos,.preview {
 					max-width: 100%;
-					width: calc(340px * @ratio);
-					height: calc(190px * @ratio);
-					img, iframe {
+				}
+				.preview {
+					.streamImage {
+						@ratio: 1;
 						max-width: 100%;
 						width: calc(340px * @ratio);
 						height: calc(190px * @ratio);
+						img, iframe {
+							max-width: 100%;
+							width: calc(340px * @ratio);
+							height: calc(190px * @ratio);
+						}
 					}
 				}
 			}
@@ -432,11 +445,13 @@ export default class StreamInfo extends Vue {
 	
 		&.expand {
 			.detailsHolder {
-				.infos {
-					max-width: 100%;
-				}
-				.preview {
-					max-width: 100%;
+				.row {
+					.infos {
+						max-width: 100%;
+					}
+					.preview {
+						max-width: 100%;
+					}
 				}
 			}
 		}
@@ -446,14 +461,16 @@ export default class StreamInfo extends Vue {
 @media only screen and (max-width: 320px) {
 	.streaminfo{
 		.detailsHolder {
-			.preview {
-				.streamImage {
-					@ratio: .7;
-					width: calc(340px * @ratio);
-					height: calc(190px * @ratio);
-					img, iframe {
+			.row {
+				.preview {
+					.streamImage {
+						@ratio: .7;
 						width: calc(340px * @ratio);
 						height: calc(190px * @ratio);
+						img, iframe {
+							width: calc(340px * @ratio);
+							height: calc(190px * @ratio);
+						}
 					}
 				}
 			}
