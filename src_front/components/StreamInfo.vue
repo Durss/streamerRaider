@@ -367,28 +367,29 @@ export default class StreamInfo extends Vue {
 					}
 				}
 			}
+		}
 
-			.description {
-				font-size: 17px;
-				font-style: italic;
-				padding-left: 40px;
-				position: relative;
-				margin-top: 10px;
-				opacity: .6;
-				font-family: "Nunito Light";
-				width: 100%;
-				box-sizing: border-box;
-				&::before {
-					content: "";
-					background: url("../assets/icons/quote.svg");
-					background-size: 30px 30px;
-					width: 30px;
-					height: 30px;
-					display: block;
-					top: 0;
-					left: 0;
-					position: absolute;
-				}
+		.description {
+			font-size: 17px;
+			font-style: italic;
+			padding-left: 40px;
+			position: relative;
+			margin-top: 10px;
+			opacity: .6;
+			font-family: "Nunito Light";
+			width: 100%;
+			box-sizing: border-box;
+			text-align: left;
+			&::before {
+				content: "";
+				background: url("../assets/icons/quote.svg");
+				background-size: 30px 30px;
+				width: 30px;
+				height: 30px;
+				display: block;
+				top: 0;
+				left: 0;
+				position: absolute;
 			}
 		}
 
