@@ -205,13 +205,14 @@ export default class Home extends Vue {
 	}
 
 	public randomRaid():void {
-		let user;
+		let user:TwitchTypes.UserInfo;
 		do {
 			user = Utils.pickRand(this.onlineUsers);
-		}while(user.userName.toLowerCase() == this.$store.state.userLogin.toLowerCase());
-		Utils.confirm("Lancer un raid", "Veux-tu vraiment lancer un raid vers la chaîne de "+user.userName+" ?")
+		}while(user.display_name.toLowerCase() == this.$store.state.userLogin.toLowerCase());
+		
+		Utils.confirm("Lancer un raid", "Veux-tu vraiment lancer un raid vers la chaîne de "+user.display_name+" ?")
 		.then(_=> {
-			IRCClient.instance.sendMessage("/raid "+user.userName);
+			IRCClient.instance.sendMessage("/raid "+user.display_name);
 		}).catch(error=>{});
 	}
 
