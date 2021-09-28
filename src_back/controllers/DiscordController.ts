@@ -167,6 +167,18 @@ ${users.map(v => v.name).join(", ")}
 
 			case "raider-help":
 				if(!this.isWatchingChannel(message) && !isAdmin) return;
+
+				//Add a command specific to "protopotes" group as we have a custom
+				//command managed transparently by another bot. You won't need this.
+				let protopoteSpecifics = "";
+				let profile = Utils.getProfile(null, message.guild.id);
+				if(profile == "protopotes") {
+					protopoteSpecifics = `
+!add-user TWITCH_LOGIN TWITTER_LOGIN
+	Ajouter un·e utilisateur/trice twitch et son compte twitter
+`;
+				}
+
 				message.channel.send(`Voici les commandes disponibles :\`\`\`
 !raider-add
 	(admin)Ajouter le bot à un chan
@@ -179,7 +191,7 @@ ${users.map(v => v.name).join(", ")}
 
 !add-user TWITCH_LOGIN
 	Ajouter un·e utilisateur/trice twitch
-
+${protopoteSpecifics}
 !del-user TWITCH_LOGIN
 	Supprimer un·e utilisateur/trice twitch
 
@@ -259,6 +271,7 @@ ${users.map(v => v.name).join(", ")}
 		if(!this.isWatchingChannel(message)) return;
 		if(!this.isGuildValid(message)) return
 
+		let profile = Utils.getProfile(null, message.guild.id);
 		let cmd = chunks[0];
 
 		//Check if twitch user actually exists
@@ -299,7 +312,10 @@ ${users.map(v => v.name).join(", ")}
 			APIController.invalidateCache(profile);
 		}else{
 			if(cmd == "add-user") {
-				message.reply("Le compte Twitch **\""+login+"\"** est déjà ajouté à la liste.");
+				//Custom logic for "protopotes" site that has 2 discord bots running in sync
+				if(profile != "protopotes" || chunks.length == 2) {
+					message.reply("Le compte Twitch **\""+login+"\"** est déjà ajouté à la liste.");
+				}
 			}else{
 				message.reply("Le compte Twitch **\""+login+"\"** est déjà absent de la liste.");
 			}
