@@ -22,8 +22,15 @@ Create a file `data/credentials.json` on the projet's root folder and put this i
 	"privateApiKey":"xxx"
 }
 ```
-To get the `client_id` and `secret_id` keys, create a twitch app here :\
-https://dev.twitch.tv/console/apps 
+To get the `client_id` and `secret_id` keys, create a twitch app here:\
+https://dev.twitch.tv/console/apps
+\
+\
+Configure an oauth redirect URI on the app so users can authenticate via Twitch from the page.\
+The URL should be your domain name ending with `/oauth`, example:
+```
+http://locahost:8080/oauth
+```
 
 The `privateApiKey` is just a key to secure an API exposed by the application itself. You probably won't care about it.
 
