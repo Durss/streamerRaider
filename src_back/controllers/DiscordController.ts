@@ -176,6 +176,9 @@ ${users.map(v => v.name).join(", ")}
 					protopoteSpecifics = `
 !add-user TWITCH_LOGIN TWITTER_LOGIN
 	Ajouter un·e utilisateur/trice twitch et son compte twitter
+
+!remove-twitter TWITTER_LOGIN
+	Supprimer son compte twitter du bot twitter d'alertes de live
 `;
 				}
 
