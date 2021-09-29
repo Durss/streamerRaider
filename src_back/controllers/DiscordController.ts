@@ -112,7 +112,7 @@ export default class DiscordController {
 		let userId = message.member.id;
 		let isAdmin = false;
 		
-		for (let i = 0; i < this.adminsCache[message.member.guild.id].length; i++) {
+		for (let i = 0; i < this.adminsCache[message.member.guild.id]?.length; i++) {
 			const adminList = this.adminsCache[message.member.guild.id][i];
 			if(adminList.indexOf(userId) > -1) {
 				isAdmin = true;

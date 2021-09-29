@@ -15,7 +15,8 @@ export default new Vuex.Store({
 		userLogin: "",//Stores the current user's login
 		profileName: "",//Current profile if using multi-profiles configuration
 		initComplete: false,
-		botEnabled: false,
+		botToxicEnabled: false,
+		botShoutoutEnabled: false,
 		botDescriptionFallback: true,
 		botRoles: ["moderator"],
 		botCommand: "",
@@ -62,9 +63,14 @@ export default new Vuex.Store({
 		
 		closeTooltip(state) { state.tooltip = null; },
 		
-		setBotEnabled(state, payload) {
-			state.botEnabled = payload;
-			Store.set("botEnabled", payload? 'true' : 'false');
+		setBotShoutoutEnabled(state, payload) {
+			state.botShoutoutEnabled = payload;
+			Store.set("botShoutoutEnabled", payload? 'true' : 'false');
+		},
+		
+		setBotToxicEnabled(state, payload) {
+			state.botToxicEnabled = payload;
+			Store.set("botToxicEnabled", payload? 'true' : 'false');
 		},
 		
 		setBotCommand(state, payload) {
@@ -133,8 +139,11 @@ export default new Vuex.Store({
 			
 			commit("resetBotConfig", false);
 
-			let botEnabled = Store.get("botEnabled");
-			if(botEnabled === "true") state.botEnabled = true;
+			let botShoutoutEnabled = Store.get("botShoutoutEnabled");
+			if(botShoutoutEnabled === "true") state.botShoutoutEnabled = true;
+
+			let botToxicEnabled = Store.get("botToxicEnabled");
+			if(botToxicEnabled === "true") state.botToxicEnabled = true;
 			
 			let botCommand = Store.get("botCommand");
 			if(botCommand) state.botCommand = botCommand;
@@ -179,7 +188,9 @@ export default new Vuex.Store({
 		
 		logout({commit}) { commit("setOAuthToken", null); },
 		
-		setBotEnabled({commit}, payload) { commit("setBotEnabled", payload); },
+		setBotShoutoutEnabled({commit}, payload) { commit("setBotShoutoutEnabled", payload); },
+		
+		setBotToxicEnabled({commit}, payload) { commit("setBotToxicEnabled", payload); },
 		
 		setBotCommand({commit}, payload) { commit("setBotCommand", payload); },
 

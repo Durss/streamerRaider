@@ -44,7 +44,7 @@ export default class ProfileSwitcher extends Vue {
 	public nextProfile:Profile = null;
 	public prevProfile:Profile = null;
 	public hasProfile:boolean = false;
-	public profiles:{domains:string[], profile:string}[] = null;
+	public profiles:ServerProfile[] = null;
 
 	public mounted():void {
 		if(this.$store.state.initComplete) {
@@ -64,33 +64,42 @@ export default class ProfileSwitcher extends Vue {
 		}catch(e) {
 			return;
 		}
-		if(res.profiles) {
+		if(res.profiles && res.profiles.length > 1) {
 			this.profiles = res.profiles;
 			this.hasProfile = true;
 			let dns = document.location.hostname;
 			// dns = "protopotes.durss.fr";
 			// dns = "pogscience.durss.fr";
+			console.log(this.profiles);
+			let route = this.$route.path;
+			for (let i = 0; i < this.profiles.length; i++) {
+				const p = this.profiles[i];
+				if(p.domains.indexOf(dns) > -1) {
+					if(p.nextProfile) {
+						let sideProfile:ServerProfile = this.profiles.find(v => v.profile === p.nextProfile);
+						console.log(sideProfile);
+						this.nextProfile = {
+							dns:sideProfile.domains[0],
+							url: "https://"+sideProfile.domains[0] + route,
+							name:sideProfile.profile,
+							icon: require("@/assets/logos/"+sideProfile.profile+".png")
+						};
+					}
+					if(p.prevProfile) {
+						let sideProfile:ServerProfile = this.profiles.find(v => v.profile === p.prevProfile);
+						this.prevProfile = {
+							dns:sideProfile.domains[0],
+							url: "https://"+sideProfile.domains[0] + route,
+							name:sideProfile.profile,
+							icon: require("@/assets/logos/"+sideProfile.profile+".png")
+						};
+					}
+				}
+			}
+			/*
 			let currentIndex = -1;
 			let list:Profile[] = [];
 			let tld = null;
-			//Search for current domain on available profiles
-			// for (const p in this.profiles) {
-			// 	//Remove "localhost" profile if not testing locally
-			// 	if(dns.indexOf("localhost") == -1 && p.indexOf("localhost") > -1) continue;
-			// 	let reg = p.replace(/(\.|\/|\?)/gi, "\\$1").replace(/\*/gi, "(.*)");
-			// 	if(!tld && RegExp(reg, "gi").test(dns)) {
-			// 		tld = dns.replace(RegExp(reg, "gi"), "$1");;
-			// 	}
-			// 	list.push({
-			// 		dns:p,
-			// 		url: "",
-			// 		name:this.profiles[p],
-			// 		icon: require("@/assets/logos/"+this.profiles[p]+".png")
-			// 	});
-			// 	if(RegExp(p.replace(/(\.|\/|\?)/gi, "\\$1"), "gi").test(dns)) {
-			// 		currentIndex = list.length - 1;
-			// 	}
-			// }
 			for (let i = 0; i < this.profiles.length; i++) {
 				const p = this.profiles[i];
 				let minDist:number = 99999;
@@ -120,6 +129,7 @@ export default class ProfileSwitcher extends Vue {
 			if(currentIndex > 0) this.prevProfile = list[currentIndex-1];
 			//Get next profile
 			if(currentIndex < list.length-1) this.nextProfile = list[currentIndex+1];
+			*/
 		}
 	}
 }
@@ -129,6 +139,13 @@ export interface Profile {
 	url:string;
 	name:string;
 	icon:string;
+}
+
+export interface ServerProfile {
+	domains:string[];
+	profile:string;
+	prevProfile?:string;
+	nextProfile?:string;
 }
 </script>
 

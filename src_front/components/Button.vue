@@ -140,7 +140,7 @@ export default class Button extends Vue {
 	}
 
 	public onClick(event):void {
-		if(this.disabled || this.loading) return;
+		if(this.disabled !== false || this.loading) return;
 		this.$emit('click', event);//bubble up event to avoid having to listen for @click.native everytime
 	}
 
@@ -381,7 +381,7 @@ export default class Button extends Vue {
 			background-color: fade(@mainColor_warn,50%);
 		}
 		&:hover {
-			background-color: fade(@mainColor_normal_light, 50%);
+			background-color: @mainColor_warn_light;
 		}
 	}
 	

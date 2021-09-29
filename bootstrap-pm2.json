@@ -15,6 +15,6 @@
   "kill_retry_time": 100,
   "write": true,
   "ignore_watch" : ["node_modules", "public", "src_back", "src_front", "/", "uploads"],
-  "watch": ["server"],
+  "watch": ["server", "data"],
   "exec_mode": "fork"
 }

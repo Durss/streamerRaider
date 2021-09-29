@@ -34,7 +34,7 @@ IRCClient.instance.addEventListener(IRCEvent.MESSAGE, async (event:IRCEvent)=> {
 
 	//Decompose command to extract parameters
 	let chunks = message.split(/ /gi);
-	if(store.state.botEnabled
+	if(store.state.botShoutoutEnabled
 	&& chunks[0] == store.state.botCommand.toLowerCase().trim()
 	&& Utils.getRouteMetaValue(router.currentRoute, "lightMode") === true) {
 

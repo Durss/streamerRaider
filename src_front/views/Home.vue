@@ -35,13 +35,13 @@
 					@click="getOBSPanel()"
 					:icon="require('@/assets/icons/obs.svg')" />
 
-				<Button :title="botEnabled? 'Bot actif' : 'Bot inactif'"
-					:white="!botEnabled"
+				<Button title="Outils"
+					white
 					v-if="lightMode"
-					@click="getBotConfigPanel()"
-					:icon="require('@/assets/icons/twitch.svg')" />
+					@click="openConfigPanel()"
+					:icon="require('@/assets/icons/params.svg')" />
 
-				<Button :title="lightMode? '' : 'Logout'" highlight class="logout"
+				<Button v-if="!showConfigPanel" :title="lightMode? '' : 'Logout'" highlight class="logout"
 					@click="logout()"
 					:icon="require('@/assets/icons/cross_white.svg')" />
 			</div>
@@ -50,7 +50,7 @@
 			<OBSPanelInfo v-if="showOBSPanel" @close="showOBSPanel=false" />
 			
 			<!-- TWITCH BOT CONFIG PANEL -->
-			<BotConfigPanel v-if="showBotConfigPanel" @close="showBotConfigPanel=false" />
+			<ObsConfigPanel v-if="showConfigPanel" @close="showConfigPanel=false" />
 
 			<!-- USER FORM (edit description) -->
 			<StreamerForm v-if="showProfileForm" @close="showProfileForm=false" />
@@ -107,7 +107,7 @@
 
 <script lang="ts">
 import AuthForm from "@/components/AuthForm.vue";
-import BotConfigPanel from "@/components/BotConfigPanel.vue";
+import ObsConfigPanel from "@/components/ObsConfigPanel.vue";
 import Button from "@/components/Button.vue";
 import MainLoader from "@/components/MainLoader.vue";
 import OBSPanelInfo from "@/components/OBSPanelInfo.vue";
@@ -128,7 +128,7 @@ import { Component, Vue } from "vue-property-decorator";
 		MainLoader,
 		StreamerForm,
 		OBSPanelInfo,
-		BotConfigPanel,
+		ObsConfigPanel,
 	},
 })
 export default class Home extends Vue {
@@ -136,7 +136,7 @@ export default class Home extends Vue {
 	public loading:boolean = true;
 	public loadError:boolean = false;
 	public showOBSPanel:boolean = false;
-	public showBotConfigPanel:boolean = false;
+	public showConfigPanel:boolean = false;
 	public showProfileForm:boolean = false;
 	public missingTwitchKeys:boolean = false;
 	public missingTwitchUsers:boolean = false;
@@ -157,8 +157,8 @@ export default class Home extends Vue {
 		return Utils.getRouteMetaValue(this.$route, "lightMode") === true;
 	}
 
-	public get botEnabled():boolean {
-		return this.$store.state.botEnabled;
+	public get botShoutoutEnabled():boolean {
+		return this.$store.state.botShoutoutEnabled;
 	}
 
 	public get connected():boolean {
@@ -267,6 +267,7 @@ export default class Home extends Vue {
 			this.loadError = true;
 			this.loading = false;
 			console.log(error);
+			this.scheduleReload();
 			return;
 		}
 
@@ -311,8 +312,8 @@ export default class Home extends Vue {
 		this.showOBSPanel = true;
 	}
 
-	public getBotConfigPanel():void {
-		this.showBotConfigPanel = !this.showBotConfigPanel;
+	public openConfigPanel():void {
+		this.showConfigPanel = !this.showConfigPanel;
 	}
 
 }
@@ -320,6 +321,9 @@ export default class Home extends Vue {
 
 <style scoped lang="less">
 .home {
+	position: relative;
+	width: 100%;
+	height: 100%;
 
 	&.light {
 		width: 100%;
@@ -337,6 +341,8 @@ export default class Home extends Vue {
 		}
 	
 		.page {
+			width: 100%;
+			height: 100%;
 			.menu {
 				.logout {
 					position: absolute;
