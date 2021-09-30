@@ -283,12 +283,15 @@ ${protopoteSpecifics}
 		try {
 			let result = await TwitchUtils.loadChannelsInfo([login]);
 			let json = await result.json();
+			
 			if(json.data.length == 0) {
 				message.reply("Le compte Twitch **\""+login+"\"** n'existe pas.");
 				return;
 			}
 			twitchUser = json.data[0];
 		}catch(error) {
+			Logger.error("Failed to load channels info:");
+			Logger.log(error);
 			message.reply("Woops... y a eu une erreur pas prévue :(");
 			return;
 		}

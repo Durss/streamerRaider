@@ -1,6 +1,7 @@
 import fetch, { Response as FetchResponse } from "node-fetch";
 import Config from "./Config";
 import Logger from "./Logger";
+import Utils from "./Utils";
 
 /**
 * Created : 08/07/2021 
@@ -69,6 +70,7 @@ export default class TwitchUtils {
 		}
 		if(logins) {
 			logins = logins.filter(v => v != null && v != undefined);
+			logins = logins.map(v => encodeURIComponent(Utils.replaceDiacritics(v)));
 		}
 		
 		let params = logins ? "login="+logins.join("&login=") : "id="+ids.join("&id=");
