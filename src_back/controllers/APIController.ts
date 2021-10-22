@@ -41,6 +41,8 @@ export default class APIController {
 		this._app.get("/api/user_list", (req:Request, res:Response) => this.getUserList(req,res));
 		//Get description of a specific user
 		this._app.get("/api/description", (req:Request, res:Response) => this.getUserDescription(req,res));
+		//Get description of a specific user
+		this._app.get("/api/online_count", (req:Request, res:Response) => this.getUsersOnlineCount(req,res));
 		
 		//==============
 		//PRIVATE ROUTES
@@ -220,6 +222,68 @@ export default class APIController {
 	}
 
 	/**
+	 * Gets the numbezr of users online
+	 * 
+	 * @param res 
+	 */
+	private async getUsersOnlineCount(req:Request, res:Response):Promise<void> {
+		// let channels:string = <string>req.query.channels;
+		let profile = Utils.getProfile(req);
+		if(!this._streamInfosCache[profile]) {
+			await this.getStreamInfos(req);
+		}
+		let users:{id:string, login:string, streamInfos?:any}[] = this._streamInfosCache[profile].data;
+		let count = users.filter(v => v.streamInfos != undefined).length
+
+		if(req.query.formated != undefined) {
+			let html = `
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+	<meta charset="utf-8">
+	<title>Online count</title>
+	<meta content='width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0' name='viewport' />
+	<meta name="robots" content="noindex, nofollow">
+	<link rel="author" href="https://www.durss.ninja" />
+	<link rel="canonical" href="http://protopotes.durss.ninja/">
+	<meta http-equiv="refresh" content="60" >
+	<style>
+	.holder {
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+	}
+	.logo {
+		width: 100px;
+		margin-right: 20px;
+	}
+	.count {
+		color: #8D24A9;
+		font-size: 100px;
+		font-weight: bold;
+		
+		text-shadow: -2px 2px 0 #fff, 2px 2px 0 #fff, 2px -2px 0 #fff, -2px -2px 0 #fff;
+		font-family: Inter,Roobert,Helvetica Neue,Helvetica,Arial,sans-serif;
+	}
+	</style>
+</head>
+
+<body>
+	<div class="holder">
+		<img class="logo" src="/twitch_logo.svg" alt="Twitch logo" />
+		<span class="count">${count}</span>
+	</div>
+</body>
+
+</html>
+			`;
+			res.status(200).send(html);
+		}else{
+			res.status(200).send(count.toString());
+		}
+	}
+
+	/**
 	 * Adds a user's description to the list
 	 * 
 	 * @param req 
@@ -274,7 +338,7 @@ export default class APIController {
 	 * @param req 
 	 * @param res 
 	 */
-	private async getStreamInfos(req:Request, res:Response):Promise<void> {
+	private async getStreamInfos(req:Request, res?:Response):Promise<void> {
 		// let channels:string = <string>req.query.channels;
 		let profile = Utils.getProfile(req);
 		let expireDuration = (Date.now() - this._streamInfosCache[profile]?.expires_at) / 1000;
@@ -283,7 +347,7 @@ export default class APIController {
 			this._streamInfosCache[profile] = null;//Force cache refresh
 		}
 
-		if(this._streamInfosCache[profile]) {
+		if(this._streamInfosCache[profile] && res) {
 			res.header("Cache-Control", "max-age="+Math.ceil(timeLeft));
 			res.status(200).send(JSON.stringify({success:true, data:this._streamInfosCache[profile].data}));
 			return;
@@ -317,7 +381,9 @@ export default class APIController {
 				}catch(error){
 					Logger.error("Error while loading channels infos")
 					console.log(error);
-					res.status(500).send(error);
+					if(res) {
+						res.status(500).send(error);
+					}
 					return;
 				}
 			}while(userList.length > 0);
@@ -328,8 +394,10 @@ export default class APIController {
 			data:result,
 		};
 
-		res.header("Cache-Control", "max-age="+Math.ceil(Config.STREAMERS_CACHE_DURATION));
-		res.status(200).send(JSON.stringify({success:true, data:result}));
+		if(res) {
+			res.header("Cache-Control", "max-age="+Math.ceil(Config.STREAMERS_CACHE_DURATION));
+			res.status(200).send(JSON.stringify({success:true, data:result}));
+		}
 	}
 
 	/**

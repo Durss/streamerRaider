@@ -40,6 +40,7 @@ export default class HTTPServer {
 		}catch(error) {
 			//Invalid token
 			Logger.error("Invalid twitch tokens. Please check the client_id and secret_id values in the file data/credentials.json")
+			console.log(error);
 		}
 
 		//Redirect to homepage invalid requests
@@ -168,6 +169,7 @@ export default class HTTPServer {
 	private async createEndpoints():Promise<void> {
 		this.migrateFileStructures();
 		this.migrateUserNamesToIDs();
+		Logger.info("Create endpoints");
 		new APIController().create(this.app);
 		new DiscordController().create(this.app);
 	}
