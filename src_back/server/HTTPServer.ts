@@ -140,6 +140,9 @@ export default class HTTPServer {
 						if(!json || json.data.length == 0) {
 							response.status(404).send(JSON.stringify({success:false, error:"user not found", error_code:"USER_NOT_FOUND"}));
 							return;
+						}else{
+							//Inject user login to headers
+							request.headers["uid"] = json.data[0].id;
 						}
 					}
 				}
@@ -175,7 +178,8 @@ export default class HTTPServer {
 		this.migrateFileStructures();
 		this.migrateUserNamesToIDs();
 		Logger.info("Create endpoints");
-		new APIController().create(this.app);
+		let api = new APIController();
+		api.create(this.app);
 		
 		let eventSub = new EventSubController();
 		await eventSub.create(this.app);
@@ -189,6 +193,12 @@ export default class HTTPServer {
 		eventSub.addEventListener(RaiderEvent.DISCORD_ALERT_LIVE, (event:RaiderEvent) => {
 			discord.alertLiveChannel(event.profile, event.channelId);
 		});
+		
+		api.addEventListener(RaiderEvent.USER_ADDED, (event:RaiderEvent) => { eventSub.subToUser(event.profile, event.channelId); });
+		api.addEventListener(RaiderEvent.USER_REMOVED, (event:RaiderEvent) => { eventSub.unsubUser(event.profile, event.channelId); });
+		
+		discord.addEventListener(RaiderEvent.USER_ADDED, (event:RaiderEvent) => { eventSub.subToUser(event.profile, event.channelId); });
+		discord.addEventListener(RaiderEvent.USER_REMOVED, (event:RaiderEvent) => { eventSub.unsubUser(event.profile, event.channelId); });
 
 	}
 

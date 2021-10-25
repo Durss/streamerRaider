@@ -133,7 +133,6 @@ https://twitch.tv/${infos.user_login}`;
 			if(this.liveAlertsListCache[key]) {
 				let users = Utils.getUserList(null, key);
 				let profile = Utils.getProfile(null, key)
-				console.log(users.length);
 				for (let i = 0; i < users.length; i++) {
 					this.dispatchEvent(new RaiderEvent(RaiderEvent.SUB_TO_LIVE_EVENT, profile, users[i].id));
 				}
@@ -435,12 +434,13 @@ ${protopoteSpecifics}
 					created_at: Date.now(),
 				});
 				message.reply("Le compte Twitch **\""+login+"\"** a bien été ajouté à la liste.");
+				this.dispatchEvent(new RaiderEvent(RaiderEvent.USER_ADDED, profile, twitchUser.id));
 			}else{
 				users.splice(userIndex, 1);
 				message.reply("Le compte Twitch **\""+login+"\"** a bien été supprimé de la liste.");
+				this.dispatchEvent(new RaiderEvent(RaiderEvent.USER_REMOVED, profile, twitchUser.id));
 			}
 			fs.writeFileSync(Config.TWITCH_USERS_FILE(null, message.guild.id), JSON.stringify(users));
-			let profile = Utils.getProfile(null, message.guild.id);
 			APIController.invalidateCache(profile);
 		}else{
 			if(cmd == "add-user") {

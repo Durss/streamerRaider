@@ -1,7 +1,9 @@
 import { Express, Request, Response } from "express-serve-static-core";
 import * as fs from "fs";
 import Config from "../utils/Config";
+import { EventDispatcher } from "../utils/EventDispatcher";
 import Logger from "../utils/Logger";
+import RaiderEvent from "../utils/RaiderEvent";
 import TwitchUtils from "../utils/TwitchUtils";
 import UserData from "../utils/UserData";
 import Utils from "../utils/Utils";
@@ -9,7 +11,7 @@ import Utils from "../utils/Utils";
 /**
 * Created : 08/07/2021 
 */
-export default class APIController {
+export default class APIController extends EventDispatcher {
 
 	private _app:Express;
 	private _usersCache:{[key:string]:UserData[]} = {};
@@ -17,6 +19,7 @@ export default class APIController {
 	private static _CACHE_INVALIDATED:{[key:string]:boolean} = {};
 	
 	constructor() {
+		super();
 		this.initialize();
 	}
 	
@@ -159,6 +162,7 @@ export default class APIController {
 	private async postUser(req:Request, res:Response):Promise<void> {
 		let login = (<string>req.query.login)?.toLowerCase();
 		let users = Utils.getUserList(req);
+		let profile = Utils.getProfile(req);
 		let userIndex = users.findIndex(v => v.name?.toLowerCase() == login?.toLowerCase());
 		Logger.info(`Add user: ${login}`);
 		if(userIndex == -1) {
@@ -176,6 +180,7 @@ export default class APIController {
 				});
 				fs.writeFileSync(Config.TWITCH_USERS_FILE(req), JSON.stringify(users));
 				res.status(200).send(JSON.stringify({success:true, data:users}));
+				this.dispatchEvent(new RaiderEvent(RaiderEvent.USER_ADDED, profile, req.headers.uid as string));
 			}
 		}else{
 			Logger.warn(`User ${login} already added`);
@@ -192,12 +197,14 @@ export default class APIController {
 	private async deleteUser(req:Request, res:Response):Promise<void> {
 		let login = (<string>req.query.login)?.toLowerCase();
 		let users = Utils.getUserList(req);
+		let profile = Utils.getProfile(req);
 		let userIndex = users.findIndex(v => v.name?.toLowerCase() == login?.toLowerCase());
 		Logger.info(`Delete user: ${login}`);
 		if(userIndex > -1) {
 			users.splice(userIndex, 1);
 			fs.writeFileSync(Config.TWITCH_USERS_FILE(req), JSON.stringify(users));
 			res.status(200).send(JSON.stringify({success:true, data:users}));
+			this.dispatchEvent(new RaiderEvent(RaiderEvent.USER_REMOVED, profile, req.headers.uid as string));
 		}else{
 			Logger.warn(`User ${login} not found`);
 			res.status(200).send(JSON.stringify({success:false, error:"User not found", error_code:"USER_NOT_FOUND"}));

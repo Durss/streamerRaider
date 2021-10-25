@@ -17,6 +17,10 @@ export default class EventSubController extends EventDispatcher {
 	private token:string=null;
 	private idsParsed:{[key:string]:boolean} = {};
 	private lastUserAlert:{[key:string]:number} = {};
+	private challengeCompleteCount:number = 0;
+	private challengeCompleteLogTimeout:number;
+	private subToList:string[] = [];
+	private subToLogTimeout:number;
 	
 	constructor() {
 		super();
@@ -94,7 +98,16 @@ export default class EventSubController extends EventDispatcher {
 			this.subToUser(profile, uid);
 			// console.log(error);
 		}
-		Logger.info("📢 Sub to "+uid+" for profile "+profile);
+		this.subToList.push(uid);
+		clearTimeout(this.challengeCompleteLogTimeout);
+		this.challengeCompleteLogTimeout = setTimeout(_=> {
+			Logger.success("📢 EventSub subscribed to "+this.subToList.length+" users for profile \""+profile+"\" :",this.subToList);
+			this.subToList = [];
+		}, 500);
+	}
+
+	public unsubUser(profile:string, uid:string):void {
+		this.unsubPrevious(profile, uid);
 	}
 
 
@@ -136,7 +149,13 @@ export default class EventSubController extends EventDispatcher {
 				res.status(401);
 				return;
 			}
-			Logger.success("📢 EventSub challenge completed for "+json.subscription.type)
+			this.challengeCompleteCount ++;
+			clearTimeout(this.challengeCompleteLogTimeout);
+			this.challengeCompleteLogTimeout = setTimeout(_=> {
+				Logger.success("📢 EventSub challenge completed for "+this.challengeCompleteCount+" events");
+				this.challengeCompleteCount = 0;
+			}, 500);
+
 			res.status(200).send(req.body.challenge);
 			return;
 
@@ -152,28 +171,6 @@ export default class EventSubController extends EventDispatcher {
 					this.dispatchEvent(new RaiderEvent(RaiderEvent.DISCORD_ALERT_LIVE, profile, uid));
 				}
 			}
-			// {
-			// 	subscription: {
-			// 	  id: '93662c80-fb3a-44ed-b28e-76ae4c7ea0b7',     
-			// 	  status: 'enabled',
-			// 	  type: 'stream.online',
-			// 	  version: '1',
-			// 	  condition: { broadcaster_user_id: '647389082' },    transport: {
-			// 		method: 'webhook',
-			// 		callback: 'https://7251-2a01-e34-ec76-460-cdb5-4b7b-9d-74a4.ngrok.io/api/eventsubcallback'        
-			// 	  },
-			// 	  created_at: '2021-10-25T12:21:51.054736553Z',   
-			// 	  cost: 1
-			// 	},
-			// 	event: {
-			// 	  id: '43621318732',
-			// 	  broadcaster_user_id: '647389082',
-			// 	  broadcaster_user_login: 'durssbot',
-			// 	  broadcaster_user_name: 'DurssBot',
-			// 	  type: 'live',
-			// 	  started_at: '2021-10-25T12:22:29Z'
-			// 	}
-			//   }
 		}
 		this.idsParsed[id] = true;
 		res.sendStatus(200);
@@ -181,9 +178,10 @@ export default class EventSubController extends EventDispatcher {
 	/**
 	 * Removes previous event sub
 	 * 
+	 * @param uid	specify a user ID to remove a specific event sub
 	 * @returns 
 	 */
-	private async unsubPrevious():Promise<void> {
+	private async unsubPrevious(profile?:string, uid?:string):Promise<void> {
 		let opts = {
 			method:"GET",
 			headers:{
@@ -191,32 +189,41 @@ export default class EventSubController extends EventDispatcher {
 				"Authorization": "Bearer "+this.token,
 				"Content-Type": "application/json",
 			}
-		}
+		};
 		let res = await fetch("https://api.twitch.tv/helix/eventsub/subscriptions", opts);
 		let json = await res.json();
 		if(res.status == 401) {
 			this.logOAuthURL();
 			return;
 		}
-		
-		console.log("Cleaning up "+json.data.length+" subscriptions");
-		for (let i = 0; i < json.data.length; i++) {
+
+		//Filtering out only callbacks for current environment
+		let callbacksToClean = json.data.filter(e => {
+			if(uid && profile) {
+				return e.condition.broadcaster_user_id == uid && e.transport.callback.split("profile=")[1] == profile;
+			}else{
+				return e.transport.callback.indexOf(this.url) > -1;
+			}
+		});
+		Logger.info("📢 EventSub Cleaning up "+callbacksToClean.length+" subscriptions...");
+		for (let i = 0; i < callbacksToClean.length; i++) {
 			const e = json.data[i];
-			Logger.info("📢 Cleanup prev EventSub",e.id);
-			// if(e.transport.callback.indexOf("ngrok") > -1) {
-				let opts = {
-					method:"DELETE",
-					headers:{
-						"Client-ID": Config.TWITCHAPP_CLIENT_ID,
-						"Authorization": "Bearer "+this.token,
-						"Content-Type": "application/json",
-					}
+			// Logger.info("📢 Cleanup prev EventSub",e.id);
+			//If testing locally only cleanup "ngrok" callback
+
+			let opts = {
+				method:"DELETE",
+				headers:{
+					"Client-ID": Config.TWITCHAPP_CLIENT_ID,
+					"Authorization": "Bearer "+this.token,
+					"Content-Type": "application/json",
 				}
-				await fetch("https://api.twitch.tv/helix/eventsub/subscriptions?id="+e.id, opts).catch(error=>{
-					Logger.error("📢 EventSub Cleanup error for:", e.type)
-				})
-			// }
+			}
+			await fetch("https://api.twitch.tv/helix/eventsub/subscriptions?id="+e.id, opts).catch(error=>{
+				Logger.error("📢 EventSub Cleanup error for:", e.type)
+			})
 		}
+		Logger.success("📢 EventSub Cleaning up complete for "+callbacksToClean.length+" subscriptions");
 	}
 
 	/**
