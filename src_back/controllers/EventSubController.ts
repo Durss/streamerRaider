@@ -50,7 +50,7 @@ export default class EventSubController extends EventDispatcher {
 	}
 
 	/**
-	 * Subscribes to a specific user
+	 * Requests to receive live notifications for a specific user
 	 * 
 	 * @param uid	twitch user ID 
 	 */
@@ -90,14 +90,17 @@ export default class EventSubController extends EventDispatcher {
 			let res = await fetch("https://api.twitch.tv/helix/eventsub/subscriptions", opts);
 			if(res.status == 403) {
 				this.logOAuthURL();
+				return;
 			}
 			// console.log(await res.json());
 		}catch(error) {
 			Logger.error("📢 EventSub subscription error for user:", uid);
+			console.log(error);
 			//Try again
-			this.subToUser(profile, uid);
-			// console.log(error);
+			setTimeout(() => this.subToUser(profile, uid), 10000);
+			return;
 		}
+
 		this.subToList.push(uid);
 		clearTimeout(this.challengeCompleteLogTimeout);
 		this.challengeCompleteLogTimeout = setTimeout(_=> {
@@ -106,6 +109,12 @@ export default class EventSubController extends EventDispatcher {
 		}, 500);
 	}
 
+	/**
+	 * Stops receiving live notifications for a specific user
+	 * 
+	 * @param profile 
+	 * @param uid 
+	 */
 	public unsubUser(profile:string, uid:string):void {
 		this.unsubPrevious(profile, uid);
 	}
@@ -190,27 +199,44 @@ export default class EventSubController extends EventDispatcher {
 				"Content-Type": "application/json",
 			}
 		};
-		let res = await fetch("https://api.twitch.tv/helix/eventsub/subscriptions", opts);
-		let json = await res.json();
-		if(res.status == 401) {
-			this.logOAuthURL();
-			return;
-		}
+		let list:EventSubMessageSubType.Subscription[] = [];
+		let json:any, cursor:string;
+		do {
+			let url = "https://api.twitch.tv/helix/eventsub/subscriptions";
+			if(cursor) {
+				url += "?after="+cursor;
+			}
+			console.log(url);
+			let res = await fetch(url, opts);
+			json = await res.json();
+			if(res.status == 401) {
+				this.logOAuthURL();
+				return;
+			}
+			list = list.concat(json.data);
+			cursor = json.pagination?.cursor;
+		}while(cursor != null);
+
+		// console.log(json.total_cost);
+		// console.log(json.max_total_cost);
+		// console.log(json.pagination);
+		// console.log(json.data.length+" / "+json.total);
+		console.log("LOADED COUNT ", list.length);
+		
 
 		//Filtering out only callbacks for current environment
-		let callbacksToClean = json.data.filter(e => {
+		let callbacksToClean = list.filter(e => {
+			let include = e.transport.callback.indexOf(this.url) > -1;
 			if(uid && profile) {
-				return e.condition.broadcaster_user_id == uid && e.transport.callback.split("profile=")[1] == profile;
-			}else{
-				return e.transport.callback.indexOf(this.url) > -1;
+				include =  include
+						&& e.condition.broadcaster_user_id == uid
+						&& e.transport.callback.split("profile=")[1] == profile;
 			}
+			return include;
 		});
 		Logger.info("📢 EventSub Cleaning up "+callbacksToClean.length+" subscriptions...");
 		for (let i = 0; i < callbacksToClean.length; i++) {
-			const e = json.data[i];
-			// Logger.info("📢 Cleanup prev EventSub",e.id);
-			//If testing locally only cleanup "ngrok" callback
-
+			const subscription = list[i];
 			let opts = {
 				method:"DELETE",
 				headers:{
@@ -219,8 +245,8 @@ export default class EventSubController extends EventDispatcher {
 					"Content-Type": "application/json",
 				}
 			}
-			await fetch("https://api.twitch.tv/helix/eventsub/subscriptions?id="+e.id, opts).catch(error=>{
-				Logger.error("📢 EventSub Cleanup error for:", e.type)
+			await fetch("https://api.twitch.tv/helix/eventsub/subscriptions?id="+subscription.id, opts).catch(error=>{
+				Logger.error("📢 EventSub Cleanup error for:", subscription.type)
 			})
 		}
 		Logger.success("📢 EventSub Cleaning up complete for "+callbacksToClean.length+" subscriptions");
