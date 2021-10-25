@@ -236,6 +236,7 @@ export default class APIController {
 		let count = users.filter(v => v.streamInfos != undefined).length
 
 		if(req.query.formated != undefined) {
+			//TODO move this to a file
 			let html = `
 <!DOCTYPE html>
 <html lang="fr">

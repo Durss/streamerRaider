@@ -12,10 +12,11 @@ export default class Config {
 	private static _CONF_PATH: string = "env.conf";
 	private static _CREDENTIALS_PATH: string = "data/credentials.json";
 	private static _DISCORD_GUILD_IDS_PATH: string = "data/discordGuildIdToProfile.json";
-	private static _CREDENTIALS:{client_id:string, secret_id:string, privateApiKey:string, discordBot_token:string};
+	private static _CREDENTIALS:{client_id:string, secret_id:string, privateApiKey:string, discordBot_token:string, eventsub_secret:string, eventsub_callback:string};
 
 	public static AVAILABLE_PROFILES_LIST: string = "data/dnsToProfile.json";
 	public static DISCORD_CHANNELS_LISTENED:string = "data/discordChannels.json";
+	public static DISCORD_CHANNELS_LIVE_ALERTS:string = "data/discordLiveAlertChannels.json";
 	public static DISCORD_CHANNELS_ADMINS:string = "data/discordGuilIdToAdmins.json";
 	public static STREAMERS_CACHE_DURATION:number = 10;
 
@@ -39,6 +40,21 @@ export default class Config {
 		}
 	}
 
+	public static DISCORD_PROFILE_FROM_GUILD_ID(profile:string):string {
+		if(!fs.existsSync(this._DISCORD_GUILD_IDS_PATH)) return null;
+		try {
+			let json:{[key:string]:string} = JSON.parse(fs.readFileSync(this._DISCORD_GUILD_IDS_PATH, "utf8"));
+			for (const key in json) {
+				if(json[key] == profile) return key;
+			}
+			return null;
+		}catch(error) {
+			Logger.error("Invalid content of file discordGuildIdToProfile.json");
+			console.log(error);
+			return null;
+		}
+	}
+
 	public static get TWITCHAPP_CLIENT_ID():string {
 		this.loadKeys();
 		return this._CREDENTIALS.client_id;
@@ -55,13 +71,24 @@ export default class Config {
 		this.loadKeys();
 		return this._CREDENTIALS.discordBot_token;
 	}
+	public static get EVENTSUB_SECRET():string {
+		this.loadKeys();
+		return this._CREDENTIALS.eventsub_secret;
+	}
+	public static get EVENTSUB_CALLBACK():string {
+		this.loadKeys();
+		return this._CREDENTIALS.eventsub_callback;
+	}
+	public static get EVENTSUB_SCOPES():string {
+		return "";
+	}
 	
 	private static loadKeys():void {
 		if(this._CREDENTIALS) return;
 		if(!fs.existsSync(this._CREDENTIALS_PATH)) {
 			Logger.error(LogStyle.BgRed+LogStyle.FgWhite+"MISSING Twitch credentials !"+LogStyle.Reset);
 			Logger.error("Please fill in the client_id and secret_id values on the file credentials.json");
-			this._CREDENTIALS = {client_id:"",secret_id:"", discordBot_token:"", privateApiKey:""};
+			this._CREDENTIALS = {client_id:"",secret_id:"", discordBot_token:"", privateApiKey:"", eventsub_secret:"", eventsub_callback:""};
 			fs.writeFileSync(this._CREDENTIALS_PATH, JSON.stringify(this._CREDENTIALS));
 		}else{
 			this._CREDENTIALS = JSON.parse(fs.readFileSync(this._CREDENTIALS_PATH, "utf8"));

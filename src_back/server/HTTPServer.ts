@@ -13,6 +13,8 @@ import UserData from '../utils/UserData';
 import Utils from "../utils/Utils";
 import * as rateLimit from "express-rate-limit";
 import * as speedLimit from "express-slow-down";
+import EventSubController from '../controllers/EventSubController';
+import RaiderEvent from '../utils/RaiderEvent';
 
 export default class HTTPServer {
 
@@ -97,11 +99,14 @@ export default class HTTPServer {
 			if(!TwitchUtils.ready) {
 				response.status(401).send(JSON.stringify({success:false, error_code:"INVALID_TWITCH_KEYS", error:"missing or invalid twitch API keys"}));
 			}else{
-				if(request.method == "POST" || request.method == "DELETE") {
+				let isTwitchMessage = request.body?.subscription != undefined || request.headers["twitch-eventsub-message-id"] != undefined;
+				if((request.method == "POST" || request.method == "DELETE")
+				&& !isTwitchMessage) {
 					let login = <string>request.query.login;
 					let key = request.headers.authorization;
 					let hash = SHA256(login + Config.PRIVATE_API_KEY).toString();
 					let access_token = <string>request.body.access_token;
+
 					//If using API externally
 					if(!access_token) {
 						//Check if the given authorization header hash is valid
@@ -171,7 +176,20 @@ export default class HTTPServer {
 		this.migrateUserNamesToIDs();
 		Logger.info("Create endpoints");
 		new APIController().create(this.app);
-		new DiscordController().create(this.app);
+		
+		let eventSub = new EventSubController();
+		await eventSub.create(this.app);
+
+		let discord = new DiscordController();
+		discord.addEventListener(RaiderEvent.SUB_TO_LIVE_EVENT, (event:RaiderEvent) => {
+			eventSub.subToUser(event.profile, event.channelId);
+		});
+		discord.create(this.app);
+		
+		eventSub.addEventListener(RaiderEvent.DISCORD_ALERT_LIVE, (event:RaiderEvent) => {
+			discord.alertLiveChannel(event.profile, event.channelId);
+		});
+
 	}
 
 	/**
@@ -245,11 +263,12 @@ export default class HTTPServer {
 		this.app.enable('trust proxy');
 
 		const speedLimiter = speedLimit({
-			windowMs: 1 * 1000, // time frame
+			windowMs: 1 * 1000, // time frame647389082
 			delayAfter: 5, //max requests per windowMs time frame
 			delayMs:500,
 			skip:(req:Request, res:Response)=> {
-				return req.method == "OPTIONS" || req.ip == "127.0.0.1";//No restrictions when testing locally
+				let isTwitchMessage = req.body?.subscription != undefined || req.headers["twitch-eventsub-message-id"] != undefined;
+				return req.method == "OPTIONS" || req.ip == "127.0.0.1" || isTwitchMessage;//No restrictions when testing locally
 			},
 			keyGenerator: (req:Request, res:Response)=> { return Utils.getIpFromRequest(req); },
 			onLimitReached:(req:speedLimit.RequestWithSlowDown, res:Response, options:any)=> {
@@ -260,8 +279,9 @@ export default class HTTPServer {
 		const rateLimiter = rateLimit({
 			windowMs: 1 * 60 * 1000, // time frame
 			max: 60, //max requests per windowMs time frame
-			skip:(req:Request, res)=> {
-				return req.method == "OPTIONS" || req.ip == "127.0.0.1";//No restrictions when testing locally
+			skip:(req:Request, res:Response)=> {
+				let isTwitchMessage = req.body?.subscription != undefined || req.headers["twitch-eventsub-message-id"] != undefined;
+				return req.method == "OPTIONS" || req.ip == "127.0.0.1" || isTwitchMessage;//No restrictions when testing locally
 			},
 			keyGenerator: (req:Request, res:Response)=> { return Utils.getIpFromRequest(req); },
 			handler:(req:Request, res:Response, next:NextFunction)=> {

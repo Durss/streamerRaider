@@ -3,22 +3,26 @@ import * as Discord from "discord.js"
 import * as fs from "fs"
 import Logger from '../utils/Logger';
 import Config from "../utils/Config";
-import TwitchUtils from "../utils/TwitchUtils";
+import TwitchUtils, { TwitchStreamInfos } from "../utils/TwitchUtils";
 import APIController from "./APIController";
 import Utils from "../utils/Utils";
+import { EventDispatcher } from "../utils/EventDispatcher";
+import RaiderEvent from "../utils/RaiderEvent";
 
 /**
 * Created : 15/10/2020 
 */
-export default class DiscordController {
+export default class DiscordController extends EventDispatcher {
 
 	private client:Discord.Client;
 	private watchListCache:{[key:string]:string[]};
+	private liveAlertsListCache:{[key:string]:string[]};
 	private adminsCache:{[key:string]:string[]};
 	private BOT_TOKEN:string = Config.DISCORDBOT_TOKEN;
 	
 	
 	constructor() {
+		super();
 	}
 	
 	/********************
@@ -38,6 +42,14 @@ export default class DiscordController {
 			this.watchListCache = {};
 		}else{
 			this.watchListCache = JSON.parse(fs.readFileSync(Config.DISCORD_CHANNELS_LISTENED, "utf8"));
+		}
+		
+		if(!fs.existsSync(Config.DISCORD_CHANNELS_LIVE_ALERTS)) {
+			fs.writeFileSync(Config.DISCORD_CHANNELS_LIVE_ALERTS, "{}");
+			this.liveAlertsListCache = {};
+		}else{
+			this.liveAlertsListCache = JSON.parse(fs.readFileSync(Config.DISCORD_CHANNELS_LIVE_ALERTS, "utf8"));
+			this.subToUsers();
 		}
 		
 		if(!fs.existsSync(Config.DISCORD_CHANNELS_ADMINS)) {
@@ -66,6 +78,42 @@ export default class DiscordController {
 			// console.log(link);
 		})
 	}
+
+	/**
+	 * Sends a message to warn that a user went live on twitch
+	 */
+	public async alertLiveChannel(profile:string, uid:string, attemptCount:number = 0):Promise<void> {
+		let res = await TwitchUtils.getStreamsInfos(null, [uid]);
+		let infos = res.data[0];
+		if(!infos) {
+			if(attemptCount < 3) {
+				Logger.info("No stream infos found for user " + uid + " try again.");
+				setTimeout(_=> this.alertLiveChannel(profile, uid, attemptCount+1), 5000);
+			}
+			return;
+		}
+		let message = `**${infos.user_name}** vient de commencer un live dans la catégorie \`${infos.game_name}\` !
+Le sujet est : \`${infos.title}\`
+https://twitch.tv/${infos.user_login}`;
+		
+		// console.log("Message to send on profile ", profile);
+		let guildId = Config.DISCORD_PROFILE_FROM_GUILD_ID(profile);
+		// console.log("GuildID", guildId);
+		let channelIDs = this.liveAlertsListCache[guildId];
+		// console.log("Channel IDS", channelIDs);
+		if(channelIDs) {
+			for (let i = 0; i < channelIDs.length; i++) {
+				const id = channelIDs[i];
+				// console.log("Send to ID", id);
+				let channel = this.client.channels.cache.get(id) as Discord.TextChannel;
+				// console.log("Channel found ? "+(channel ? "yes" : "no"));
+				if(channel) {
+					channel.send(message);
+				}
+				
+			}
+		}
+	}
 	
 	
 	
@@ -76,6 +124,21 @@ export default class DiscordController {
 		Logger.success("Discord bot connected");
 		// this.client.guilds.cache.map(async (g) => {
 		// });
+	}
+
+	private subToUsers() {
+		for (const key in this.liveAlertsListCache) {
+			//if a live alert channel has been defined for this discord
+			//sub to all users of the corresponding profile.
+			if(this.liveAlertsListCache[key]) {
+				let users = Utils.getUserList(null, key);
+				let profile = Utils.getProfile(null, key)
+				console.log(users.length);
+				for (let i = 0; i < users.length; i++) {
+					this.dispatchEvent(new RaiderEvent(RaiderEvent.SUB_TO_LIVE_EVENT, profile, users[i].id));
+				}
+			}
+		}
 	}
 
 	/**
@@ -110,7 +173,7 @@ export default class DiscordController {
 	 */
 	private async parseCommand(message:Discord.Message):Promise<void> {
 		let userId = message.member.id;
-		let isAdmin = false;
+		let isAdmin = message.member.permissions.has("ADMINISTRATOR");
 		
 		for (let i = 0; i < this.adminsCache[message.member.guild.id]?.length; i++) {
 			const adminList = this.adminsCache[message.member.guild.id][i];
@@ -138,6 +201,26 @@ export default class DiscordController {
 					let channelName = (<any>message.channel).name;
 					this.updateWatchList(message.guild.id, message.channel.id, false);
 					message.reply("Le bot a bien été supprimé du channel #"+channelName);
+				}
+				break;
+
+			case "raider-live-add":
+				if(isAdmin) {
+					let channelName = (<any>message.channel).name;
+					this.updateLiveAlertList(message.guild.id, message.channel.id, true);
+					message.reply("Le bot d'alertes de live a bien été configuré sur le channel #"+channelName);
+				}else{
+					message.reply("Seul un Administrateur peut ajouter le bot à un channel");
+				}
+				break;
+
+			case "raider-live-del":
+				if(isAdmin) {
+					let channelName = (<any>message.channel).name;
+					this.updateLiveAlertList(message.guild.id, message.channel.id, false);
+					message.reply("Le bot d'alertes de live a bien supprimé du channel #"+channelName);
+				}else{
+					message.reply("Seul un Administrateur peut ajouter le bot à un channel");
 				}
 				break;
 		
@@ -184,10 +267,17 @@ ${users.map(v => v.name).join(", ")}
 
 				message.channel.send(`Voici les commandes disponibles :\`\`\`
 !raider-add
-	(admin)Ajouter le bot à un chan
+	(admin) Ajouter le bot à un chan
 
 !raider-del
-	(admin)Supprimer le bot d'un chan
+	(admin) Supprimer le bot d'un chan
+
+!raider-live-add
+	(admin) Ajouter le bot d'alertes de live à un chan.
+	Lorsqu'un·e utilisateur/trice twitch passe en live un message sera posté dans ce chan
+
+!raider-live-del
+	(admin) Supprime le bot d'alertes de live d'un chan.
 
 !raider-list
 	Liste toutes les personnes enregistrées
@@ -243,6 +333,42 @@ ${protopoteSpecifics}
 		this.watchListCache = json;
 
 		fs.writeFileSync(Config.DISCORD_CHANNELS_LISTENED, JSON.stringify(json));
+	}
+
+	/**
+	 * Adds or removes a channel from the live alert list of the bot
+	 * 
+	 * @param serverId 
+	 * @param channelId 
+	 * @param add 
+	 * @returns 
+	 */
+	private updateLiveAlertList(serverId:string, channelId:string, add:boolean = true):void {
+		let text = fs.readFileSync(Config.DISCORD_CHANNELS_LIVE_ALERTS, "utf8");
+		let json:{[key:string]:string[]};
+		try {
+			json = JSON.parse(text);
+		}catch(error) { json = {}; }
+		
+		if(add) {
+			//Add a channel
+			if(!json[serverId]) json[serverId] = [];
+			let index = json[serverId].indexOf(channelId);
+			if(index == -1) {
+				json[serverId].push(channelId);
+			}
+		}else{
+			//Remove a channel
+			if(!json[serverId]) return;
+			let index = json[serverId].indexOf(channelId);
+			if(index > -1) {
+				json[serverId].splice(index, 1);
+			}
+		}
+
+		this.liveAlertsListCache = json;
+
+		fs.writeFileSync(Config.DISCORD_CHANNELS_LIVE_ALERTS, JSON.stringify(json));
 	}
 
 	/**
