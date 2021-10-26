@@ -3,7 +3,7 @@ import * as Discord from "discord.js"
 import * as fs from "fs"
 import Logger from '../utils/Logger';
 import Config from "../utils/Config";
-import TwitchUtils, { TwitchStreamInfos } from "../utils/TwitchUtils";
+import TwitchUtils, { TwitchStreamInfos, TwitchUserInfos } from "../utils/TwitchUtils";
 import APIController from "./APIController";
 import Utils from "../utils/Utils";
 import { EventDispatcher } from "../utils/EventDispatcher";
@@ -77,6 +77,7 @@ export default class DiscordController extends EventDispatcher {
 			// console.log("ON RAW")
 			// console.log(link);
 		})
+		// this.alertLiveChannel("pogscience", "252445282");//TODO remove debug
 	}
 
 	/**
@@ -92,9 +93,6 @@ export default class DiscordController extends EventDispatcher {
 			}
 			return;
 		}
-		let message = `**${infos.user_name}** vient de commencer un live dans la catégorie \`${infos.game_name}\` !
-Le sujet est : \`${infos.title}\`
-https://twitch.tv/${infos.user_login}`;
 		
 		// console.log("Message to send on profile ", profile);
 		let guildId = Config.DISCORD_PROFILE_FROM_GUILD_ID(profile);
@@ -107,10 +105,28 @@ https://twitch.tv/${infos.user_login}`;
 				// console.log("Send to ID", id);
 				let channel = this.client.channels.cache.get(id) as Discord.TextChannel;
 				// console.log("Channel found ? "+(channel ? "yes" : "no"));
-				if(channel) {
-					channel.send(message);
-				}
 				
+				if(channel) {
+					let res = await TwitchUtils.loadChannelsInfo(null, [uid]);
+					let userInfo:TwitchUserInfos = (await res.json()).data[0];
+					infos.thumbnail_url = infos.thumbnail_url.replace("{width}", "320").replace("{height}", "180");
+
+					let card = new Discord.MessageEmbed();
+					card.setTitle(infos.title);
+					card.setColor("#a970ff");
+					card.setURL(`https://twitch.tv/${infos.user_login}`);
+					card.setThumbnail(userInfo.profile_image_url);
+					card.setImage(infos.thumbnail_url)
+					card.setAuthor(infos.user_name+" est en live !", userInfo.profile_image_url)
+					card.addFields(
+						{ name: 'Catégorie', value: infos.game_name, inline: true },
+						{ name: 'Viewers', value: infos.viewer_count.toString(), inline: true },
+					);
+					card.setFooter(userInfo.description);
+					channel.send({embeds:[card]});
+				}else{
+					Logger.error("Channel not found");
+				}
 			}
 		}
 	}

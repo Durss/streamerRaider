@@ -170,10 +170,10 @@ export default class EventSubController extends EventDispatcher {
 
 		}else{
 			if(data.type == "live") {
-				Logger.info("📢 A channel went live : "+data.broadcaster_user_name)
+				Logger.info("📢 The channel "+data.broadcaster_user_name+" went live at "+data.started_at+" with type "+data.type);
 				let uid = data.broadcaster_user_id;
 				let lastAlert = this.lastUserAlert[uid] || 999999;
-				//Alert only once per 30min
+				//Alert only once every 30min
 				if(Date.now() - lastAlert > 1000 * 60 * 30) {
 					this.lastUserAlert[uid] = Date.now();
 					let profile = json.subscription.transport.callback.split("profile=")[1];
