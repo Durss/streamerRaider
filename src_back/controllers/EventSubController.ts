@@ -206,7 +206,7 @@ export default class EventSubController extends EventDispatcher {
 			if(cursor) {
 				url += "?after="+cursor;
 			}
-			console.log(url);
+			// console.log(url);
 			let res = await fetch(url, opts);
 			json = await res.json();
 			if(res.status == 401) {
@@ -221,7 +221,7 @@ export default class EventSubController extends EventDispatcher {
 		// console.log(json.max_total_cost);
 		// console.log(json.pagination);
 		// console.log(json.data.length+" / "+json.total);
-		console.log("LOADED COUNT ", list.length);
+		// console.log("LOADED COUNT ", list.length);
 		
 
 		//Filtering out only callbacks for current environment
