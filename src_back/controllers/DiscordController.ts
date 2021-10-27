@@ -269,6 +269,7 @@ ${users.map(v => v.name).join(", ")}
 				//Add a command specific to "protopotes" group as we have a custom
 				//command managed transparently by another bot. You won't need this.
 				let protopoteSpecifics = "";
+				let liveAlertSpecifics = "";
 				let profile = Utils.getProfile(null, message.guild.id);
 
 				//Just some specific commands for the "protopotes" group
@@ -284,7 +285,7 @@ ${users.map(v => v.name).join(", ")}
 
 				//Adding "live alert" bot infos if credentials are set
 				if(Config.EVENTSUB_SECRET && Config.EVENTSUB_CALLBACK) {
-					protopoteSpecifics = `
+					liveAlertSpecifics = `
 !raider-live-add
 	(admin) Ajouter le bot d'alertes de live à un chan.
 	Lorsqu'un·e utilisateur/trice twitch passe en live un message sera posté dans ce chan
@@ -304,7 +305,7 @@ ${users.map(v => v.name).join(", ")}
 
 !raider-list
 	Liste toutes les personnes enregistrées
-${protopoteSpecifics}
+${liveAlertSpecifics}
 !add-user TWITCH_LOGIN
 	Ajouter un·e utilisateur/trice twitch
 ${protopoteSpecifics}
