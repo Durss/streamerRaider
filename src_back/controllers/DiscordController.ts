@@ -120,7 +120,7 @@ export default class DiscordController extends EventDispatcher {
 					card.setAuthor(infos.user_name+" est en live !", userInfo.profile_image_url)
 					card.addFields(
 						{ name: 'Catégorie', value: infos.game_name, inline: true },
-						{ name: 'Viewers', value: infos.viewer_count.toString(), inline: true },
+						// { name: 'Viewers', value: infos.viewer_count.toString(), inline: true },
 					);
 					card.setFooter(userInfo.description);
 					channel.send({embeds:[card]});
