@@ -270,6 +270,8 @@ ${users.map(v => v.name).join(", ")}
 				//command managed transparently by another bot. You won't need this.
 				let protopoteSpecifics = "";
 				let profile = Utils.getProfile(null, message.guild.id);
+
+				//Just some specific commands for the "protopotes" group
 				if(profile == "protopotes") {
 					protopoteSpecifics = `
 !add-user TWITCH_LOGIN TWITTER_LOGIN
@@ -280,6 +282,19 @@ ${users.map(v => v.name).join(", ")}
 `;
 				}
 
+				//Adding "live alert" bot infos if credentials are set
+				if(Config.EVENTSUB_SECRET && Config.EVENTSUB_CALLBACK) {
+					protopoteSpecifics = `
+!raider-live-add
+	(admin) Ajouter le bot d'alertes de live à un chan.
+	Lorsqu'un·e utilisateur/trice twitch passe en live un message sera posté dans ce chan
+
+!raider-live-del
+	(admin) Supprime le bot d'alertes de live d'un chan.
+`;
+				}
+
+	
 				message.channel.send(`Voici les commandes disponibles :\`\`\`
 !raider-add
 	(admin) Ajouter le bot à un chan
@@ -287,16 +302,9 @@ ${users.map(v => v.name).join(", ")}
 !raider-del
 	(admin) Supprimer le bot d'un chan
 
-!raider-live-add
-	(admin) Ajouter le bot d'alertes de live à un chan.
-	Lorsqu'un·e utilisateur/trice twitch passe en live un message sera posté dans ce chan
-
-!raider-live-del
-	(admin) Supprime le bot d'alertes de live d'un chan.
-
 !raider-list
 	Liste toutes les personnes enregistrées
-
+${protopoteSpecifics}
 !add-user TWITCH_LOGIN
 	Ajouter un·e utilisateur/trice twitch
 ${protopoteSpecifics}
