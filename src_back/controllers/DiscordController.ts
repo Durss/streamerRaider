@@ -109,7 +109,7 @@ export default class DiscordController extends EventDispatcher {
 				if(channel) {
 					let res = await TwitchUtils.loadChannelsInfo(null, [uid]);
 					let userInfo:TwitchUserInfos = (await res.json()).data[0];
-					infos.thumbnail_url = infos.thumbnail_url.replace("{width}", "320").replace("{height}", "180");
+					infos.thumbnail_url = infos.thumbnail_url.replace("{width}", "1080").replace("{height}", "600");
 
 					let card = new Discord.MessageEmbed();
 					card.setTitle(infos.title);

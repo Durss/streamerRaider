@@ -67,6 +67,8 @@ export default class EventSubController extends EventDispatcher {
 			"broadcaster_user_id": uid
 		};
 
+		this.token = await TwitchUtils.getClientCredentialToken();
+
 		let opts = {
 			method:"POST",
 			headers:{
@@ -191,6 +193,7 @@ export default class EventSubController extends EventDispatcher {
 	 * @returns 
 	 */
 	private async unsubPrevious(profile?:string, uid?:string):Promise<void> {
+		this.token = await TwitchUtils.getClientCredentialToken();
 		let opts = {
 			method:"GET",
 			headers:{
