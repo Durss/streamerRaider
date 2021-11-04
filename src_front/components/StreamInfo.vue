@@ -333,7 +333,7 @@ export default class StreamInfo extends Vue {
 			justify-content: space-between;
 
 			.infos {
-				max-width: 50%;
+				max-width: calc(100% - 190px);
 				display: flex;
 				flex-direction: column;
 				align-items: flex-start;
