@@ -83,11 +83,11 @@ export default class DiscordController extends EventDispatcher {
 	/**
 	 * Sends a message to warn that a user went live on twitch
 	 */
-	public async alertLiveChannel(profile:string, uid:string, attemptCount:number = 0):Promise<void> {
+	public async alertLiveChannel(profile:string, uid:string, attemptCount:number = 0, editedMessage?:Discord.Message):Promise<void> {
 		let res = await TwitchUtils.getStreamsInfos(null, [uid]);
 		let infos = res.data[0];
 		if(!infos) {
-			if(attemptCount < 3) {
+			if(attemptCount < 3 && !editedMessage) {
 				Logger.info("No stream infos found for user " + uid + " try again.");
 				setTimeout(_=> this.alertLiveChannel(profile, uid, attemptCount+1), 5000);
 			}
@@ -116,14 +116,31 @@ export default class DiscordController extends EventDispatcher {
 					card.setColor("#a970ff");
 					card.setURL(`https://twitch.tv/${infos.user_login}`);
 					card.setThumbnail(userInfo.profile_image_url);
-					card.setImage(infos.thumbnail_url)
-					card.setAuthor(infos.user_name+" est en live !", userInfo.profile_image_url)
+					card.setImage(infos.thumbnail_url+"?t="+Date.now());
+					card.setAuthor(infos.user_name+" est en live !", userInfo.profile_image_url+"?t="+Date.now());
 					card.addFields(
-						{ name: 'Catégorie', value: infos.game_name, inline: true },
-						// { name: 'Viewers', value: infos.viewer_count.toString(), inline: true },
+						{ name: 'Catégorie', value: infos.game_name, inline: false },
 					);
+					if(editedMessage) {
+						let ellapsed = Date.now() - new Date(infos.started_at).getTime();
+						let uptime:string = Utils.formatDuration(ellapsed);
+						card.addFields(
+							{ name: 'Viewers', value: infos.viewer_count.toString(), inline: true },
+							{ name: 'Uptime', value: uptime, inline: true },
+						);
+					}
 					card.setFooter(userInfo.description);
-					channel.send({embeds:[card]});
+
+					let message:Discord.Message;
+					if(editedMessage) {
+						message = editedMessage;
+						message = await message.edit({embeds:[card]});
+					}else{
+						message = await channel.send({embeds:[card]});
+					}
+					setInterval(_=> {
+						this.alertLiveChannel(profile, uid, 0, message);
+					}, 5 * 60 * 1000);
 				}else{
 					Logger.error("Channel not found");
 				}

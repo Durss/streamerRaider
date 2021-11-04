@@ -493,4 +493,29 @@ export default class Utils  {
 		if((ip == "127.0.0.1" && Config.envName == "prod") || !ip) Logger.warn("No IP detected ! If behind a proxy, make sure you enabled 'x-forwarded-for' header on the proxy !")
 		return ip;
 	}
+
+	public static formatDuration(seconds: number): string {
+		let res = this.secondsToInputValue(seconds);
+		let days = Math.floor(seconds / (24 * 3600*1000));
+		if(days > 1) {
+			res = days+"j "+res;
+		}
+		return res;
+	}
+
+	public static secondsToInputValue(seconds: number): string {
+		let h = Math.floor(seconds / 3600000);
+		let m = Math.floor((seconds - h * 3600000) / 60000);
+		let s = Math.round((seconds - h * 3600000 - m * 60000) / 1000);
+		let res = this.toDigits(s);
+		if(m > 0 || h > 0) res = this.toDigits(m) + ":" + res;
+		if(h > 0) res = this.toDigits(h) + ":" + res;
+		return res;
+	}
+
+	private static toDigits(num:number, digits:number = 2):string {
+		let res = num.toString();
+		while(res.length < digits) res = "0"+res;
+		return res;
+	}
 }
