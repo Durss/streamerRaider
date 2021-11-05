@@ -138,7 +138,7 @@ export default class DiscordController extends EventDispatcher {
 					}else{
 						message = await channel.send({embeds:[card]});
 					}
-					setInterval(_=> {
+					setTimeout(_=> {
 						this.alertLiveChannel(profile, uid, 0, message);
 					}, 5 * 60 * 1000);
 				}else{
