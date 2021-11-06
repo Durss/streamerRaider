@@ -20,7 +20,6 @@ export default class EventSubController extends EventDispatcher {
 	private challengeCompleteCount:number = 0;
 	private challengeCompleteLogTimeout:number;
 	private subToList:string[] = [];
-	private subToLogTimeout:number;
 	
 	constructor() {
 		super();

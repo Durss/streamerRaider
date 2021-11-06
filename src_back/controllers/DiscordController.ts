@@ -87,9 +87,9 @@ export default class DiscordController extends EventDispatcher {
 		let res = await TwitchUtils.getStreamsInfos(null, [uid]);
 		let infos = res.data[0];
 		if(!infos) {
-			if(attemptCount < 3 && !editedMessage) {
+			if(attemptCount < 10 && !editedMessage) {
 				Logger.info("No stream infos found for user " + uid + " try again.");
-				setTimeout(_=> this.alertLiveChannel(profile, uid, attemptCount+1), 5000);
+				setTimeout(_=> this.alertLiveChannel(profile, uid, attemptCount+1), 5000 * (attemptCount+1));
 			}
 			return;
 		}
