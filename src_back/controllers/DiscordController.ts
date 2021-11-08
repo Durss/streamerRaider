@@ -18,6 +18,8 @@ export default class DiscordController extends EventDispatcher {
 	private watchListCache:{[key:string]:string[]};
 	private liveAlertsListCache:{[key:string]:string[]};
 	private adminsCache:{[key:string]:string[]};
+	private maxViewersCount:{[key:string]:number} = {};
+	private lastStreamInfosCount:{[key:string]:TwitchStreamInfos} = {};
 	private BOT_TOKEN:string = Config.DISCORDBOT_TOKEN;
 	
 	
@@ -87,9 +89,24 @@ export default class DiscordController extends EventDispatcher {
 		let res = await TwitchUtils.getStreamsInfos(null, [uid]);
 		let infos = res.data[0];
 		if(!infos) {
-			if(attemptCount < 10 && !editedMessage) {
-				Logger.info("No stream infos found for user " + uid + " try again.");
-				setTimeout(_=> this.alertLiveChannel(profile, uid, attemptCount+1), 5000 * (attemptCount+1));
+			let maxAttempt = 10;
+			if(attemptCount < maxAttempt) {
+				if(!editedMessage) {
+					Logger.info("No stream infos found for user " + uid + " try again.");
+				}
+				setTimeout(_=> this.alertLiveChannel(profile, uid, attemptCount+1, editedMessage), 5000 * (attemptCount+1));
+			}
+
+			if(attemptCount>=maxAttempt && editedMessage) {
+				//user closed his/her stream, replace the stream picture by the offline one
+				let res = await TwitchUtils.loadChannelsInfo(null, [uid]);
+				let userInfo:TwitchUserInfos = (await res.json()).data[0];
+				// editedMessage.embeds[0].setImage(userInfo.offline_image_url.replace("{width}", "1080").replace("{height}", "600"));
+
+				let card = this.buildLiveCard(this.lastStreamInfosCount[userInfo.id], userInfo, false, true);
+				await editedMessage.edit({embeds:[card]});
+				delete this.lastStreamInfosCount[userInfo.id];
+				delete this.maxViewersCount[userInfo.id];
 			}
 			return;
 		}
@@ -109,28 +126,7 @@ export default class DiscordController extends EventDispatcher {
 				if(channel) {
 					let res = await TwitchUtils.loadChannelsInfo(null, [uid]);
 					let userInfo:TwitchUserInfos = (await res.json()).data[0];
-					infos.thumbnail_url = infos.thumbnail_url.replace("{width}", "1080").replace("{height}", "600");
-
-					let card = new Discord.MessageEmbed();
-					card.setTitle(infos.title);
-					card.setColor("#a970ff");
-					card.setURL(`https://twitch.tv/${infos.user_login}`);
-					card.setThumbnail(userInfo.profile_image_url);
-					card.setImage(infos.thumbnail_url+"?t="+Date.now());
-					card.setAuthor(infos.user_name+" est en live !", userInfo.profile_image_url+"?t="+Date.now());
-					card.addFields(
-						{ name: 'Catégorie', value: infos.game_name, inline: false },
-					);
-					if(editedMessage) {
-						let ellapsed = Date.now() - new Date(infos.started_at).getTime();
-						let uptime:string = Utils.formatDuration(ellapsed);
-						card.addFields(
-							{ name: 'Viewers', value: infos.viewer_count.toString(), inline: true },
-							{ name: 'Uptime', value: uptime, inline: true },
-						);
-					}
-					card.setFooter(userInfo.description);
-
+					let card = this.buildLiveCard(infos, userInfo, editedMessage!=null);
 					let message:Discord.Message;
 					if(editedMessage) {
 						message = editedMessage;
@@ -140,7 +136,7 @@ export default class DiscordController extends EventDispatcher {
 					}
 					setTimeout(_=> {
 						this.alertLiveChannel(profile, uid, 0, message);
-					}, 5 * 60 * 1000);
+					}, 1 * 60 * 1000);
 				}else{
 					Logger.error("Channel not found");
 				}
@@ -550,6 +546,51 @@ ${protopoteSpecifics}
 		fs.writeFileSync(Config.TWITCH_USERS_FILE(null, message.guild.id), JSON.stringify(users));
 		let profile = Utils.getProfile(null, message.guild.id)
 		APIController.invalidateCache(profile);
+	}
+
+	private buildLiveCard(infos:TwitchStreamInfos, userInfo:TwitchUserInfos, liveMode:boolean, offlineMode:boolean =false):Discord.MessageEmbed {
+		if(offlineMode) {
+			let url = userInfo.offline_image_url;
+			if(!url) {
+				url = "https://raid.protopotes.stream/offline.png";//TODO replace that hardcoded domain
+			}
+			infos.thumbnail_url = url.replace("{width}", "1080").replace("{height}", "600");
+		}else{
+			infos.thumbnail_url = infos.thumbnail_url.replace("{width}", "1080").replace("{height}", "600");
+		}
+
+		let card = new Discord.MessageEmbed();
+		card.setTitle(infos.title);
+		card.setColor("#a970ff");
+		card.setURL(`https://twitch.tv/${infos.user_login}`);
+		card.setThumbnail(userInfo.profile_image_url);
+		card.setImage(infos.thumbnail_url+"?t="+Date.now());
+		card.setAuthor(infos.user_name+" est en live !", userInfo.profile_image_url);
+		card.addFields(
+			{ name: 'Catégorie', value: infos.game_name, inline: false },
+		);
+		if(liveMode) {
+			let ellapsed = Date.now() - new Date(infos.started_at).getTime();
+			let uptime:string = Utils.formatDuration(ellapsed);
+			if(!this.maxViewersCount[userInfo.id]) this.maxViewersCount[userInfo.id] = 0;
+			this.maxViewersCount[userInfo.id] = Math.max(this.maxViewersCount[userInfo.id], infos.viewer_count);
+			card.addFields(
+				{ name: 'Viewers', value: infos.viewer_count.toString(), inline: true },
+				{ name: 'Uptime', value: uptime, inline: true },
+			);
+			this.lastStreamInfosCount[userInfo.id] = infos;
+		}else if(offlineMode) {
+			let fields:Discord.EmbedField[] = [];
+			if(this.maxViewersCount[userInfo.id]) {
+				fields.push({ name: 'Viewers max', value: this.maxViewersCount[userInfo.id].toString(), inline: true });
+			}
+			let ellapsed = Date.now() - new Date(infos.started_at).getTime();
+			let uptime:string = Utils.formatDuration(ellapsed);
+			fields.push({ name: 'Durée du stream', value: uptime, inline: true });
+			card.addFields( fields );
+		}
+		card.setFooter(userInfo.description);
+		return card;
 	}
 
 }
