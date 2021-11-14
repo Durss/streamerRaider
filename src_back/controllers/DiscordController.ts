@@ -86,6 +86,10 @@ export default class DiscordController extends EventDispatcher {
 	 * Sends a message to warn that a user went live on twitch
 	 */
 	public async alertLiveChannel(profile:string, uid:string, attemptCount:number = 0, editedMessage?:Discord.Message):Promise<void> {
+		//If there's data in cache, it's becasue the stream is already live.
+		//Avoid having two messages for the same stream by ignoring this one.
+		if(this.lastStreamInfosCount[uid] && !editedMessage) return;
+
 		let res = await TwitchUtils.getStreamsInfos(null, [uid]);
 		let infos = res.data[0];
 		if(!infos) {
