@@ -40,7 +40,7 @@ export default class Config {
 		}
 	}
 
-	public static DISCORD_PROFILE_FROM_GUILD_ID(profile:string):string {
+	public static DISCORD_GUILD_ID_FROM_PROFILE(profile:string):string {
 		if(!fs.existsSync(this._DISCORD_GUILD_IDS_PATH)) return null;
 		try {
 			let json:{[key:string]:string} = JSON.parse(fs.readFileSync(this._DISCORD_GUILD_IDS_PATH, "utf8"));

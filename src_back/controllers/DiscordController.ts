@@ -16,10 +16,10 @@ export default class DiscordController extends EventDispatcher {
 
 	private client:Discord.Client;
 	private watchListCache:{[key:string]:string[]};
-	private liveAlertsListCache:{[key:string]:string[]};
+	private liveAlertChannelsListCache:{[key:string]:string[]};
 	private adminsCache:{[key:string]:string[]};
 	private maxViewersCount:{[key:string]:number} = {};
-	private lastStreamInfosCount:{[key:string]:TwitchStreamInfos} = {};
+	private lastStreamInfos:{[key:string]:TwitchStreamInfos} = {};
 	private BOT_TOKEN:string = Config.DISCORDBOT_TOKEN;
 	
 	
@@ -48,9 +48,9 @@ export default class DiscordController extends EventDispatcher {
 		
 		if(!fs.existsSync(Config.DISCORD_CHANNELS_LIVE_ALERTS)) {
 			fs.writeFileSync(Config.DISCORD_CHANNELS_LIVE_ALERTS, "{}");
-			this.liveAlertsListCache = {};
+			this.liveAlertChannelsListCache = {};
 		}else{
-			this.liveAlertsListCache = JSON.parse(fs.readFileSync(Config.DISCORD_CHANNELS_LIVE_ALERTS, "utf8"));
+			this.liveAlertChannelsListCache = JSON.parse(fs.readFileSync(Config.DISCORD_CHANNELS_LIVE_ALERTS, "utf8"));
 			this.subToUsers();
 		}
 		
@@ -88,11 +88,11 @@ export default class DiscordController extends EventDispatcher {
 	public async alertLiveChannel(profile:string, uid:string, attemptCount:number = 0, editedMessage?:Discord.Message):Promise<void> {
 		//If there's data in cache, it's becasue the stream is already live.
 		//Avoid having two messages for the same stream by ignoring this one.
-		if(this.lastStreamInfosCount[uid] && !editedMessage) return;
+		if(this.lastStreamInfos[uid] && !editedMessage) return;
 
 		let res = await TwitchUtils.getStreamsInfos(null, [uid]);
-		let infos = res.data[0];
-		if(!infos) {
+		let steamDetails = res.data[0];
+		if(!steamDetails) {
 			let maxAttempt = 10;
 			if(attemptCount < maxAttempt) {
 				if(!editedMessage) {
@@ -107,37 +107,37 @@ export default class DiscordController extends EventDispatcher {
 				let userInfo:TwitchUserInfos = (await res.json()).data[0];
 				// editedMessage.embeds[0].setImage(userInfo.offline_image_url.replace("{width}", "1080").replace("{height}", "600"));
 
-				let card = this.buildLiveCard(this.lastStreamInfosCount[userInfo.id], userInfo, false, true);
+				let card = this.buildLiveCard(this.lastStreamInfos[userInfo.id], userInfo, false, true);
 				await editedMessage.edit({embeds:[card]});
-				delete this.lastStreamInfosCount[userInfo.id];
+				delete this.lastStreamInfos[userInfo.id];
 				delete this.maxViewersCount[userInfo.id];
 			}
 			return;
 		}
 		
-		// console.log("Message to send on profile ", profile);
-		let guildId = Config.DISCORD_PROFILE_FROM_GUILD_ID(profile);
-		// console.log("GuildID", guildId);
-		let channelIDs = this.liveAlertsListCache[guildId];
-		// console.log("Channel IDS", channelIDs);
+		//Get discord guild ID from current profile
+		let guildId = Config.DISCORD_GUILD_ID_FROM_PROFILE(profile);
+		//Get channels IDs in which send alerts
+		let channelIDs = this.liveAlertChannelsListCache[guildId];
 		if(channelIDs) {
 			for (let i = 0; i < channelIDs.length; i++) {
 				const id = channelIDs[i];
-				// console.log("Send to ID", id);
+				//Get actual channel's reference
 				let channel = this.client.channels.cache.get(id) as Discord.TextChannel;
-				// console.log("Channel found ? "+(channel ? "yes" : "no"));
-				
 				if(channel) {
+					//Get twitch channel's infos
 					let res = await TwitchUtils.loadChannelsInfo(null, [uid]);
 					let userInfo:TwitchUserInfos = (await res.json()).data[0];
-					let card = this.buildLiveCard(infos, userInfo, editedMessage!=null);
+					let card = this.buildLiveCard(steamDetails, userInfo, editedMessage!=null);
 					let message:Discord.Message;
 					if(editedMessage) {
+						//Edit existing message
 						message = editedMessage;
 						message = await message.edit({embeds:[card]});
 					}else{
 						message = await channel.send({embeds:[card]});
 					}
+					//Schedule message update 1min later
 					setTimeout(_=> {
 						this.alertLiveChannel(profile, uid, 0, message);
 					}, 1 * 60 * 1000);
@@ -160,10 +160,10 @@ export default class DiscordController extends EventDispatcher {
 	}
 
 	private subToUsers() {
-		for (const key in this.liveAlertsListCache) {
+		for (const key in this.liveAlertChannelsListCache) {
 			//if a live alert channel has been defined for this discord
 			//sub to all users of the corresponding profile.
-			if(this.liveAlertsListCache[key]) {
+			if(this.liveAlertChannelsListCache[key]) {
 				let users = Utils.getUserList(null, key);
 				let profile = Utils.getProfile(null, key)
 				for (let i = 0; i < users.length; i++) {
@@ -407,7 +407,7 @@ ${protopoteSpecifics}
 			}
 		}
 
-		this.liveAlertsListCache = json;
+		this.liveAlertChannelsListCache = json;
 
 		fs.writeFileSync(Config.DISCORD_CHANNELS_LIVE_ALERTS, JSON.stringify(json));
 	}
@@ -582,7 +582,7 @@ ${protopoteSpecifics}
 				{ name: 'Viewers', value: infos.viewer_count.toString(), inline: true },
 				{ name: 'Uptime', value: uptime, inline: true },
 			);
-			this.lastStreamInfosCount[userInfo.id] = infos;
+			this.lastStreamInfos[userInfo.id] = infos;
 		}else if(offlineMode) {
 			let fields:Discord.EmbedField[] = [];
 			if(this.maxViewersCount[userInfo.id]) {
