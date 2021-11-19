@@ -1,6 +1,6 @@
 {
   "script": "./server/bootstrap.js",
-  "name": "ProtopotesRaider",
+  "name": "StreamerRaider",
   "env": {},
   "merge_logs": true,
   "vizion": true,

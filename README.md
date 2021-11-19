@@ -119,7 +119,7 @@ pm2 start bootstrap-pm2.json
 
 To view process logs via PM2, execute :
 ```
-pm2 logs --raw ProtopotesRaider
+pm2 logs --raw StreamerRaider
 ```
 
 # Start on boot
