@@ -253,7 +253,6 @@ export default class APIController extends EventDispatcher {
 	<meta content='width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0' name='viewport' />
 	<meta name="robots" content="noindex, nofollow">
 	<link rel="author" href="https://www.durss.ninja" />
-	<link rel="canonical" href="http://protopotes.durss.ninja/">
 	<meta http-equiv="refresh" content="60" >
 	<style>
 	.holder {
