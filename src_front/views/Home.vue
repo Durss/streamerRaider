@@ -8,7 +8,7 @@
 		
 		<div class="confError" v-if="missingTwitchUsers">Please add users to the file <strong>data/{{userFile}}.json</strong> at the root of the project</div>
 		
-		<div class="confError" v-if="loadError">Woops... une erreur est survenue lors du chargement des données... Il y a peut-être eu une mise à jour, essaie de rafraîchir la page !</div>
+		<div class="confError" v-if="loadError">Woops... une erreur est survenue lors du chargement des données... Il y a peut-être eu une mise à jour ou Twitch a encore fait sauté ma clef d'API, essaie de rafraîchir la page au cas où !</div>
 
 		<div v-if="!loading && !missingTwitchKeys && !missingTwitchUsers && !loadError" class="page">
 			<div v-if="!lightMode">
