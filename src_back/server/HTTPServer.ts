@@ -97,7 +97,11 @@ export default class HTTPServer {
 		 */
 		this.app.all("/api/*", async (request:Request, response:Response, next:NextFunction) => {
 			if(!TwitchUtils.ready) {
-				response.status(401).send(JSON.stringify({success:false, error_code:"INVALID_TWITCH_KEYS", error:"missing or invalid twitch API keys"}));
+				if(!Config.TWITCHAPP_CLIENT_ID || !Config.TWITCHAPP_SECRET_ID) {
+					response.status(401).send(JSON.stringify({success:false, error_code:"MISSING_TWITCH_KEYS", error:"missing twitch API keys"}));
+				}else{
+					response.status(401).send(JSON.stringify({success:false, error_code:"INVALID_TWITCH_KEYS", error:"invalid twitch API keys"}));
+				}
 			}else{
 				let isTwitchMessage = request.body?.subscription != undefined || request.headers["twitch-eventsub-message-id"] != undefined;
 				if((request.method == "POST" || request.method == "DELETE")

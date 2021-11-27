@@ -69,7 +69,7 @@ export default class Api {
 				let json = JSON.parse(text);
 				if(json.success === false) {
 					//Status 200 but JSON says there's an error
-					throw(json);
+					throw(new ApiError(json));
 				}else if(json.data){
 					return json.data;
 				}else{
@@ -80,21 +80,35 @@ export default class Api {
 					return text;
 				}else{
 					console.log(error);
-					throw({code:"unknown", message:"Unable to decode query result"});
+					throw({success:false, error_code:"unknown", message:"Unable to decode query result"});
 				}
 			}
 		}else if(result.status == 429) {
 			let json = await result.json()
 			let duration = Math.ceil(json.retryAfter/1000);
 			store.dispatch("alert", "Too many requests, try again in "+duration+" seconds");
-			throw({code:"unknown", message:"Too many requests, try again in "+duration+" seconds", alertDone:true});
+			throw({success:false, error_code:"unknown", message:"Too many requests, try again in "+duration+" seconds"});
 		}else{
+			let err:ApiError;
 			try {
 				let json = await result.json();
-				throw(json);
+				err = new ApiError(json);
 			}catch(error) {
-				throw({code:"unknown", message:"Unable to decode query result"});
+				err = new ApiError({success:false, error_code:"unknown", message:"Unable to decode query result"});
 			};
+			throw(err);
 		}
     }
+}
+
+export class ApiError {
+	public success:boolean;
+	public error_code:string;
+	public message:string;
+
+	constructor(json:any) {
+		this.success = json.success;
+		this.error_code = json.error_code;
+		this.message = json.message;
+	}
 }

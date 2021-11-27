@@ -6,11 +6,16 @@
 
 		<div class="confError" v-if="missingTwitchKeys">Please fill in the <strong>client_id</strong> and <strong>secret_id</strong> values inside the file <strong>data/credentials.json</strong> created at the root of the project!</div>
 		
+		<div class="confError" v-if="invalidTwitchKeys">The configured Twitch credentials are invalid!</div>
+
 		<div class="confError" v-if="missingTwitchUsers">Please add users to the file <strong>data/{{userFile}}.json</strong> at the root of the project</div>
 		
-		<div class="confError" v-if="loadError">Woops... une erreur est survenue lors du chargement des données... Il y a peut-être eu une mise à jour ou Twitch a encore fait sauté ma clef d'API, essaie de rafraîchir la page au cas où !</div>
+		<div class="confError" v-if="loadError">
+			Woops... there was an error loading data... there may have been a server update, please try reloading the page !
+			<Button title="Reload" highlight :icon="require('@/assets/icons/reload.svg')" class="reloadBt" :loading="reloading" @click="reloadPage()" />
+		</div>
 
-		<div v-if="!loading && !missingTwitchKeys && !missingTwitchUsers && !loadError" class="page">
+		<div v-if="!loading && !missingTwitchKeys && !invalidTwitchKeys && !missingTwitchUsers && !loadError" class="page">
 			<div v-if="!lightMode">
 				<img :src="logoPath" height="100">
 				<h1>{{title}} Raider</h1>
@@ -113,7 +118,7 @@ import MainLoader from "@/components/MainLoader.vue";
 import OBSPanelInfo from "@/components/OBSPanelInfo.vue";
 import StreamerForm from "@/components/StreamerForm.vue";
 import StreamInfo from "@/components/StreamInfo.vue";
-import Api from "@/utils/Api";
+import Api, { ApiError } from "@/utils/Api";
 import IRCClient from "@/utils/IRCClient";
 import { TwitchTypes } from "@/utils/TwitchUtils";
 import Utils from "@/utils/Utils";
@@ -134,11 +139,13 @@ import { Component, Vue } from "vue-property-decorator";
 export default class Home extends Vue {
 
 	public loading:boolean = true;
+	public reloading:boolean = false;
 	public loadError:boolean = false;
 	public showOBSPanel:boolean = false;
 	public showConfigPanel:boolean = false;
 	public showProfileForm:boolean = false;
 	public missingTwitchKeys:boolean = false;
+	public invalidTwitchKeys:boolean = false;
 	public missingTwitchUsers:boolean = false;
 
 	public onlineUsers:TwitchTypes.UserInfo[] = [];
@@ -266,7 +273,15 @@ export default class Home extends Vue {
 		}catch(error) {
 			this.loadError = true;
 			this.loading = false;
-			console.log(error);
+			if(error instanceof ApiError) {
+				if(error.error_code === "INVALID_TWITCH_KEYS") {
+					this.invalidTwitchKeys = true;
+					this.loadError = false;
+				}else if(error.error_code === "INVALID_TWITCH_KEYS") {
+					this.missingTwitchKeys = true;
+					this.loadError = false;
+				}
+			}
 			this.scheduleReload();
 			return;
 		}
@@ -314,6 +329,11 @@ export default class Home extends Vue {
 
 	public openConfigPanel():void {
 		this.showConfigPanel = !this.showConfigPanel;
+	}
+
+	public reloadPage():void {
+		this.reloading = true;
+		document.location.reload();
 	}
 
 }
@@ -382,6 +402,15 @@ export default class Home extends Vue {
 		box-shadow: rgba(0, 0, 0, 0.5) 0px 6px 16px 0px, rgba(0, 0, 0, 0.4) 0px 0px 4px 0px;
 		box-sizing: border-box;
 		border-radius: 10px;
+
+		.reloadBt {
+			display: block;
+			margin: auto;
+			margin-top: 20px;
+			/deep/.icon {
+				margin-bottom: 4px;
+			}
+		}
 	}
 
 	.page {

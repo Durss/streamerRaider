@@ -48,12 +48,17 @@ export default class TwitchUtils {
 		};
 		let result = await fetch("https://id.twitch.tv/oauth2/token?client_id="+Config.TWITCHAPP_CLIENT_ID+"&client_secret="+Config.TWITCHAPP_SECRET_ID+"&grant_type=client_credentials&scope=", options)
 		if(result.status == 200) {
-			let json =await result.json()
+			let json =await result.json();
 			this._token = json.access_token;
 			this._token_invalidation_date = Date.now() + (json.expires_in - 60000);
 			return json.access_token;
 		}else{
-			throw("Token generation failed");
+			try {
+				let json = await result.json();
+				throw(json);
+			}catch(error){
+				throw({status:403, message:"Invalid credentials"});
+			}
 		}
 	}
 
