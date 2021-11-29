@@ -409,6 +409,14 @@ export default class Button extends Vue {
 				min-height: 25px;
 			}
 		}
+		&:not(.big) {
+			.label {
+				font-size: 15px;
+			}
+			.icon {
+				max-height: 18px;
+			}
+		}
 	}
 }
 </style>

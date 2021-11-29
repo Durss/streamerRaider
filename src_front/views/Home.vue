@@ -522,13 +522,22 @@ export default class Home extends Vue {
 @media only screen and (max-width: 500px) {
 	.home{
 		.page {
+			h1 {
+				font-size: 30px;
+			}
 			.menu {
 				margin-top: 0;
+				// .button {
+					// font-size: 11px;
+				// }
 			}
 			.block {
 				padding-top: 25px;
 				.title {
 					padding-bottom: 0;
+					h2 {
+						font-size: 15px;
+					}
 				}
 			}
 		}

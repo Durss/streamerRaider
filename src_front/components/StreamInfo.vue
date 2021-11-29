@@ -298,9 +298,6 @@ export default class StreamInfo extends Vue {
 			width: 30px;
 			height: 30px;
 			min-width: 30px;
-			min-height: 30px;
-			max-width: 30px;
-			max-height: 30px;
 			padding: 5px;
 			border-radius: 10px;
 		}
@@ -417,6 +414,33 @@ export default class StreamInfo extends Vue {
 
 @media only screen and (max-width: 500px) {
 	.streaminfo{
+
+		&.light.small {
+			width: 43%;
+			margin: 5px;
+			margin-bottom: 0px !important;//ooouh...bad bad me :)
+			.userName {
+				.name {
+					font-size: 14px;
+				}
+			}
+		}
+		.userName {
+			padding: 5px;
+			.name {
+				font-size: 18px;
+			}
+			.avatar {
+				width: 25px;
+				height: 25px;
+			}
+
+			.link {
+				width: 25px;
+				height: 25px;
+				min-width: 25px;
+			}
+		}
 		.detailsHolder {
 			display: flex;
 			flex-direction: column;
@@ -428,9 +452,14 @@ export default class StreamInfo extends Vue {
 				.infos,.preview {
 					max-width: 100%;
 				}
+				.infos {
+					.title {
+						font-size: 14px;
+					}
+				}
 				.preview {
 					.streamImage {
-						@ratio: 1;
+						@ratio: .92;
 						max-width: 100%;
 						width: calc(340px * @ratio);
 						height: calc(190px * @ratio);
