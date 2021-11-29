@@ -107,7 +107,10 @@
 				</transition-group>
 
 				<div v-if="inactiveUsers.length > 0" class="inactive">
-					<button class="showInactiveBt" @click="displayInactiveUsers()" v-if="!showInactive">- voir les personnes inactives -</button>
+					<button class="showInactiveBt" @click="displayInactiveUsers()" v-if="!showInactive">
+						<span v-if="inactiveUsers.length == 1">- {{inactiveUsers.length}} personne inactive -</span>
+						<span v-if="inactiveUsers.length > 1">- {{inactiveUsers.length}} personnes inactives -</span>
+					</button>
 					<div class="title" v-if="showInactive">
 						<span class="line"></span>
 						<h2>Personnes inactives ({{inactiveDays}} jours)</h2>
