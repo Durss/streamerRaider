@@ -9,6 +9,8 @@ export default class Config {
 	public static IS_PROD:boolean = /.*\.(com|fr|net|org|ninja|st|stream)$/gi.test(window.location.hostname);
 
 	public static TWITCH_SCOPES:string[] = ["chat:read","chat:edit","channel_editor"];
+	public static NEW_USER_DURATION:number = 1000 * 60 * 60 * 24 * 31;//31 days
+	public static INACTIVITY_DURATION:number = 1000 * 60 * 60 * 24 * 60;//60 days
 
 	/**
 	 * Undocumented facultative stuff to keep basic installs simple

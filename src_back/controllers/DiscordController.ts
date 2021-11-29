@@ -474,6 +474,7 @@ ${protopoteSpecifics}
 					id:twitchUser.id,
 					name:twitchUser.display_name,
 					created_at: Date.now(),
+					lastActivity: Date.now(),
 				});
 				message.reply("Le compte Twitch **\""+login+"\"** a bien été ajouté à la liste.");
 				this.dispatchEvent(new RaiderEvent(RaiderEvent.USER_ADDED, profile, twitchUser.id));

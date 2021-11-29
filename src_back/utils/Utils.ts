@@ -470,8 +470,8 @@ export default class Utils  {
 	}
 
 
-	public static getUserList(req:Request, discordGuildID?:string):UserData[] {
-		return this.getFileContent(Config.TWITCH_USERS_FILE(req, discordGuildID), []);
+	public static getUserList(req:Request, discordGuildID?:string, profile?:string):UserData[] {
+		return this.getFileContent(Config.TWITCH_USERS_FILE(req, discordGuildID, profile), []);
 	}
 
 

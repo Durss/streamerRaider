@@ -105,6 +105,23 @@
 						:userInfos="u"
 						small />
 				</transition-group>
+
+				<div v-if="inactiveUsers.length > 0" class="inactive">
+					<button class="showInactiveBt" @click="displayInactiveUsers()" v-if="!showInactive">- voir les personnes inactives et inactifs -</button>
+					<div class="title" v-if="showInactive">
+						<span class="line"></span>
+						<h2>Personnes inactives ({{inactiveDays}} jours)</h2>
+						<span class="line"></span>
+					</div>
+					<div v-if="showInactive" class="list">
+						<StreamInfo class="stream" v-for="(u, index) in inactiveUsers"
+							:data-index="index*.25"
+							:key="u.id"
+							:userName="u.display_name"
+							:userInfos="u"
+							small />
+					</div>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -124,6 +141,7 @@ import { TwitchTypes } from "@/utils/TwitchUtils";
 import Utils from "@/utils/Utils";
 import gsap from "gsap/all";
 import { Component, Vue } from "vue-property-decorator";
+import Config from "@/utils/Config";
 
 @Component({
 	components: {
@@ -142,6 +160,7 @@ export default class Home extends Vue {
 	public reloading:boolean = false;
 	public loadError:boolean = false;
 	public showOBSPanel:boolean = false;
+	public showInactive:boolean = false;
 	public showConfigPanel:boolean = false;
 	public showProfileForm:boolean = false;
 	public missingTwitchKeys:boolean = false;
@@ -150,14 +169,18 @@ export default class Home extends Vue {
 
 	public onlineUsers:TwitchTypes.UserInfo[] = [];
 	public offlineUsers:TwitchTypes.UserInfo[] = [];
+	public inactiveUsers:TwitchTypes.UserInfo[] = [];
 	
-	private mouseMoveHandler:any;
 	private refreshTimeout:number;
 
 	public get classes():string[] {
 		let res = ["home"];
 		if(this.lightMode) res.push("light");
 		return res;
+	}
+
+	public get inactiveDays():number {
+		return Config.INACTIVITY_DURATION / (1000 * 60 * 60 * 24);
 	}
 
 	public get lightMode():boolean {
@@ -202,13 +225,10 @@ export default class Home extends Vue {
 
 	public async mounted():Promise<void> {
 		this.loadData(true);
-		// this.mouseMoveHandler = (e:MouseEvent) => this.onMouseMove(e);
-		// document.body.addEventListener("mousemove", this.mouseMoveHandler);
 	}
 
 	public beforeDestroy(): void {
 		clearTimeout(this.refreshTimeout);
-		// document.body.removeEventListener("mousemove", this.mouseMoveHandler);
 	}
 
 	public randomRaid():void {
@@ -254,6 +274,7 @@ export default class Home extends Vue {
 		
 		let onlineUsers:TwitchTypes.UserInfo[] = [];
 		let offlineUsers:TwitchTypes.UserInfo[] = [];
+		let inactiveUsers:TwitchTypes.UserInfo[] = [];
 		this.loadError = false;
 		try {
 			//Get channels list and states
@@ -264,7 +285,11 @@ export default class Home extends Vue {
 					if(user.streamInfos) {
 						onlineUsers.push(user);
 					}else{
-						offlineUsers.push(user);
+						if(Date.now() - user.rawData.lastActivity > Config.INACTIVITY_DURATION) {
+							inactiveUsers.push(user);
+						}else{
+							offlineUsers.push(user);
+						}
 					}
 				}
 			}else{
@@ -298,10 +323,17 @@ export default class Home extends Vue {
 			return 0;
 		})
 
+		inactiveUsers.sort((a, b) => {
+			if(a.login.toLowerCase() > b.login.toLowerCase()) return 1;
+			if(a.login.toLowerCase() < b.login.toLowerCase()) return -1;
+			return 0;
+		})
+
 		this.loading = false;
 		await this.$nextTick();
 		this.onlineUsers = onlineUsers;
 		this.offlineUsers = offlineUsers;
+		this.inactiveUsers = inactiveUsers;
 		
 		this.scheduleReload();
 	}
@@ -334,6 +366,12 @@ export default class Home extends Vue {
 	public reloadPage():void {
 		this.reloading = true;
 		document.location.reload();
+	}
+
+	public async displayInactiveUsers():Promise<void> {
+		this.showInactive = true;
+		await this.$nextTick();
+		window.scrollBy(0, 100);
 	}
 
 }
@@ -497,7 +535,7 @@ export default class Home extends Vue {
 				height: 100%;
 				display: flex;
 				flex-direction: column;
-				.title {
+				&>.title {
 					background: linear-gradient(0deg, rgba(0,0,0,0.5) 20%, rgba(0,0,0,0) 100%);
 				}
 				.list {
@@ -505,6 +543,23 @@ export default class Home extends Vue {
 					width: 100%;
 					flex-grow: 1;
 					background-color: rgba(0,0,0,0.5);
+				}
+				.inactive {
+					padding-top: 20px;
+					background-color: rgba(0,0,0,0.5);
+					.list  {
+						background-color: transparent;
+						.stream {
+							filter: saturate(0%);
+						}
+					}
+				}
+				.showInactiveBt {
+					background-color: @mainColor_dark_light;
+					border-radius: 5px;
+					padding: 2px 10px;
+					cursor: pointer;
+					margin-bottom: 10px;
 				}
 			}
 		}
@@ -538,6 +593,12 @@ export default class Home extends Vue {
 					h2 {
 						font-size: 15px;
 					}
+				}
+				.showInactiveBt {
+					font-size: 14px;
+				}
+				.list {
+					padding-top: 10px;
 				}
 			}
 		}

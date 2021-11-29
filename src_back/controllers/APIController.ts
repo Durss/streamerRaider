@@ -4,7 +4,7 @@ import Config from "../utils/Config";
 import { EventDispatcher } from "../utils/EventDispatcher";
 import Logger from "../utils/Logger";
 import RaiderEvent from "../utils/RaiderEvent";
-import TwitchUtils from "../utils/TwitchUtils";
+import TwitchUtils, { TwitchUserInfos } from "../utils/TwitchUtils";
 import UserData from "../utils/UserData";
 import Utils from "../utils/Utils";
 
@@ -75,6 +75,14 @@ export default class APIController extends EventDispatcher {
 		this._app.post("/api/description", (req:Request, res:Response) => this.postUserDescription(req,res));
 		//Remove the description from a user
 		this._app.delete("/api/description", (req:Request, res:Response) => this.deleteUserDescription(req,res));
+
+		//Force caches refresh every 30 minutes to make sure "lastActivity" date is
+		//updated for all users
+		setInterval(() => {
+			Utils.getProfileList().forEach(async profile => {
+				await this.getStreamsListByProfile(profile.profile);
+			});
+		}, 1000 * 60 * 30);
 	}
 
 	public static invalidateCache(profile:string):void {
@@ -177,6 +185,7 @@ export default class APIController extends EventDispatcher {
 					id:twitchUserData.data[0].id,
 					name:twitchUserData.data[0].display_name,
 					created_at:Date.now(),
+					lastActivity:Date.now(),
 				});
 				fs.writeFileSync(Config.TWITCH_USERS_FILE(req), JSON.stringify(users));
 				res.status(200).send(JSON.stringify({success:true, data:users}));
@@ -229,7 +238,7 @@ export default class APIController extends EventDispatcher {
 	}
 
 	/**
-	 * Gets the numbezr of users online
+	 * Gets the number of users online
 	 * 
 	 * @param res 
 	 */
@@ -360,9 +369,26 @@ export default class APIController extends EventDispatcher {
 			return;
 		}
 
-		let userList = this.getCachedUserList(req);
+		let result = await this.getStreamsListByProfile(profile);
+
+		this._streamInfosCache[profile] = {
+			expires_at:Date.now(),
+			data:result,
+		};
+
+		if(res) {
+			res.header("Cache-Control", "max-age="+Math.ceil(Config.STREAMERS_CACHE_DURATION));
+			res.status(200).send(JSON.stringify({success:true, data:result}));
+		}
+	}
+
+	/**
+	 * Loads streams infos and update last activity dates of active users
+	 */
+	private async getStreamsListByProfile(profile:string):Promise<TwitchUserInfos[]> {
+		let userList = this.getCachedUserList(null, profile);
 		let userListRef = userList.concat();
-		let result = [];
+		let result:TwitchUserInfos[] = [];
 		let batchSize = 100;
 		if(userList?.length > 0) {
 			do {
@@ -370,7 +396,7 @@ export default class APIController extends EventDispatcher {
 				try {
 					let channelRequest = await TwitchUtils.loadChannelsInfo(null, list);
 					let channelJson = await channelRequest.json();
-					let channelsInfos = channelJson.data;
+					let channelsInfos:TwitchUserInfos[] = channelJson.data;
 					result = result.concat(channelsInfos);
 					
 					let jsonStreams = await TwitchUtils.getStreamsInfos(null, list);
@@ -388,23 +414,29 @@ export default class APIController extends EventDispatcher {
 				}catch(error){
 					Logger.error("Error while loading channels infos")
 					console.log(error);
-					if(res) {
-						res.status(500).send(error);
-					}
-					return;
+					throw(error);
 				}
 			}while(userList.length > 0);
 		}
 
-		this._streamInfosCache[profile] = {
-			expires_at:Date.now(),
-			data:result,
-		};
-
-		if(res) {
-			res.header("Cache-Control", "max-age="+Math.ceil(Config.STREAMERS_CACHE_DURATION));
-			res.status(200).send(JSON.stringify({success:true, data:result}));
+		//Updating last activity dates of users
+		let users = Utils.getUserList(null, null, profile);
+		for (let i = 0; i < users.length; i++) {
+			const u = users[i];
+			for (let j = 0; j < result.length; j++) {
+				const infos = result[j];
+				if(infos.streamInfos && u.id == infos.id) {
+					u.lastActivity = Date.now();
+				}
+				if(!u.lastActivity) {
+					u.lastActivity = Date.now();
+				}
+			}
 		}
+		fs.writeFileSync(Config.TWITCH_USERS_FILE(null, null, profile), JSON.stringify(users));
+		APIController._CACHE_INVALIDATED[profile] = true;
+
+		return result;
 	}
 
 	/**
@@ -430,14 +462,16 @@ export default class APIController extends EventDispatcher {
 	/**
 	 * Gets a description from cache
 	 */
-	private getCachedUserList(req:Request):UserData[] {
-		let profile:string = Utils.getProfile(req);
+	private getCachedUserList(req:Request, profile?:string):UserData[] {
+		if(!profile) {
+			profile = Utils.getProfile(req);
+		}
 		if(APIController._CACHE_INVALIDATED[profile] !== false) {
 			this._usersCache[profile] = null;
 			APIController._CACHE_INVALIDATED[profile] = false;
 		}
 		if(!this._usersCache[profile]) {
-			let users = Utils.getUserList(req);
+			let users = Utils.getUserList(null, null, profile);
 			this._usersCache[profile] = users;
 		}
 		return this._usersCache[profile].concat();

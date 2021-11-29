@@ -1,6 +1,7 @@
 import fetch, { Response as FetchResponse } from "node-fetch";
 import Config from "./Config";
 import Logger from "./Logger";
+import UserData from "./UserData";
 import Utils from "./Utils";
 
 /**
@@ -193,4 +194,9 @@ export interface TwitchUserInfos {
 	offline_image_url:string;
 	view_count:string;
 	created_at:string;
+		
+	//Custom injected data from server.
+	streamInfos:TwitchStreamInfos;
+	//Custom injected data from server.
+	rawData:UserData;
 }

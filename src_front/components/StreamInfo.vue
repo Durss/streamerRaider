@@ -58,6 +58,7 @@
 </template>
 
 <script lang="ts">
+import Config from "@/utils/Config";
 import IRCClient from "@/utils/IRCClient";
 import { TwitchTypes } from "@/utils/TwitchUtils";
 import Utils from "@/utils/Utils";
@@ -94,7 +95,7 @@ export default class StreamInfo extends Vue {
 
 	public get streamInfos():TwitchTypes.StreamInfo { return this.userInfos.streamInfos; }
 	
-	public get isNewUser():boolean { return Date.now() - this.userInfos?.rawData.created_at < 31*24*60*60*1000; }
+	public get isNewUser():boolean { return Date.now() - this.userInfos?.rawData.created_at < Config.NEW_USER_DURATION; }
 
 	public get twitchParent():string {
 		return document.location.hostname;
