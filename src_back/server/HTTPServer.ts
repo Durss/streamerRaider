@@ -184,15 +184,15 @@ export default class HTTPServer {
 		Logger.info("Create endpoints");
 		let api = new APIController();
 		api.create(this.app);
+		let discord = new DiscordController();
+		discord.create(this.app);
 		
 		let eventSub = new EventSubController();
 		await eventSub.create(this.app);
 
-		let discord = new DiscordController();
 		discord.addEventListener(RaiderEvent.SUB_TO_LIVE_EVENT, (event:RaiderEvent) => {
 			eventSub.subToUser(event.profile, event.channelId);
 		});
-		discord.create(this.app);
 		
 		eventSub.addEventListener(RaiderEvent.DISCORD_ALERT_LIVE, (event:RaiderEvent) => {
 			discord.alertLiveChannel(event.profile, event.channelId);
@@ -203,6 +203,8 @@ export default class HTTPServer {
 		
 		discord.addEventListener(RaiderEvent.USER_ADDED, (event:RaiderEvent) => { eventSub.subToUser(event.profile, event.channelId); });
 		discord.addEventListener(RaiderEvent.USER_REMOVED, (event:RaiderEvent) => { eventSub.unsubUser(event.profile, event.channelId); });
+
+		discord.onEventsubReady();
 
 	}
 

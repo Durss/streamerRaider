@@ -38,20 +38,13 @@ export default class DiscordController extends EventDispatcher {
 	******************/
 	public async create(app:Express):Promise<void> {
 		if(!this.BOT_TOKEN) return;
+		this.liveAlertChannelsListCache = {};
 		
 		if(!fs.existsSync(Config.DISCORD_CHANNELS_LISTENED)) {
 			fs.writeFileSync(Config.DISCORD_CHANNELS_LISTENED, "{}");
 			this.watchListCache = {};
 		}else{
 			this.watchListCache = JSON.parse(fs.readFileSync(Config.DISCORD_CHANNELS_LISTENED, "utf8"));
-		}
-		
-		if(!fs.existsSync(Config.DISCORD_CHANNELS_LIVE_ALERTS)) {
-			fs.writeFileSync(Config.DISCORD_CHANNELS_LIVE_ALERTS, "{}");
-			this.liveAlertChannelsListCache = {};
-		}else{
-			this.liveAlertChannelsListCache = JSON.parse(fs.readFileSync(Config.DISCORD_CHANNELS_LIVE_ALERTS, "utf8"));
-			this.subToUsers();
 		}
 		
 		if(!fs.existsSync(Config.DISCORD_CHANNELS_ADMINS)) {
@@ -80,6 +73,19 @@ export default class DiscordController extends EventDispatcher {
 			// console.log(link);
 		})
 		// this.alertLiveChannel("pogscience", "252445282");//TODO remove debug
+	}
+
+	/**
+	 * Called when eventsub is ready
+	 */
+	public onEventsubReady():void {
+		if(!fs.existsSync(Config.DISCORD_CHANNELS_LIVE_ALERTS)) {
+			fs.writeFileSync(Config.DISCORD_CHANNELS_LIVE_ALERTS, "{}");
+			this.liveAlertChannelsListCache = {};
+		}else{
+			this.liveAlertChannelsListCache = JSON.parse(fs.readFileSync(Config.DISCORD_CHANNELS_LIVE_ALERTS, "utf8"));
+			this.subToUsers();
+		}
 	}
 
 	/**
