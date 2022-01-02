@@ -49,7 +49,7 @@ See [Create a discord bot](#create-a-discord-bot)
 
 The `eventsub_secret` and `eventsub_callback` should be specified if you want to get discord alerts when a user goes live.\
 Leave these values blank if you don't need this feature.\
-The `eventsub_secret` is a random string between 10 and 100 chars that'll be used to handshake with EventSub Twitch API. Write Anything you awant there.\
+The `eventsub_secret` is a random string between 10 and 100 chars that'll be used to handshake with EventSub Twitch API. Write Anything you want there.\
 The `eventsub_callback` is the URI twitch will call when a user goes live. It will most probably be the domain name hosting the app.\
 When testing locally you'll want to use HTTPS tuneling like [NGrok](https://ngrok.com) to get an HTTPS url that redirect queries to your localhost.
 
@@ -62,8 +62,10 @@ https://discord.com/developers/applications/ \
 Once the app is created, create a bot within the app.\
 Get its `token` and set it as the `discordBot_token` value on the file `data/credentials.json`.\
 \
-To add the bot to your discord, find the `client ID` on OAuth section of the discord APP, update the following URL and open it on your browser:
-https://discordapp.com/oauth2/authorize?scope=bot&client_id=CLIENT_ID
+To add the bot to your discord, find the `client ID` on OAuth section of the discord APP, add it at the end of the following URL and open it on your browser:
+```
+https://discordapp.com/oauth2/authorize?scope=bot&client_id=
+```
 \
 \
 Once done, the administrator of the discord needs to send this command on the channel(s) that should be listened by the bot:
