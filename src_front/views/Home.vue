@@ -17,7 +17,7 @@
 
 		<div v-if="!loading && !missingTwitchKeys && !invalidTwitchKeys && !missingTwitchUsers && !loadError" class="page">
 			<div v-if="!lightMode">
-				<img :src="logoPath" height="100">
+				<img :src="logoPath" height="100" @error="onLogoError()">
 				<h1>{{title}} Raider</h1>
 			</div>
 
@@ -169,6 +169,7 @@ export default class Home extends Vue {
 	public missingTwitchKeys:boolean = false;
 	public invalidTwitchKeys:boolean = false;
 	public missingTwitchUsers:boolean = false;
+	public forceDefaultLogo:boolean = false;
 
 	public onlineUsers:TwitchTypes.UserInfo[] = [];
 	public offlineUsers:TwitchTypes.UserInfo[] = [];
@@ -211,12 +212,11 @@ export default class Home extends Vue {
 	}
 
 	public get logoPath():string {
-		if(this.$store.state.profileName) {
-			return require("@/assets/logos/"+this.$store.state.profileName+".png");
+		if(this.$store.state.profileName && !this.forceDefaultLogo) {
+			return "/logos/"+this.$store.state.profileName+".png";
 		}else{
-			return require("@/assets/logos/protopotes.png");
+			return "/logos/default.png";
 		}
-		// @/assets/logos/pogscience.png
 	}
 
 	public get isAStreamer():boolean {
@@ -260,11 +260,13 @@ export default class Home extends Vue {
 	}
 
 	/**
-	 * Called on mouse move event.
+	 * Called if logo loading failed
 	 */
-	// private onMouseMove(e:MouseEvent):void {
-	// 	this.scheduleReload();
-	// }
+	public onLogoError():void {
+		console.warn("No logo specified for current profile ("+this.$store.state.profileName+") on folder \"public/logos\". Fallback to default logo. Add a \""+this.$store.state.profileName+".png\" on \"public\" folder to change it !");
+		this.forceDefaultLogo = true;
+	}
+
 
 	/**
 	 * Loads all the data from server

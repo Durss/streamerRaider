@@ -1,7 +1,7 @@
 <template>
 	<div :class="classes" @mouseenter="over=true" @mouseleave="over=false">
 		<a :href="data.url" class="link">
-			<img class="icon" :src="data.icon" :alt="data.name">
+			<img class="icon" :src="logo" :alt="data.name" @error="onLogoError()">
 			<div class="label">{{data.name}}</div>
 		</a>
 	</div>
@@ -26,6 +26,14 @@ export default class ProfileNavButton extends Vue {
 	public lightMode:boolean;
 
 	public over:boolean = false;
+	public forceDefaultLogo:boolean = false;
+	public get logo():string {
+		if(this.forceDefaultLogo) {
+			return "/logos/default.png";
+		}else{
+			return this.data.icon;
+		}
+	}
 
 	public get classes():string[] {
 		let res = ["profilenavbutton"];
@@ -41,6 +49,14 @@ export default class ProfileNavButton extends Vue {
 
 	public beforeDestroy():void {
 		
+	}
+
+	/**
+	 * Called if logo loading failed
+	 */
+	public onLogoError():void {
+		console.warn("No logo specified for profile \""+this.data.name+"\" on folder \"public/logos\". Fallback to default logo. Add a \""+this.data.name+".png\" on \"public/logos\" folder to change it !");
+		this.forceDefaultLogo = true;
 	}
 
 }

@@ -82,7 +82,7 @@ export default class ProfileSwitcher extends Vue {
 							dns:sideProfile.domains[0],
 							url: "https://"+sideProfile.domains[0] + route,
 							name:sideProfile.profile,
-							icon: require("@/assets/logos/"+sideProfile.profile+".png")
+							icon: "/logos/"+sideProfile.profile+".png"
 						};
 					}
 					if(p.prevProfile) {
@@ -91,45 +91,11 @@ export default class ProfileSwitcher extends Vue {
 							dns:sideProfile.domains[0],
 							url: "https://"+sideProfile.domains[0] + route,
 							name:sideProfile.profile,
-							icon: require("@/assets/logos/"+sideProfile.profile+".png")
+							icon: "/logos/"+sideProfile.profile+".png"
 						};
 					}
 				}
 			}
-			/*
-			let currentIndex = -1;
-			let list:Profile[] = [];
-			let tld = null;
-			for (let i = 0; i < this.profiles.length; i++) {
-				const p = this.profiles[i];
-				let minDist:number = 99999;
-				let closestDNS:string = null;
-				//Remove "localhost" profile if not testing locally
-				if(dns.indexOf("localhost") == -1 && p.domains.indexOf("localhost") > -1) continue;
-
-				list.push({
-					dns:p.domains[0],
-					url: "",
-					name:p.profile,
-					icon: require("@/assets/logos/"+p.profile+".png")
-				});
-				if(p.domains.indexOf(dns) > -1) {
-					currentIndex = list.length - 1;
-				}
-			}
-
-			let route = this.$route.path;
-			list.forEach((p, i) => {
-				p.url = "https://"+p.dns.replace("*", tld) + route;
-			});
-
-			// currentIndex = 1;//Local debug
-
-			//Get prev profile
-			if(currentIndex > 0) this.prevProfile = list[currentIndex-1];
-			//Get next profile
-			if(currentIndex < list.length-1) this.nextProfile = list[currentIndex+1];
-			*/
 		}
 	}
 }
