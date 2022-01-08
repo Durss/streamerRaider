@@ -70,14 +70,14 @@ export default class ProfileSwitcher extends Vue {
 			let dns = document.location.hostname;
 			// dns = "protopotes.durss.fr";
 			// dns = "pogscience.durss.fr";
-			console.log(this.profiles);
+			// console.log(this.profiles);
 			let route = this.$route.path;
 			for (let i = 0; i < this.profiles.length; i++) {
 				const p = this.profiles[i];
 				if(p.domains.indexOf(dns) > -1) {
 					if(p.nextProfile) {
 						let sideProfile:ServerProfile = this.profiles.find(v => v.profile === p.nextProfile);
-						console.log(sideProfile);
+						// console.log(sideProfile);
 						this.nextProfile = {
 							dns:sideProfile.domains[0],
 							url: "https://"+sideProfile.domains[0] + route,
