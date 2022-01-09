@@ -37,7 +37,6 @@ export default class DiscordController extends EventDispatcher {
 	* PUBLIC METHODS *
 	******************/
 	public async create(app:Express):Promise<void> {
-		if(!this.BOT_TOKEN) return;
 		this.liveAlertChannelsListCache = {};
 		
 		if(!fs.existsSync(Config.DISCORD_CHANNELS_LISTENED)) {
@@ -73,6 +72,7 @@ export default class DiscordController extends EventDispatcher {
 	 * Called when eventsub is ready
 	 */
 	public onEventsubReady():void {
+		
 		if(!fs.existsSync(Config.DISCORD_CHANNELS_LIVE_ALERTS)) {
 			fs.writeFileSync(Config.DISCORD_CHANNELS_LIVE_ALERTS, "{}");
 			this.liveAlertChannelsListCache = {};

@@ -84,13 +84,25 @@ export default class Config {
 	public static get EVENTSUB_SCOPES():string {
 		return "";
 	}
+
+	public static get PROFILES_ENABLED():boolean {
+		return fs.existsSync(Config.AVAILABLE_PROFILES_LIST);
+	}
 	
 	private static loadKeys():void {
 		if(this._CREDENTIALS) return;
 		if(!fs.existsSync(this._CREDENTIALS_PATH)) {
 			Logger.error(LogStyle.BgRed+LogStyle.FgWhite+"MISSING Twitch credentials !"+LogStyle.Reset);
 			Logger.error("Please fill in the client_id and secret_id values on the file credentials.json");
+			console.log(this._CREDENTIALS_PATH.replace(/[^\/]*\.json/gi, ""));
 			this._CREDENTIALS = {client_id:"",secret_id:"", discordBot_token:"", privateApiKey:"", eventsub_secret:"", eventsub_callback:""};
+
+			let folderPath = this._CREDENTIALS_PATH.replace(/[^\/]*\.json/gi, "");
+			//Create folder structure if necessary
+			if(!fs.existsSync(folderPath)) {
+				fs.mkdirSync(folderPath, {recursive:true});
+			}
+
 			fs.writeFileSync(this._CREDENTIALS_PATH, JSON.stringify(this._CREDENTIALS));
 		}else{
 			this._CREDENTIALS = JSON.parse(fs.readFileSync(this._CREDENTIALS_PATH, "utf8"));

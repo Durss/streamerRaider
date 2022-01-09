@@ -56,6 +56,7 @@ export default class App extends Vue {
 	@Watch("$store.state.initComplete", { immediate: true, deep: true })
 	public onReady():void {
 		let p = this.$store.state.profileName;
+		if(!p) p = "Streamer"
 		p = p.replace(/^\w/, (c) => c.toUpperCase());
 		this.pageTitle = p+" Raider";
 	}

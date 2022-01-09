@@ -222,6 +222,7 @@ export default class Utils  {
 	 * Gets all available profiles
 	 */
 	public static getProfileList():{domains:string[], profile:string}[] {
+		if(!Config.PROFILES_ENABLED) return [];
 		if(!this.profileCache) {
 			try {
 				this.profileCache = JSON.parse(fs.readFileSync(Config.AVAILABLE_PROFILES_LIST, "utf8"));
@@ -252,6 +253,7 @@ export default class Utils  {
 	 * Gets a profile from an express request or a discord ID
 	 */
 	public static getProfile(req:Request, discordGuildID?:string):string {
+		if(!Config.PROFILES_ENABLED) return null;
 		if(!this.profileCache) {
 			try {
 				this.profileCache = JSON.parse(fs.readFileSync(Config.AVAILABLE_PROFILES_LIST, "utf8"));
@@ -297,7 +299,14 @@ export default class Utils  {
 	 * Gets the users list from an express query or a discord ID
 	 */
 	public static getUserList(req:Request, discordGuildID?:string, profile?:string):UserData[] {
-		return this.getFileContent(Config.TWITCH_USERS_FILE(req, discordGuildID, profile), []);
+		let list;
+		try {
+			list = this.getFileContent(Config.TWITCH_USERS_FILE(req, discordGuildID, profile), []);
+		}catch(error) {
+			Logger.error("Unable to parse JSON file: "+Config.TWITCH_USERS_FILE(req, discordGuildID, profile));
+			return [];
+		}
+		return list;
 	}
 
 	/**

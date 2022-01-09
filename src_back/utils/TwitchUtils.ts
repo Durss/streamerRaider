@@ -58,7 +58,7 @@ export default class TwitchUtils {
 				let json = await result.json();
 				throw(json);
 			}catch(error){
-				throw({status:403, message:"Invalid credentials"});
+				throw({status:403, message:"Invalid credentials", code:"INVALID_CREDENTIALS"});
 			}
 		}
 	}
