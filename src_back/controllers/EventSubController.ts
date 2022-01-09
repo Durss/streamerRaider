@@ -20,6 +20,7 @@ export default class EventSubController extends EventDispatcher {
 	private challengeCompleteCount:number = 0;
 	private challengeCompleteLogTimeout:number;
 	private subToList:string[] = [];
+	private callbackCache:EventSubMessageSubType.Subscription[] = [];
 	
 	constructor() {
 		super();
@@ -42,8 +43,8 @@ export default class EventSubController extends EventDispatcher {
 		
 		if(this.url) {
 			this.token = await TwitchUtils.getClientCredentialToken();
-			await this.unsubPrevious();
-			// await this.subToUser("647389082");
+			await this.getCurrentCallbacks();
+			// await this.unsubPrevious();
 			this.onReady();
 		}
 	}
@@ -62,12 +63,24 @@ export default class EventSubController extends EventDispatcher {
 			Logger.warn("📢 EventSub is missing a secret passphrase to be initialized !");
 			return;
 		}
+
+		this.token = await TwitchUtils.getClientCredentialToken();
+		
+		//Check if user is already subscribed
+		let callback:string = this.url+"api/eventsubcallback?profile="+profile;
+		let list = this.callbackCache;
+		for (let i = 0; i < list.length; i++) {
+			const el = list[i];
+			if(el.condition.broadcaster_user_id === uid
+			&& el.transport.callback == callback) {
+				Logger.info("📢 EventSub Already subscribed to user "+uid);
+				return;
+			}
+		}
+
 		let condition:any = {
 			"broadcaster_user_id": uid
 		};
-
-		this.token = await TwitchUtils.getClientCredentialToken();
-
 		let opts = {
 			method:"POST",
 			headers:{
@@ -81,7 +94,7 @@ export default class EventSubController extends EventDispatcher {
 				"condition": condition,
 				"transport": {
 					"method": "webhook",
-					"callback": this.url+"api/eventsubcallback?profile="+profile,
+					"callback": callback,
 					"secret": Config.EVENTSUB_SECRET,
 				}
 			})
@@ -102,6 +115,8 @@ export default class EventSubController extends EventDispatcher {
 			return;
 		}
 
+		//This "subToList" var is only here to avoid spamming console if subbing
+		//to lots of users at once.
 		this.subToList.push(uid);
 		clearTimeout(this.challengeCompleteLogTimeout);
 		this.challengeCompleteLogTimeout = setTimeout(_=> {
@@ -263,6 +278,44 @@ export default class EventSubController extends EventDispatcher {
 		console.log(LogStyle.BgRed+"https://id.twitch.tv/oauth2/authorize?client_id="+Config.TWITCHAPP_CLIENT_ID+"&redirect_uri=http%3A%2F%2Flocalhost%3A3009%2Foauth&response_type=token&scope="+Config.EVENTSUB_SCOPES+LogStyle.Reset);
 	}
 
+	/**
+	 * Gets all the current subsscriptions related to a profile
+	 * @param profile 
+	 * @returns 
+	 */
+	private async getCurrentCallbacks():Promise<EventSubMessageSubType.Subscription[]> {
+		this.token = await TwitchUtils.getClientCredentialToken();
+		
+		let list:EventSubMessageSubType.Subscription[] = [];
+		let json:any, cursor:string;
+		let options = {
+			method:"GET",
+			headers:{
+				"Client-ID": Config.TWITCHAPP_CLIENT_ID,
+				"Authorization": "Bearer "+this.token,
+				"Content-Type": "application/json",
+			}
+		};
+		do {
+			let url = "https://api.twitch.tv/helix/eventsub/subscriptions";
+			if(cursor) {
+				url += "?after="+cursor;
+			}
+			// console.log(url);
+			let res = await fetch(url, options);
+			json = await res.json();
+			if(res.status == 401) {
+				this.logOAuthURL();
+				return;
+			}
+			list = list.concat(json.data);
+			cursor = json.pagination?.cursor;
+		}while(cursor != null);
+
+		this.callbackCache = list;
+		
+		return list;
+	}
 }
 
 export interface EventSubMessage {
