@@ -10,160 +10,6 @@ import UserData from "./UserData";
 export default class Utils  {
 
 	/**
-	 * Computes distance between two strings
-	 *
-	 * @param a
-	 * @param b
-	 * @returns {number}
-	 */
-	public static levenshtein(a:string, b:string):number {
-		if(a.length == 0) return b.length;
-		if(b.length == 0) return a.length;
-
-		let matrix:number[][] = [];
-		a = this.replaceDiacritics(a);
-		b = this.replaceDiacritics(b);
-
-		// increment along the first column of each row
-		let i:number;
-		for(i = 0; i <= b.length; i++){
-			matrix[i] = [i];
-		}
-
-		// increment each column in the first row
-		let j:number;
-		for(j = 0; j <= a.length; j++){
-			matrix[0][j] = j;
-		}
-
-		// Fill in the rest of the matrix
-		for(i = 1; i <= b.length; i++){
-			for(j = 1; j <= a.length; j++){
-				if(b.charAt(i-1) == a.charAt(j-1)){
-					matrix[i][j] = matrix[i-1][j-1];
-				} else {
-					matrix[i][j] = Math.min(matrix[i-1][j-1] + 1, // substitution
-						Math.min(matrix[i][j-1] + 1, // insertion
-							matrix[i-1][j] + 1)); // deletion
-				}
-			}
-		}
-
-		// Logger.log("Levenshtein",a,b,matrix[b.length][a.length])
-		return matrix[b.length][a.length];
-	};
-
-	/**
-	 * Shortens
-	 * @param src
-	 * @param maxLength
-	 * @returns {string}
-	 */
-	public static shorten(src:string, maxLength:number = 10):string {
-		if(src.length > maxLength) {
-			return src.substr(0, maxLength-1) + "…";
-		}else{
-			return src;
-		}
-	}
-
-	/**
-	 * Convers a string into a slug
-	 *
-	 * @param str
-	 * @returns {string}
-	 */
-	public static slugify(str:string):string {
-		if(!str || str.length == 0) return "";
-		return this.replaceDiacritics(str.toLowerCase().trim())
-			.replace(/[^\w\s-]/g, '') // remove non-word [a-z0-9_], non-whitespace, non-hyphen characters
-			.replace(/[\s_-]+/g, '-') // swap any length of whitespace, underscore, hyphen characters with a single -
-			.replace(/^-+|-+$/g, '')
-			.replace(/&/g, '-and-');
-	}
-
-	/**
-	 * Splits a string into multiple strings, each containing a maximum of N characters
-	 *
-	 * @param str
-	 * @param maxLength
-	 * @returns {string[]}
-	 */
-	public static smartSplitString(str:string, maxLength:number = 140):string[] {
-		str = this.htmlEntityDecode(str).replace(/(<script(\s|\S)*?<\/script>)|(<style(\s|\S)*?<\/style>)|(<!--(\s|\S)*?-->)|(<\/?(\s|\S)*?>)/g, "");
-
-		if(str.length < maxLength) return [str];
-
-		let strings:string[] = [];
-		let words:string[] = str.split(/(\r|\n|\s|\.|\?|!|,)/gm);
-		let length:number = 0;
-		let offset:number = 0;
-
-		for(let i:number=0; i < words.length; i++) {
-			if(i%2 == 1) continue;
-
-			let w:string = words[i];
-			if(length + w.length+1 > maxLength) {
-				let line:string = str.substr(offset, length).trim();
-				if(line.length > 0) {
-					strings.push( line );
-				}
-				offset += length;
-				length = 0;
-				i-=2;
-			}else{
-				length += w.length + 1;
-			}
-		}
-
-		if(offset < str.length) {
-			let line:string = str.substr(offset, str.length - offset).trim();
-			if(line.length > 0) strings.push( line );
-		}
-
-		return strings;
-	}
-
-	/**
-	 * Shuffles an array
-	 * Modifies the array
-	 *
-	 * @param a
-	 */
-	public static shuffle(a:any[]):void {
-		for (let i:number = a.length; i; i--) {
-			let j = Math.floor(Math.random() * i);
-			[a[i - 1], a[j]] = [a[j], a[i - 1]];
-		}
-	}
-
-	/**
-	 * Picks random entry
-	 *
-	 * @param a
-	 */
-	public static pickRand<T>(a:T[]):T {
-		return a[ Math.floor(Math.random() * a.length) ];
-	}
-
-	/**
-	 * Decodes HTML entities
-	 *
-	 * @param text
-	 * @returns {string}
-	 */
-	public static htmlEntityDecode(text:string):string {
-		let entities:any[] = [
-			['nbsp', ' '], ['Tab', '	'], ['NewLine', '\n'], ['excl', '!'], ['quot', '"'], ['num', '#'], ['dollar', '$'], ['percnt', '%'], ['amp', '&amp;'], ['apos', '\''], ['lpar', '('], ['rpar', ')'], ['ast', '*'], ['plus', '+'], ['comma', ','], ['period', '.'], ['sol', '/'], ['colon', ':'], ['semi', ';'], ['lt', '&lt;'], ['equals', '='], ['gt', '&gt;'], ['quest', '?'], ['commat', '@'], ['lsqb', '['], ['bsol', '\\'], ['rsqb', ']'], ['Hat', '^'], ['lowbar', '_'], ['grave', '`'], ['lcub', '{'], ['verbar', '|'], ['rcub', '}'], ['nbsp', '&nbsp;'], ['iexcl', '¡'], ['cent', '¢'], ['pound', '£'], ['curren', '¤'], ['yen', '¥'], ['brvbar', '¦'], ['sect', '§'], ['Dot', '¨'], ['copy', '©'], ['ordf', 'ª'], ['laquo', '«'], ['not', '¬'], ['shy', '­'], ['reg', '®'], ['macr', '¯'], ['deg', '°'], ['plusmn', '±'], ['sup2', '²'], ['sup3', '³'], ['acute', '´'], ['micro', 'µ'], ['para', '¶'], ['middot', '·'], ['cedil', '¸'], ['sup1', '¹'], ['ordm', 'º'], ['raquo', '»'], ['frac14', '¼'], ['frac12', '½'], ['frac34', '¾'], ['iquest', '¿'], ['Agrave', 'À'], ['Aacute', 'Á'], ['Acirc', 'Â'], ['Atilde', 'Ã'], ['Auml', 'Ä'], ['Aring', 'Å'], ['AElig', 'Æ'], ['Ccedil', 'Ç'], ['Egrave', 'È'], ['Eacute', 'É'], ['Ecirc', 'Ê'], ['Euml', 'Ë'], ['Igrave', 'Ì'], ['Iacute', 'Í'], ['Icirc', 'Î'], ['Iuml', 'Ï'], ['ETH', 'Ð'], ['Ntilde', 'Ñ'], ['Ograve', 'Ò'], ['Oacute', 'Ó'], ['Ocirc', 'Ô'], ['Otilde', 'Õ'], ['Ouml', 'Ö'], ['times', '×'], ['Oslash', 'Ø'], ['Ugrave', 'Ù'], ['Uacute', 'Ú'], ['Ucirc', 'Û'], ['Uuml', 'Ü'], ['Yacute', 'Ý'], ['THORN', 'Þ'], ['szlig', 'ß'], ['agrave', 'à'], ['aacute', 'á'], ['acirc', 'â'], ['atilde', 'ã'], ['auml', 'ä'], ['aring', 'å'], ['aelig', 'æ'], ['ccedil', 'ç'], ['egrave', 'è'], ['eacute', 'é'], ['ecirc', 'ê'], ['euml', 'ë'], ['igrave', 'ì'], ['iacute', 'í'], ['icirc', 'î'], ['iuml', 'ï'], ['eth', 'ð'], ['ntilde', 'ñ'], ['ograve', 'ò'], ['oacute', 'ó'], ['ocirc', 'ô'], ['otilde', 'õ'], ['ouml', 'ö'], ['divide', '÷'], ['oslash', 'ø'], ['ugrave', 'ù'], ['uacute', 'ú'], ['ucirc', 'û'], ['uuml', 'ü'], ['yacute', 'ý'], ['thorn', 'þ'], ['yuml', 'ÿ'], ['Amacr', 'Ā'], ['amacr', 'ā'], ['Abreve', 'Ă'], ['abreve', 'ă'], ['Aogon', 'Ą'], ['aogon', 'ą'], ['Cacute', 'Ć'], ['cacute', 'ć'], ['Ccirc', 'Ĉ'], ['ccirc', 'ĉ'], ['Cdot', 'Ċ'], ['cdot', 'ċ'], ['Ccaron', 'Č'], ['ccaron', 'č'], ['Dcaron', 'Ď'], ['dcaron', 'ď'], ['Dstrok', 'Đ'], ['dstrok', 'đ'], ['Emacr', 'Ē'], ['emacr', 'ē'], ['Edot', 'Ė'], ['edot', 'ė'], ['Eogon', 'Ę'], ['eogon', 'ę'], ['Ecaron', 'Ě'], ['ecaron', 'ě'], ['Gcirc', 'Ĝ'], ['gcirc', 'ĝ'], ['Gbreve', 'Ğ'], ['gbreve', 'ğ'], ['Gdot', 'Ġ'], ['gdot', 'ġ'], ['Gcedil', 'Ģ'], ['Hcirc', 'Ĥ'], ['hcirc', 'ĥ'], ['Hstrok', 'Ħ'], ['hstrok', 'ħ'], ['Itilde', 'Ĩ'], ['itilde', 'ĩ'], ['Imacr', 'Ī'], ['imacr', 'ī'], ['Iogon', 'Į'], ['iogon', 'į'], ['Idot', 'İ'], ['imath', 'ı'], ['IJlig', 'Ĳ'], ['ijlig', 'ĳ'], ['Jcirc', 'Ĵ'], ['jcirc', 'ĵ'], ['Kcedil', 'Ķ'], ['kcedil', 'ķ'], ['kgreen', 'ĸ'], ['Lacute', 'Ĺ'], ['lacute', 'ĺ'], ['Lcedil', 'Ļ'], ['lcedil', 'ļ'], ['Lcaron', 'Ľ'], ['lcaron', 'ľ'], ['Lmidot', 'Ŀ'], ['lmidot', 'ŀ'], ['Lstrok', 'Ł'], ['lstrok', 'ł'], ['Nacute', 'Ń'], ['nacute', 'ń'], ['Ncedil', 'Ņ'], ['ncedil', 'ņ'], ['Ncaron', 'Ň'], ['ncaron', 'ň'], ['napos', 'ŉ'], ['ENG', 'Ŋ'], ['eng', 'ŋ'], ['Omacr', 'Ō'], ['omacr', 'ō'], ['Odblac', 'Ő'], ['odblac', 'ő'], ['OElig', 'Œ'], ['oelig', 'œ'], ['Racute', 'Ŕ'], ['racute', 'ŕ'], ['Rcedil', 'Ŗ'], ['rcedil', 'ŗ'], ['Rcaron', 'Ř'], ['rcaron', 'ř'], ['Sacute', 'Ś'], ['sacute', 'ś'], ['Scirc', 'Ŝ'], ['scirc', 'ŝ'], ['Scedil', 'Ş'], ['scedil', 'ş'], ['Scaron', 'Š'], ['scaron', 'š'], ['Tcedil', 'Ţ'], ['tcedil', 'ţ'], ['Tcaron', 'Ť'], ['tcaron', 'ť'], ['Tstrok', 'Ŧ'], ['tstrok', 'ŧ'], ['Utilde', 'Ũ'], ['utilde', 'ũ'], ['Umacr', 'Ū'], ['umacr', 'ū'], ['Ubreve', 'Ŭ'], ['ubreve', 'ŭ'], ['Uring', 'Ů'], ['uring', 'ů'], ['Udblac', 'Ű'], ['udblac', 'ű'], ['Uogon', 'Ų'], ['uogon', 'ų'], ['Wcirc', 'Ŵ'], ['wcirc', 'ŵ'], ['Ycirc', 'Ŷ'], ['ycirc', 'ŷ'], ['Yuml', 'Ÿ'], ['Zacute', 'Ź'], ['zacute', 'ź'], ['Zdot', 'Ż'], ['zdot', 'ż'], ['Zcaron', 'Ž'], ['zcaron', 'ž'], ['fnof', 'ƒ'], ['imped', 'Ƶ'], ['gacute', 'ǵ'], ['jmath', 'ȷ'], ['circ', 'ˆ'], ['caron', 'ˇ'], ['breve', '˘'], ['dot', '˙'], ['ring', '˚'], ['ogon', '˛'], ['tilde', '˜'], ['dblac', '˝'], ['DownBreve', '̑'], ['UnderBar', '̲'], ['Alpha', 'Α'], ['Beta', 'Β'], ['Gamma', 'Γ'], ['Delta', 'Δ'], ['Epsilon', 'Ε'], ['Zeta', 'Ζ'], ['Eta', 'Η'], ['Theta', 'Θ'], ['Iota', 'Ι'], ['Kappa', 'Κ'], ['Lambda', 'Λ'], ['Mu', 'Μ'], ['Nu', 'Ν'], ['Xi', 'Ξ'], ['Omicron', 'Ο'], ['Pi', 'Π'], ['Rho', 'Ρ'], ['Sigma', 'Σ'], ['Tau', 'Τ'], ['Upsilon', 'Υ'], ['Phi', 'Φ'], ['Chi', 'Χ'], ['Psi', 'Ψ'], ['Omega', 'Ω'], ['alpha', 'α'], ['beta', 'β'], ['gamma', 'γ'], ['delta', 'δ'], ['epsiv', 'ε'], ['zeta', 'ζ'], ['eta', 'η'], ['theta', 'θ'], ['iota', 'ι'], ['kappa', 'κ'], ['lambda', 'λ'], ['mu', 'μ'], ['nu', 'ν'], ['xi', 'ξ'], ['omicron', 'ο'], ['pi', 'π'], ['rho', 'ρ'], ['sigmav', 'ς'], ['sigma', 'σ'], ['tau', 'τ'], ['upsi', 'υ'], ['phi', 'φ'], ['chi', 'χ'], ['psi', 'ψ'], ['omega', 'ω'], ['thetav', 'ϑ'], ['Upsi', 'ϒ'], ['straightphi', 'ϕ'], ['piv', 'ϖ'], ['Gammad', 'Ϝ'], ['gammad', 'ϝ'], ['kappav', 'ϰ'], ['rhov', 'ϱ'], ['epsi', 'ϵ'], ['bepsi', '϶'], ['IOcy', 'Ё'], ['DJcy', 'Ђ'], ['GJcy', 'Ѓ'], ['Jukcy', 'Є'], ['DScy', 'Ѕ'], ['Iukcy', 'І'], ['YIcy', 'Ї'], ['Jsercy', 'Ј'], ['LJcy', 'Љ'], ['NJcy', 'Њ'], ['TSHcy', 'Ћ'], ['KJcy', 'Ќ'], ['Ubrcy', 'Ў'], ['DZcy', 'Џ'], ['Acy', 'А'], ['Bcy', 'Б'], ['Vcy', 'В'], ['Gcy', 'Г'], ['Dcy', 'Д'], ['IEcy', 'Е'], ['ZHcy', 'Ж'], ['Zcy', 'З'], ['Icy', 'И'], ['Jcy', 'Й'], ['Kcy', 'К'], ['Lcy', 'Л'], ['Mcy', 'М'], ['Ncy', 'Н'], ['Ocy', 'О'], ['Pcy', 'П'], ['Rcy', 'Р'], ['Scy', 'С'], ['Tcy', 'Т'], ['Ucy', 'У'], ['Fcy', 'Ф'], ['KHcy', 'Х'], ['TScy', 'Ц'], ['CHcy', 'Ч'], ['SHcy', 'Ш'], ['SHCHcy', 'Щ'], ['HARDcy', 'Ъ'], ['Ycy', 'Ы'], ['SOFTcy', 'Ь'], ['Ecy', 'Э'], ['YUcy', 'Ю'], ['YAcy', 'Я'], ['acy', 'а'], ['bcy', 'б'], ['vcy', 'в'], ['gcy', 'г'], ['dcy', 'д'], ['iecy', 'е'], ['zhcy', 'ж'], ['zcy', 'з'], ['icy', 'и'], ['jcy', 'й'], ['kcy', 'к'], ['lcy', 'л'], ['mcy', 'м'], ['ncy', 'н'], ['ocy', 'о'], ['pcy', 'п'], ['rcy', 'р'], ['scy', 'с'], ['tcy', 'т'], ['ucy', 'у'], ['fcy', 'ф'], ['khcy', 'х'], ['tscy', 'ц'], ['chcy', 'ч'], ['shcy', 'ш'], ['shchcy', 'щ'], ['hardcy', 'ъ'], ['ycy', 'ы'], ['softcy', 'ь'], ['ecy', 'э'], ['yucy', 'ю'], ['yacy', 'я'], ['iocy', 'ё'], ['djcy', 'ђ'], ['gjcy', 'ѓ'], ['jukcy', 'є'], ['dscy', 'ѕ'], ['iukcy', 'і'], ['yicy', 'ї'], ['jsercy', 'ј'], ['ljcy', 'љ'], ['njcy', 'њ'], ['tshcy', 'ћ'], ['kjcy', 'ќ'], ['ubrcy', 'ў'], ['dzcy', 'џ'], ['ensp', ' '], ['emsp', ' '], ['emsp13', ' '], ['emsp14', ' '], ['numsp', ' '], ['puncsp', ' '], ['thinsp', ' '], ['hairsp', ' '], ['ZeroWidthSpace', '​'], ['zwnj', '‌'], ['zwj', '‍'], ['lrm', '‎'], ['rlm', '‏'], ['hyphen', '‐'], ['ndash', '–'], ['mdash', '—'], ['horbar', '―'], ['Verbar', '‖'], ['lsquo', '‘'], ['rsquo', '’'], ['lsquor', '‚'], ['ldquo', '“'], ['rdquo', '”'], ['ldquor', '„'], ['dagger', '†'], ['Dagger', '‡'], ['bull', '•'], ['nldr', '‥'], ['hellip', '…'], ['permil', '‰'], ['pertenk', '‱'], ['prime', '′'], ['Prime', '″'], ['tprime', '‴'], ['bprime', '‵'], ['lsaquo', '‹'], ['rsaquo', '›'], ['oline', '‾'], ['caret', '⁁'], ['hybull', '⁃'], ['frasl', '⁄'], ['bsemi', '⁏'], ['qprime', '⁗'], ['MediumSpace', ' '], ['NoBreak', '⁠'], ['ApplyFunction', '⁡'], ['InvisibleTimes', '⁢'], ['InvisibleComma', '⁣'], ['euro', '€'], ['tdot', '⃛'], ['DotDot', '⃜'], ['Copf', 'ℂ'], ['incare', '℅'], ['gscr', 'ℊ'], ['hamilt', 'ℋ'], ['Hfr', 'ℌ'], ['quaternions', 'ℍ'], ['planckh', 'ℎ'], ['planck', 'ℏ'], ['Iscr', 'ℐ'], ['image', 'ℑ'], ['Lscr', 'ℒ'], ['ell', 'ℓ'], ['Nopf', 'ℕ'], ['numero', '№'], ['copysr', '℗'], ['weierp', '℘'], ['Popf', 'ℙ'], ['rationals', 'ℚ'], ['Rscr', 'ℛ'], ['real', 'ℜ'], ['reals', 'ℝ'], ['rx', '℞'], ['trade', '™'], ['integers', 'ℤ'], ['ohm', 'Ω'], ['mho', '℧'], ['Zfr', 'ℨ'], ['iiota', '℩'], ['angst', 'Å'], ['bernou', 'ℬ'], ['Cfr', 'ℭ'], ['escr', 'ℯ'], ['Escr', 'ℰ'], ['Fscr', 'ℱ'], ['phmmat', 'ℳ'], ['order', 'ℴ'], ['alefsym', 'ℵ'], ['beth', 'ℶ'], ['gimel', 'ℷ'], ['daleth', 'ℸ'], ['CapitalDifferentialD', 'ⅅ'], ['DifferentialD', 'ⅆ'], ['ExponentialE', 'ⅇ'], ['ImaginaryI', 'ⅈ'], ['frac13', '⅓'], ['frac23', '⅔'], ['frac15', '⅕'], ['frac25', '⅖'], ['frac35', '⅗'], ['frac45', '⅘'], ['frac16', '⅙'], ['frac56', '⅚'], ['frac18', '⅛'], ['frac38', '⅜'], ['frac58', '⅝'], ['frac78', '⅞'], ['larr', '←'], ['uarr', '↑'], ['rarr', '→'], ['darr', '↓'], ['harr', '↔'], ['varr', '↕'], ['nwarr', '↖'], ['nearr', '↗'], ['searr', '↘'], ['swarr', '↙'], ['nlarr', '↚'], ['nrarr', '↛'], ['rarrw', '↝'], ['Larr', '↞'], ['Uarr', '↟'], ['Rarr', '↠'], ['Darr', '↡'], ['larrtl', '↢'], ['rarrtl', '↣'], ['LeftTeeArrow', '↤'], ['UpTeeArrow', '↥'], ['map', '↦'], ['DownTeeArrow', '↧'], ['larrhk', '↩'], ['rarrhk', '↪'], ['larrlp', '↫'], ['rarrlp', '↬'], ['harrw', '↭'], ['nharr', '↮'], ['lsh', '↰'], ['rsh', '↱'], ['ldsh', '↲'], ['rdsh', '↳'], ['crarr', '↵'], ['cularr', '↶'], ['curarr', '↷'], ['olarr', '↺'], ['orarr', '↻'], ['lharu', '↼'], ['lhard', '↽'], ['uharr', '↾'], ['uharl', '↿'], ['rharu', '⇀'], ['rhard', '⇁'], ['dharr', '⇂'], ['dharl', '⇃'], ['rlarr', '⇄'], ['udarr', '⇅'], ['lrarr', '⇆'], ['llarr', '⇇'], ['uuarr', '⇈'], ['rrarr', '⇉'], ['ddarr', '⇊'], ['lrhar', '⇋'], ['rlhar', '⇌'], ['nlArr', '⇍'], ['nhArr', '⇎'], ['nrArr', '⇏'], ['lArr', '⇐'], ['uArr', '⇑'], ['rArr', '⇒'], ['dArr', '⇓'], ['hArr', '⇔'], ['vArr', '⇕'], ['nwArr', '⇖'], ['neArr', '⇗'], ['seArr', '⇘'], ['swArr', '⇙'], ['lAarr', '⇚'], ['rAarr', '⇛'], ['zigrarr', '⇝'], ['larrb', '⇤'], ['rarrb', '⇥'], ['duarr', '⇵'], ['loarr', '⇽'], ['roarr', '⇾'], ['hoarr', '⇿'], ['forall', '∀'], ['comp', '∁'], ['part', '∂'], ['exist', '∃'], ['nexist', '∄'], ['empty', '∅'], ['nabla', '∇'], ['isin', '∈'], ['notin', '∉'], ['niv', '∋'], ['notni', '∌'], ['prod', '∏'], ['coprod', '∐'], ['sum', '∑'], ['minus', '−'], ['mnplus', '∓'], ['plusdo', '∔'], ['setmn', '∖'], ['lowast', '∗'], ['compfn', '∘'], ['radic', '√'], ['prop', '∝'], ['infin', '∞'], ['angrt', '∟'], ['ang', '∠'], ['angmsd', '∡'], ['angsph', '∢'], ['mid', '∣'], ['nmid', '∤'], ['par', '∥'], ['npar', '∦'], ['and', '∧'], ['or', '∨'], ['cap', '∩'], ['cup', '∪'], ['int', '∫'], ['Int', '∬'], ['tint', '∭'], ['conint', '∮'], ['Conint', '∯'], ['Cconint', '∰'], ['cwint', '∱'], ['cwconint', '∲'], ['awconint', '∳'], ['there4', '∴'], ['becaus', '∵'], ['ratio', '∶'], ['Colon', '∷'], ['minusd', '∸'], ['mDDot', '∺'], ['homtht', '∻'], ['sim', '∼'], ['bsim', '∽'], ['ac', '∾'], ['acd', '∿'], ['wreath', '≀'], ['nsim', '≁'], ['esim', '≂'], ['sime', '≃'], ['nsime', '≄'], ['cong', '≅'], ['simne', '≆'], ['ncong', '≇'], ['asymp', '≈'], ['nap', '≉'], ['ape', '≊'], ['apid', '≋'], ['bcong', '≌'], ['asympeq', '≍'], ['bump', '≎'], ['bumpe', '≏'], ['esdot', '≐'], ['eDot', '≑'], ['efDot', '≒'], ['erDot', '≓'], ['colone', '≔'], ['ecolon', '≕'], ['ecir', '≖'], ['cire', '≗'], ['wedgeq', '≙'], ['veeeq', '≚'], ['trie', '≜'], ['equest', '≟'], ['ne', '≠'], ['equiv', '≡'], ['nequiv', '≢'], ['le', '≤'], ['ge', '≥'], ['lE', '≦'], ['gE', '≧'], ['lnE', '≨'], ['gnE', '≩'], ['Lt', '≪'], ['Gt', '≫'], ['twixt', '≬'], ['NotCupCap', '≭'], ['nlt', '≮'], ['ngt', '≯'], ['nle', '≰'], ['nge', '≱'], ['lsim', '≲'], ['gsim', '≳'], ['nlsim', '≴'], ['ngsim', '≵'], ['lg', '≶'], ['gl', '≷'], ['ntlg', '≸'], ['ntgl', '≹'], ['pr', '≺'], ['sc', '≻'], ['prcue', '≼'], ['sccue', '≽'], ['prsim', '≾'], ['scsim', '≿'], ['npr', '⊀'], ['nsc', '⊁'], ['sub', '⊂'], ['sup', '⊃'], ['nsub', '⊄'], ['nsup', '⊅'], ['sube', '⊆'], ['supe', '⊇'], ['nsube', '⊈'], ['nsupe', '⊉'], ['subne', '⊊'], ['supne', '⊋'], ['cupdot', '⊍'], ['uplus', '⊎'], ['sqsub', '⊏'], ['sqsup', '⊐'], ['sqsube', '⊑'], ['sqsupe', '⊒'], ['sqcap', '⊓'], ['sqcup', '⊔'], ['oplus', '⊕'], ['ominus', '⊖'], ['otimes', '⊗'], ['osol', '⊘'], ['odot', '⊙'], ['ocir', '⊚'], ['oast', '⊛'], ['odash', '⊝'], ['plusb', '⊞'], ['minusb', '⊟'], ['timesb', '⊠'], ['sdotb', '⊡'], ['vdash', '⊢'], ['dashv', '⊣'], ['top', '⊤'], ['bottom', '⊥'], ['models', '⊧'], ['vDash', '⊨'], ['Vdash', '⊩'], ['Vvdash', '⊪'], ['VDash', '⊫'], ['nvdash', '⊬'], ['nvDash', '⊭'], ['nVdash', '⊮'], ['nVDash', '⊯'], ['prurel', '⊰'], ['vltri', '⊲'], ['vrtri', '⊳'], ['ltrie', '⊴'], ['rtrie', '⊵'], ['origof', '⊶'], ['imof', '⊷'], ['mumap', '⊸'], ['hercon', '⊹'], ['intcal', '⊺'], ['veebar', '⊻'], ['barvee', '⊽'], ['angrtvb', '⊾'], ['lrtri', '⊿'], ['xwedge', '⋀'], ['xvee', '⋁'], ['xcap', '⋂'], ['xcup', '⋃'], ['diam', '⋄'], ['sdot', '⋅'], ['sstarf', '⋆'], ['divonx', '⋇'], ['bowtie', '⋈'], ['ltimes', '⋉'], ['rtimes', '⋊'], ['lthree', '⋋'], ['rthree', '⋌'], ['bsime', '⋍'], ['cuvee', '⋎'], ['cuwed', '⋏'], ['Sub', '⋐'], ['Sup', '⋑'], ['Cap', '⋒'], ['Cup', '⋓'], ['fork', '⋔'], ['epar', '⋕'], ['ltdot', '⋖'], ['gtdot', '⋗'], ['Ll', '⋘'], ['Gg', '⋙'], ['leg', '⋚'], ['gel', '⋛'], ['cuepr', '⋞'], ['cuesc', '⋟'], ['nprcue', '⋠'], ['nsccue', '⋡'], ['nsqsube', '⋢'], ['nsqsupe', '⋣'], ['lnsim', '⋦'], ['gnsim', '⋧'], ['prnsim', '⋨'], ['scnsim', '⋩'], ['nltri', '⋪'], ['nrtri', '⋫'], ['nltrie', '⋬'], ['nrtrie', '⋭'], ['vellip', '⋮'], ['ctdot', '⋯'], ['utdot', '⋰'], ['dtdot', '⋱'], ['disin', '⋲'], ['isinsv', '⋳'], ['isins', '⋴'], ['isindot', '⋵'], ['notinvc', '⋶'], ['notinvb', '⋷'], ['isinE', '⋹'], ['nisd', '⋺'], ['xnis', '⋻'], ['nis', '⋼'], ['notnivc', '⋽'], ['notnivb', '⋾'], ['barwed', '⌅'], ['Barwed', '⌆'], ['lceil', '⌈'], ['rceil', '⌉'], ['lfloor', '⌊'], ['rfloor', '⌋'], ['drcrop', '⌌'], ['dlcrop', '⌍'], ['urcrop', '⌎'], ['ulcrop', '⌏'], ['bnot', '⌐'], ['profline', '⌒'], ['profsurf', '⌓'], ['telrec', '⌕'], ['target', '⌖'], ['ulcorn', '⌜'], ['urcorn', '⌝'], ['dlcorn', '⌞'], ['drcorn', '⌟'], ['frown', '⌢'], ['smile', '⌣'], ['cylcty', '⌭'], ['profalar', '⌮'], ['topbot', '⌶'], ['ovbar', '⌽'], ['solbar', '⌿'], ['angzarr', '⍼'], ['lmoust', '⎰'], ['rmoust', '⎱'], ['tbrk', '⎴'], ['bbrk', '⎵'], ['bbrktbrk', '⎶'], ['OverParenthesis', '⏜'], ['UnderParenthesis', '⏝'], ['OverBrace', '⏞'], ['UnderBrace', '⏟'], ['trpezium', '⏢'], ['elinters', '⏧'], ['blank', '␣'], ['oS', 'Ⓢ'], ['boxh', '─'], ['boxv', '│'], ['boxdr', '┌'], ['boxdl', '┐'], ['boxur', '└'], ['boxul', '┘'], ['boxvr', '├'], ['boxvl', '┤'], ['boxhd', '┬'], ['boxhu', '┴'], ['boxvh', '┼'], ['boxH', '═'], ['boxV', '║'], ['boxdR', '╒'], ['boxDr', '╓'], ['boxDR', '╔'], ['boxdL', '╕'], ['boxDl', '╖'], ['boxDL', '╗'], ['boxuR', '╘'], ['boxUr', '╙'], ['boxUR', '╚'], ['boxuL', '╛'], ['boxUl', '╜'], ['boxUL', '╝'], ['boxvR', '╞'], ['boxVr', '╟'], ['boxVR', '╠'], ['boxvL', '╡'], ['boxVl', '╢'], ['boxVL', '╣'], ['boxHd', '╤'], ['boxhD', '╥'], ['boxHD', '╦'], ['boxHu', '╧'], ['boxhU', '╨'], ['boxHU', '╩'], ['boxvH', '╪'], ['boxVh', '╫'], ['boxVH', '╬'], ['uhblk', '▀'], ['lhblk', '▄'], ['block', '█'], ['blk14', '░'], ['blk12', '▒'], ['blk34', '▓'], ['squ', '□'], ['squf', '▪'], ['EmptyVerySmallSquare', '▫'], ['rect', '▭'], ['marker', '▮'], ['fltns', '▱'], ['xutri', '△'], ['utrif', '▴'], ['utri', '▵'], ['rtrif', '▸'], ['rtri', '▹'], ['xdtri', '▽'], ['dtrif', '▾'], ['dtri', '▿'], ['ltrif', '◂'], ['ltri', '◃'], ['loz', '◊'], ['cir', '○'], ['tridot', '◬'], ['xcirc', '◯'], ['ultri', '◸'], ['urtri', '◹'], ['lltri', '◺'], ['EmptySmallSquare', '◻'], ['FilledSmallSquare', '◼'], ['starf', '★'], ['star', '☆'], ['phone', '☎'], ['female', '♀'], ['male', '♂'], ['spades', '♠'], ['clubs', '♣'], ['hearts', '♥'], ['diams', '♦'], ['sung', '♪'], ['flat', '♭'], ['natur', '♮'], ['sharp', '♯'], ['check', '✓'], ['cross', '✗'], ['malt', '✠'], ['sext', '✶'], ['VerticalSeparator', '❘'], ['lbbrk', '❲'], ['rbbrk', '❳'], ['lobrk', '⟦'], ['robrk', '⟧'], ['lang', '⟨'], ['rang', '⟩'], ['Lang', '⟪'], ['Rang', '⟫'], ['loang', '⟬'], ['roang', '⟭'], ['xlarr', '⟵'], ['xrarr', '⟶'], ['xharr', '⟷'], ['xlArr', '⟸'], ['xrArr', '⟹'], ['xhArr', '⟺'], ['xmap', '⟼'], ['dzigrarr', '⟿'], ['nvlArr', '⤂'], ['nvrArr', '⤃'], ['nvHarr', '⤄'], ['Map', '⤅'], ['lbarr', '⤌'], ['rbarr', '⤍'], ['lBarr', '⤎'], ['rBarr', '⤏'], ['RBarr', '⤐'], ['DDotrahd', '⤑'], ['UpArrowBar', '⤒'], ['DownArrowBar', '⤓'], ['Rarrtl', '⤖'], ['latail', '⤙'], ['ratail', '⤚'], ['lAtail', '⤛'], ['rAtail', '⤜'], ['larrfs', '⤝'], ['rarrfs', '⤞'], ['larrbfs', '⤟'], ['rarrbfs', '⤠'], ['nwarhk', '⤣'], ['nearhk', '⤤'], ['searhk', '⤥'], ['swarhk', '⤦'], ['nwnear', '⤧'], ['nesear', '⤨'], ['seswar', '⤩'], ['swnwar', '⤪'], ['rarrc', '⤳'], ['cudarrr', '⤵'], ['ldca', '⤶'], ['rdca', '⤷'], ['cudarrl', '⤸'], ['larrpl', '⤹'], ['curarrm', '⤼'], ['cularrp', '⤽'], ['rarrpl', '⥅'], ['harrcir', '⥈'], ['Uarrocir', '⥉'], ['lurdshar', '⥊'], ['ldrushar', '⥋'], ['LeftRightVector', '⥎'], ['RightUpDownVector', '⥏'], ['DownLeftRightVector', '⥐'], ['LeftUpDownVector', '⥑'], ['LeftVectorBar', '⥒'], ['RightVectorBar', '⥓'], ['RightUpVectorBar', '⥔'], ['RightDownVectorBar', '⥕'], ['DownLeftVectorBar', '⥖'], ['DownRightVectorBar', '⥗'], ['LeftUpVectorBar', '⥘'], ['LeftDownVectorBar', '⥙'], ['LeftTeeVector', '⥚'], ['RightTeeVector', '⥛'], ['RightUpTeeVector', '⥜'], ['RightDownTeeVector', '⥝'], ['DownLeftTeeVector', '⥞'], ['DownRightTeeVector', '⥟'], ['LeftUpTeeVector', '⥠'], ['LeftDownTeeVector', '⥡'], ['lHar', '⥢'], ['uHar', '⥣'], ['rHar', '⥤'], ['dHar', '⥥'], ['luruhar', '⥦'], ['ldrdhar', '⥧'], ['ruluhar', '⥨'], ['rdldhar', '⥩'], ['lharul', '⥪'], ['llhard', '⥫'], ['rharul', '⥬'], ['lrhard', '⥭'], ['udhar', '⥮'], ['duhar', '⥯'], ['RoundImplies', '⥰'], ['erarr', '⥱'], ['simrarr', '⥲'], ['larrsim', '⥳'], ['rarrsim', '⥴'], ['rarrap', '⥵'], ['ltlarr', '⥶'], ['gtrarr', '⥸'], ['subrarr', '⥹'], ['suplarr', '⥻'], ['lfisht', '⥼'], ['rfisht', '⥽'], ['ufisht', '⥾'], ['dfisht', '⥿'], ['lopar', '⦅'], ['ropar', '⦆'], ['lbrke', '⦋'], ['rbrke', '⦌'], ['lbrkslu', '⦍'], ['rbrksld', '⦎'], ['lbrksld', '⦏'], ['rbrkslu', '⦐'], ['langd', '⦑'], ['rangd', '⦒'], ['lparlt', '⦓'], ['rpargt', '⦔'], ['gtlPar', '⦕'], ['ltrPar', '⦖'], ['vzigzag', '⦚'], ['vangrt', '⦜'], ['angrtvbd', '⦝'], ['ange', '⦤'], ['range', '⦥'], ['dwangle', '⦦'], ['uwangle', '⦧'], ['angmsdaa', '⦨'], ['angmsdab', '⦩'], ['angmsdac', '⦪'], ['angmsdad', '⦫'], ['angmsdae', '⦬'], ['angmsdaf', '⦭'], ['angmsdag', '⦮'], ['angmsdah', '⦯'], ['bemptyv', '⦰'], ['demptyv', '⦱'], ['cemptyv', '⦲'], ['raemptyv', '⦳'], ['laemptyv', '⦴'], ['ohbar', '⦵'], ['omid', '⦶'], ['opar', '⦷'], ['operp', '⦹'], ['olcross', '⦻'], ['odsold', '⦼'], ['olcir', '⦾'], ['ofcir', '⦿'], ['olt', '⧀'], ['ogt', '⧁'], ['cirscir', '⧂'], ['cirE', '⧃'], ['solb', '⧄'], ['bsolb', '⧅'], ['boxbox', '⧉'], ['trisb', '⧍'], ['rtriltri', '⧎'], ['LeftTriangleBar', '⧏'], ['RightTriangleBar', '⧐'], ['race', '⧚'], ['iinfin', '⧜'], ['infintie', '⧝'], ['nvinfin', '⧞'], ['eparsl', '⧣'], ['smeparsl', '⧤'], ['eqvparsl', '⧥'], ['lozf', '⧫'], ['RuleDelayed', '⧴'], ['dsol', '⧶'], ['xodot', '⨀'], ['xoplus', '⨁'], ['xotime', '⨂'], ['xuplus', '⨄'], ['xsqcup', '⨆'], ['qint', '⨌'], ['fpartint', '⨍'], ['cirfnint', '⨐'], ['awint', '⨑'], ['rppolint', '⨒'], ['scpolint', '⨓'], ['npolint', '⨔'], ['pointint', '⨕'], ['quatint', '⨖'], ['intlarhk', '⨗'], ['pluscir', '⨢'], ['plusacir', '⨣'], ['simplus', '⨤'], ['plusdu', '⨥'], ['plussim', '⨦'], ['plustwo', '⨧'], ['mcomma', '⨩'], ['minusdu', '⨪'], ['loplus', '⨭'], ['roplus', '⨮'], ['Cross', '⨯'], ['timesd', '⨰'], ['timesbar', '⨱'], ['smashp', '⨳'], ['lotimes', '⨴'], ['rotimes', '⨵'], ['otimesas', '⨶'], ['Otimes', '⨷'], ['odiv', '⨸'], ['triplus', '⨹'], ['triminus', '⨺'], ['tritime', '⨻'], ['iprod', '⨼'], ['amalg', '⨿'], ['capdot', '⩀'], ['ncup', '⩂'], ['ncap', '⩃'], ['capand', '⩄'], ['cupor', '⩅'], ['cupcap', '⩆'], ['capcup', '⩇'], ['cupbrcap', '⩈'], ['capbrcup', '⩉'], ['cupcup', '⩊'], ['capcap', '⩋'], ['ccups', '⩌'], ['ccaps', '⩍'], ['ccupssm', '⩐'], ['And', '⩓'], ['Or', '⩔'], ['andand', '⩕'], ['oror', '⩖'], ['orslope', '⩗'], ['andslope', '⩘'], ['andv', '⩚'], ['orv', '⩛'], ['andd', '⩜'], ['ord', '⩝'], ['wedbar', '⩟'], ['sdote', '⩦'], ['simdot', '⩪'], ['congdot', '⩭'], ['easter', '⩮'], ['apacir', '⩯'], ['apE', '⩰'], ['eplus', '⩱'], ['pluse', '⩲'], ['Esim', '⩳'], ['Colone', '⩴'], ['Equal', '⩵'], ['eDDot', '⩷'], ['equivDD', '⩸'], ['ltcir', '⩹'], ['gtcir', '⩺'], ['ltquest', '⩻'], ['gtquest', '⩼'], ['les', '⩽'], ['ges', '⩾'], ['lesdot', '⩿'], ['gesdot', '⪀'], ['lesdoto', '⪁'], ['gesdoto', '⪂'], ['lesdotor', '⪃'], ['gesdotol', '⪄'], ['lap', '⪅'], ['gap', '⪆'], ['lne', '⪇'], ['gne', '⪈'], ['lnap', '⪉'], ['gnap', '⪊'], ['lEg', '⪋'], ['gEl', '⪌'], ['lsime', '⪍'], ['gsime', '⪎'], ['lsimg', '⪏'], ['gsiml', '⪐'], ['lgE', '⪑'], ['glE', '⪒'], ['lesges', '⪓'], ['gesles', '⪔'], ['els', '⪕'], ['egs', '⪖'], ['elsdot', '⪗'], ['egsdot', '⪘'], ['el', '⪙'], ['eg', '⪚'], ['siml', '⪝'], ['simg', '⪞'], ['simlE', '⪟'], ['simgE', '⪠'], ['LessLess', '⪡'], ['GreaterGreater', '⪢'], ['glj', '⪤'], ['gla', '⪥'], ['ltcc', '⪦'], ['gtcc', '⪧'], ['lescc', '⪨'], ['gescc', '⪩'], ['smt', '⪪'], ['lat', '⪫'], ['smte', '⪬'], ['late', '⪭'], ['bumpE', '⪮'], ['pre', '⪯'], ['sce', '⪰'], ['prE', '⪳'], ['scE', '⪴'], ['prnE', '⪵'], ['scnE', '⪶'], ['prap', '⪷'], ['scap', '⪸'], ['prnap', '⪹'], ['scnap', '⪺'], ['Pr', '⪻'], ['Sc', '⪼'], ['subdot', '⪽'], ['supdot', '⪾'], ['subplus', '⪿'], ['supplus', '⫀'], ['submult', '⫁'], ['supmult', '⫂'], ['subedot', '⫃'], ['supedot', '⫄'], ['subE', '⫅'], ['supE', '⫆'], ['subsim', '⫇'], ['supsim', '⫈'], ['subnE', '⫋'], ['supnE', '⫌'], ['csub', '⫏'], ['csup', '⫐'], ['csube', '⫑'], ['csupe', '⫒'], ['subsup', '⫓'], ['supsub', '⫔'], ['subsub', '⫕'], ['supsup', '⫖'], ['suphsub', '⫗'], ['supdsub', '⫘'], ['forkv', '⫙'], ['topfork', '⫚'], ['mlcp', '⫛'], ['Dashv', '⫤'], ['Vdashl', '⫦'], ['Barv', '⫧'], ['vBar', '⫨'], ['vBarv', '⫩'], ['Vbar', '⫫'], ['Not', '⫬'], ['bNot', '⫭'], ['rnmid', '⫮'], ['cirmid', '⫯'], ['midcir', '⫰'], ['topcir', '⫱'], ['nhpar', '⫲'], ['parsim', '⫳'], ['parsl', '⫽'], ['fflig', 'ﬀ'], ['filig', 'ﬁ'], ['fllig', 'ﬂ'], ['ffilig', 'ﬃ'], ['ffllig', 'ﬄ'], ['Ascr', '𝒜'], ['Cscr', '𝒞'], ['Dscr', '𝒟'], ['Gscr', '𝒢'], ['Jscr', '𝒥'], ['Kscr', '𝒦'], ['Nscr', '𝒩'], ['Oscr', '𝒪'], ['Pscr', '𝒫'], ['Qscr', '𝒬'], ['Sscr', '𝒮'], ['Tscr', '𝒯'], ['Uscr', '𝒰'], ['Vscr', '𝒱'], ['Wscr', '𝒲'], ['Xscr', '𝒳'], ['Yscr', '𝒴'], ['Zscr', '𝒵'], ['ascr', '𝒶'], ['bscr', '𝒷'], ['cscr', '𝒸'], ['dscr', '𝒹'], ['fscr', '𝒻'], ['hscr', '𝒽'], ['iscr', '𝒾'], ['jscr', '𝒿'], ['kscr', '𝓀'], ['lscr', '𝓁'], ['mscr', '𝓂'], ['nscr', '𝓃'], ['pscr', '𝓅'], ['qscr', '𝓆'], ['rscr', '𝓇'], ['sscr', '𝓈'], ['tscr', '𝓉'], ['uscr', '𝓊'], ['vscr', '𝓋'], ['wscr', '𝓌'], ['xscr', '𝓍'], ['yscr', '𝓎'], ['zscr', '𝓏'], ['Afr', '𝔄'], ['Bfr', '𝔅'], ['Dfr', '𝔇'], ['Efr', '𝔈'], ['Ffr', '𝔉'], ['Gfr', '𝔊'], ['Jfr', '𝔍'], ['Kfr', '𝔎'], ['Lfr', '𝔏'], ['Mfr', '𝔐'], ['Nfr', '𝔑'], ['Ofr', '𝔒'], ['Pfr', '𝔓'], ['Qfr', '𝔔'], ['Sfr', '𝔖'], ['Tfr', '𝔗'], ['Ufr', '𝔘'], ['Vfr', '𝔙'], ['Wfr', '𝔚'], ['Xfr', '𝔛'], ['Yfr', '𝔜'], ['afr', '𝔞'], ['bfr', '𝔟'], ['cfr', '𝔠'], ['dfr', '𝔡'], ['efr', '𝔢'], ['ffr', '𝔣'], ['gfr', '𝔤'], ['hfr', '𝔥'], ['ifr', '𝔦'], ['jfr', '𝔧'], ['kfr', '𝔨'], ['lfr', '𝔩'], ['mfr', '𝔪'], ['nfr', '𝔫'], ['ofr', '𝔬'], ['pfr', '𝔭'], ['qfr', '𝔮'], ['rfr', '𝔯'], ['sfr', '𝔰'], ['tfr', '𝔱'], ['ufr', '𝔲'], ['vfr', '𝔳'], ['wfr', '𝔴'], ['xfr', '𝔵'], ['yfr', '𝔶'], ['zfr', '𝔷'], ['Aopf', '𝔸'], ['Bopf', '𝔹'], ['Dopf', '𝔻'], ['Eopf', '𝔼'], ['Fopf', '𝔽'], ['Gopf', '𝔾'], ['Iopf', '𝕀'], ['Jopf', '𝕁'], ['Kopf', '𝕂'], ['Lopf', '𝕃'], ['Mopf', '𝕄'], ['Oopf', '𝕆'], ['Sopf', '𝕊'], ['Topf', '𝕋'], ['Uopf', '𝕌'], ['Vopf', '𝕍'], ['Wopf', '𝕎'], ['Xopf', '𝕏'], ['Yopf', '𝕐'], ['aopf', '𝕒'], ['bopf', '𝕓'], ['copf', '𝕔'], ['dopf', '𝕕'], ['eopf', '𝕖'], ['fopf', '𝕗'], ['gopf', '𝕘'], ['hopf', '𝕙'], ['iopf', '𝕚'], ['jopf', '𝕛'], ['kopf', '𝕜'], ['lopf', '𝕝'], ['mopf', '𝕞'], ['nopf', '𝕟'], ['oopf', '𝕠'], ['popf', '𝕡'], ['qopf', '𝕢'], ['ropf', '𝕣'], ['sopf', '𝕤'], ['topf', '𝕥'], ['uopf', '𝕦'], ['vopf', '𝕧'], ['wopf', '𝕨'], ['xopf', '𝕩'], ['yopf', '𝕪'], ['zopf', '𝕫']
-		];
-
-		for (let i:number = 0, max = entities.length; i < max; ++i)
-			text = text.replace(new RegExp('&'+entities[i][0]+';', 'g'), entities[i][1]);
-
-		return text;
-	}
-
-	/**
 	 * Removes diacritics chars from a string and replaces them by their equivalent.
 	 *
 	 * @param str
@@ -370,52 +216,11 @@ export default class Utils  {
 		}
 	}
 
-	/**
-	 * Compute the distance between 2 GPS coordinates
-	 * 
-	 * @param lat1 
-	 * @param lon1 
-	 * @param lat2 
-	 * @param lon2 
-	 */
-	public static getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
-		var R = 6371; // Radius of the earth in km
-		var dLat = this.deg2rad(lat2-lat1);  // deg2rad below
-		var dLon = this.deg2rad(lon2-lon1); 
-		var a = 
-		Math.sin(dLat/2) * Math.sin(dLat/2) +
-		Math.cos(this.deg2rad(lat1)) * Math.cos(this.deg2rad(lat2)) * 
-		Math.sin(dLon/2) * Math.sin(dLon/2); 
-		var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
-		var d = R * c; // Distance in km
-		return d;
-	}
-	
-	/**
-	 * Convert degrees angle to radians
-	 * @param deg 
-	 */
-	public static deg2rad(deg) {
-		return deg * (Math.PI/180)
-	}
-
-	public static genCode():string {
-		//Current params can generate ~1 billion different codes
-		let min = parseInt("100000", 36);
-		let max = parseInt("wwwwww", 36);
-
-		let code = (Math.round(Math.random()*(max-min))+min).toString(36);
-		code = code.replace(/0|o|l|i/gi, "u");
-		return code.toUpperCase();
-	}
-
-	public static promisedTimeout(delay: number): Promise<void> {
-		return new Promise(function (resolve) {
-			setTimeout(_ => resolve(), delay);
-		})
-	}
 
 	private static profileCache:{domains:string[], profile:string}[] = null;
+	/**
+	 * Gets all available profiles
+	 */
 	public static getProfileList():{domains:string[], profile:string}[] {
 		if(!this.profileCache) {
 			try {
@@ -427,6 +232,25 @@ export default class Utils  {
 		}
 		return this.profileCache;
 	}
+
+	/**
+	 * Gets the public domain from a profile name
+	 */
+	public static getPublicDomainFromProfile(profile:string):string {
+		let list = this.getProfileList();
+		//Search for matching profile
+		for (let i = 0; i < list.length; i++) {
+			const e = list[i];
+			if(e.profile == profile) {
+				return e.domains[0];
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Gets a profile from an express request or a discord ID
+	 */
 	public static getProfile(req:Request, discordGuildID?:string):string {
 		if(!this.profileCache) {
 			try {
@@ -469,12 +293,20 @@ export default class Utils  {
 		return profile;
 	}
 
-
+	/**
+	 * Gets the users list from an express query or a discord ID
+	 */
 	public static getUserList(req:Request, discordGuildID?:string, profile?:string):UserData[] {
 		return this.getFileContent(Config.TWITCH_USERS_FILE(req, discordGuildID, profile), []);
 	}
 
-
+	/**
+	 * Gets the content of a file by its path
+	 * 
+	 * @param path 
+	 * @param defaultValue 
+	 * @returns 
+	 */
 	private static getFileContent(path:string, defaultValue:any):any {
 		if(!fs.existsSync(path)) {
 			fs.writeFileSync(path, JSON.stringify(defaultValue));
