@@ -179,95 +179,41 @@ export default class HTTPServer {
 	 * Creates API endpoints
 	 */
 	private async createEndpoints():Promise<void> {
-		this.migrateFileStructures();
-		this.migrateUserNamesToIDs();
 		Logger.info("Create endpoints");
-		let api = new APIController();
-		api.create(this.app);
-		let discord = new DiscordController();
-		discord.create(this.app);
-		
-		let eventSub = new EventSubController();
-		await eventSub.create(this.app);
+		try {
 
-		discord.addEventListener(RaiderEvent.SUB_TO_LIVE_EVENT, (event:RaiderEvent) => {
-			eventSub.subToUser(event.profile, event.channelId);
-		});
+			let api = new APIController();
+			api.create(this.app);
+				
+			let eventSub = new EventSubController();
+			await eventSub.create(this.app);
+			api.addEventListener(RaiderEvent.USER_ADDED, (event:RaiderEvent) => { eventSub.subToUser(event.profile, event.channelId); });
+			api.addEventListener(RaiderEvent.USER_REMOVED, (event:RaiderEvent) => { eventSub.unsubUser(event.profile, event.channelId); });
+	
+			if(Config.DISCORDBOT_TOKEN) {
+				let discord = new DiscordController();
+				discord.create(this.app);
 		
-		eventSub.addEventListener(RaiderEvent.DISCORD_ALERT_LIVE, (event:RaiderEvent) => {
-			discord.alertLiveChannel(event.profile, event.channelId);
-		});
-		
-		api.addEventListener(RaiderEvent.USER_ADDED, (event:RaiderEvent) => { eventSub.subToUser(event.profile, event.channelId); });
-		api.addEventListener(RaiderEvent.USER_REMOVED, (event:RaiderEvent) => { eventSub.unsubUser(event.profile, event.channelId); });
-		
-		discord.addEventListener(RaiderEvent.USER_ADDED, (event:RaiderEvent) => { eventSub.subToUser(event.profile, event.channelId); });
-		discord.addEventListener(RaiderEvent.USER_REMOVED, (event:RaiderEvent) => { eventSub.unsubUser(event.profile, event.channelId); });
-
-		discord.onEventsubReady();
-
-	}
-
-	/**
-	 * Migrate user's data.
-	 * Before we had one file for user names and one for descriptions, which is quite dumb.
-	 * This migration merges both files into one, adding possibility to have as many props
-	 * as we want for every user.
-	 */
-	private async migrateFileStructures():Promise<void> {
-		let root = Config.DATA_FOLDER;
-		let files = fs.readdirSync( root );
-		let hasMigrated = false;
-		for(let i = 0; i < files.length; i++) {
-			let file = files[i];
-			if(file.indexOf("userDescriptions") === 0) {
-				Logger.info("Migrate profile", file.replace(/userDescriptions_(.*)\.json/gi, "$1"));
-				let usersPath		= root + file.replace(/userDescriptions/gi, "userList");
-				let descriptionPath	= root + file;
-				let users			= JSON.parse(fs.readFileSync(usersPath, "utf8"));
-				let descriptions	= JSON.parse(fs.readFileSync(descriptionPath, "utf8"));
-				let newUsers		= [];
-				for(let i = 0; i < users.length; i++) {
-					let newUser:UserData = <any>{};
-					newUser.name = users[i];
-					let description = descriptions[ users[i] ];
-					if(description) {
-						newUser.description = description;
-					}
-					newUser.created_at = Date.now() - 32*24*60*60*1000;//set it 32 days ago to avoid "new" marker
-					newUsers.push(newUser);
-				}
-				fs.writeFileSync(usersPath, JSON.stringify(newUsers));
-				fs.unlinkSync(descriptionPath);
-				hasMigrated = true;
+				discord.addEventListener(RaiderEvent.SUB_TO_LIVE_EVENT, (event:RaiderEvent) => {
+					eventSub.subToUser(event.profile, event.channelId);
+				});
+				
+				eventSub.addEventListener(RaiderEvent.DISCORD_ALERT_LIVE, (event:RaiderEvent) => {
+					discord.alertLiveChannel(event.profile, event.channelId);
+				});
+				
+				discord.addEventListener(RaiderEvent.USER_ADDED, (event:RaiderEvent) => { eventSub.subToUser(event.profile, event.channelId); });
+				discord.addEventListener(RaiderEvent.USER_REMOVED, (event:RaiderEvent) => { eventSub.unsubUser(event.profile, event.channelId); });
+				
+				discord.onEventsubReady();
 			}
-		}
-		if(hasMigrated) {
-			Logger.success("Migration complete");
-		}
-	}
-
-	/**
-	 * Injects twitch user IDs to users list
-	 */
-	private async migrateUserNamesToIDs():Promise<void> {
-		let root = Config.DATA_FOLDER;
-		let files = fs.readdirSync( root );
-		for (let i = 0; i < files.length; i++) {
-			//Only parse user list files
-			if(!/userList(_.*?)?\.json/gi.test(files[i])) continue;
-			let users = JSON.parse(fs.readFileSync(root + files[i], "utf8"));
-			if(users.length == 0) continue;
-			//Check if file is already migrated
-			if(users[0].id != undefined) continue;
-
-			let twitchUsersReq = await TwitchUtils.loadChannelsInfo(users.map(u => u.name));
-			let twitchUsers = (await twitchUsersReq.json()).data;
-			twitchUsers.forEach(u => {
-				let userLoc = users.find(user => user.name.toLowerCase() == u.login.toLowerCase());
-				userLoc.id = u.id;
-			});
-			fs.writeFileSync(root + files[i], JSON.stringify(users));
+		}catch(error) {
+			if(error?.code == "INVALID_CREDENTIALS") {
+				Logger.error(LogStyle.BgRed+LogStyle.FgWhite+"INVALID Twitch credentials !"+LogStyle.Reset);
+				Logger.error("Please fill in the client_id and secret_id values on the file credentials.json with proper values");
+			}else{
+				console.log(error);
+			}
 		}
 	}
 
