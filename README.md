@@ -102,7 +102,7 @@ Users are stored on the file `data/userList.json` like this:
 		"name": "durss",
 		"id": "29961813",
 		"created_at": 1627046252101
-	},
+	}
 ]
 ```
 `name` is the Twitch login of the user\
