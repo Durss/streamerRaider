@@ -67,12 +67,6 @@ export default class DiscordController extends EventDispatcher {
 		this.client.on("ready", ()=> this.onReady());
 
 		this.client.on("guildMemberAdd", (member) => this.onAddMember(member))
-
-		this.client.on("raw", (link) => {
-			// console.log("ON RAW")
-			// console.log(link);
-		})
-		// this.alertLiveChannel("pogscience", "252445282");//TODO remove debug
 	}
 
 	/**
@@ -113,7 +107,7 @@ export default class DiscordController extends EventDispatcher {
 				let userInfo:TwitchUserInfos = (await res.json()).data[0];
 				// editedMessage.embeds[0].setImage(userInfo.offline_image_url.replace("{width}", "1080").replace("{height}", "600"));
 
-				let card = this.buildLiveCard(this.lastStreamInfos[userInfo.id], userInfo, false, true);
+				let card = this.buildLiveCard(profile, this.lastStreamInfos[userInfo.id], userInfo, false, true);
 				await editedMessage.edit({embeds:[card]});
 				delete this.lastStreamInfos[userInfo.id];
 				delete this.maxViewersCount[userInfo.id];
@@ -134,7 +128,7 @@ export default class DiscordController extends EventDispatcher {
 					//Get twitch channel's infos
 					let res = await TwitchUtils.loadChannelsInfo(null, [uid]);
 					let userInfo:TwitchUserInfos = (await res.json()).data[0];
-					let card = this.buildLiveCard(steamDetails, userInfo, editedMessage!=null);
+					let card = this.buildLiveCard(profile, steamDetails, userInfo, editedMessage!=null);
 					let message:Discord.Message;
 					if(editedMessage) {
 						//Edit existing message
@@ -559,23 +553,29 @@ ${protopoteSpecifics}
 		APIController.invalidateCache(profile);
 	}
 
-	private buildLiveCard(infos:TwitchStreamInfos, userInfo:TwitchUserInfos, liveMode:boolean, offlineMode:boolean =false):Discord.MessageEmbed {
+	/**
+	 * Creates a message card for a live stream
+	 */
+	private buildLiveCard(profile:string, infos:TwitchStreamInfos, userInfo:TwitchUserInfos, liveMode:boolean, offlineMode:boolean =false):Discord.MessageEmbed {
 		if(offlineMode) {
 			let url = userInfo.offline_image_url;
 			if(!url) {
-				url = "https://raid.protopotes.stream/offline.png";//TODO replace that hardcoded domain
+				url = "https://"+Utils.getPublicDomainFromProfile(profile);
+				url += "/offline.png";
 			}
 			infos.thumbnail_url = url.replace("{width}", "1080").replace("{height}", "600");
 		}else{
 			infos.thumbnail_url = infos.thumbnail_url.replace("{width}", "1080").replace("{height}", "600");
 		}
 
+		let refreshInterval = 5 * 60 * 1000;//Twitch stream preview updates every 5 minutes
+		let cacheKiller = Math.floor(Date.now()/refreshInterval)*refreshInterval;
 		let card = new Discord.MessageEmbed();
 		card.setTitle(infos.title);
 		card.setColor("#a970ff");
 		card.setURL(`https://twitch.tv/${infos.user_login}`);
 		card.setThumbnail(userInfo.profile_image_url);
-		card.setImage(infos.thumbnail_url+"?t="+Date.now());
+		card.setImage(infos.thumbnail_url+"?t=" + cacheKiller );
 		card.setAuthor(infos.user_name+" est en live !", userInfo.profile_image_url);
 		card.addFields(
 			{ name: 'Catégorie', value: infos.game_name, inline: false },
