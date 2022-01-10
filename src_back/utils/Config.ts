@@ -23,7 +23,7 @@ export default class Config {
 
 	public static TWITCH_USERS_FILE(req:Request, discordGuildID?:string, profile?:string):string {
 		if(!profile) {
-			profile = ProfileUtils.getProfile(req, discordGuildID)?.profile;
+			profile = ProfileUtils.getProfile(req, discordGuildID)?.id;
 		}
 		let path = "data/userList{PROFILE}.json";
 		if(profile) path = path.replace(/\{PROFILE\}/gi, "_"+profile);

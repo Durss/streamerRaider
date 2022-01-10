@@ -166,7 +166,7 @@ export default class DiscordController extends EventDispatcher {
 			//sub to all users of the corresponding profile.
 			if(this.liveAlertChannelsListCache[key]) {
 				let users = Utils.getUserList(null, key);
-				let profile = ProfileUtils.getProfile(null, key)?.profile;
+				let profile = ProfileUtils.getProfile(null, key)?.id;
 				for (let i = 0; i < users.length; i++) {
 					this.dispatchEvent(new RaiderEvent(RaiderEvent.SUB_TO_LIVE_EVENT, profile, users[i].id));
 				}
@@ -288,7 +288,7 @@ ${users.map(v => v.name).join(", ")}
 				//command managed transparently by another bot. You won't need this.
 				let protopoteSpecifics = "";
 				let liveAlertSpecifics = "";
-				let profile = ProfileUtils.getProfile(null, message.guild.id)?.profile;
+				let profile = ProfileUtils.getProfile(null, message.guild.id)?.id;
 
 				//Just some specific commands for the "protopotes" group
 				if(profile == "protopotes") {
@@ -442,7 +442,7 @@ ${protopoteSpecifics}
 		if(!this.isWatchingChannel(message)) return;
 		if(!this.isGuildValid(message)) return
 
-		let profile = ProfileUtils.getProfile(null, message.guild.id)?.profile;
+		let profile = ProfileUtils.getProfile(null, message.guild.id)?.id;
 		let cmd = chunks[0];
 
 		//Check if twitch user actually exists
@@ -550,7 +550,7 @@ ${protopoteSpecifics}
 			message.reply("La description a bien été supprimée pour le compte **\""+login+"\"**.");
 		}
 		fs.writeFileSync(Config.TWITCH_USERS_FILE(null, message.guild.id), JSON.stringify(users));
-		let profile = ProfileUtils.getProfile(null, message.guild.id)?.profile;
+		let profile = ProfileUtils.getProfile(null, message.guild.id)?.id;
 		APIController.invalidateCache(profile);
 	}
 

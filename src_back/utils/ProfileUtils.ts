@@ -48,7 +48,7 @@ export default class ProfileUtils {
 		//Search for matching profile
 		for (let i = 0; i < list.length; i++) {
 			const e = list[i];
-			if(e.profile == profile) {
+			if(e.id == profile) {
 				return e.domains[0];
 			}
 		}
@@ -79,18 +79,18 @@ export default class ProfileUtils {
 			}
 		}
 		
-		let profileName:string = "";
+		let profileId:string = "";
 		//Get if discord ID matches a profile
-		if(discordGuildID) profileName = Config.DISCORD_GUILD_ID_TO_PROFILE(discordGuildID);
+		if(discordGuildID) profileId = Config.DISCORD_GUILD_ID_TO_PROFILE(discordGuildID);
 		//Allow GET override with "profile" var
-		if(req && !profileName) profileName = <string>req.query.profile;
+		if(req && !profileId) profileId = <string>req.query.profile;
 		//Allow POST override with "profile" var
-		if(req && !profileName) profileName = <string>req.body.profile;
+		if(req && !profileId) profileId = <string>req.body.profile;
 		
 		//Make sure the requested profile actually exists to avoid some sort of injection
 		for (let i = 0; i < this.profileCache.length; i++) {
 			const p = this.profileCache[i];
-			if(p.profile===profileName) {
+			if(p.id===profileId) {
 				return p;
 			}
 		}
@@ -109,7 +109,7 @@ export default class ProfileUtils {
 
 export interface ProfileData {
 	domains:string[];
-	profile:string;
+	id:string;
 	title?:string;
 	prevProfile?:string;
 	nextProfile?:string;

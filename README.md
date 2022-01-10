@@ -189,36 +189,36 @@ Example of content:
 	{
 		"domains":["localhost"],
 		"title":"Awesome streamers",
-		"profile": "awesome_streamers"
+		"id": "awesome_streamers"
 	},
 	{
 		"domains":["awesome.streamers.com","awesome.streamers.net","awesome.streamers.tv"],
 		"title":"Awesome streamers",
-		"profile": "awesome_streamers",
+		"id": "awesome_streamers",
 		"nextProfile": "better_streamers"
 	},
 	{
 		"domains":["better.streamers.com","better.streamers.net","better.streamers.tv"],
 		"title":"Better streamers",
-		"profile": "better_streamers",
+		"id": "better_streamers",
 		"prevProfile": "awesome_streamers",
 		"nextProfile": "lonely_streamers"
 	},
 	{
 		"domains":["lonely.streamers.com"],
 		"title":"Lonely streamers",
-		"profile": "lonely_streamers",
+		"id": "lonely_streamers",
 		"prevProfile": "better_streamers"
 	}
 ]
 ```
 One profile can have multiple domains *(to handle multiple TLDs)*\
 If defined, the `title` will be used as the page's title.\
-If you specify a `nextProfile` nor a `prevProfile` property with another profile's name as value, a navigation button will be displayed to switch from one profile to another.\
+If you specify a `nextProfile` nor a `prevProfile` property with another profile's `id` as value, a navigation button will be displayed to switch from one profile to another.\
 <br>
 ## Logos
-If you use this system you can have different logos for each profile. Just add a PNG with the profile name in `public/{PROFILE_NAME}.png`.\
+If you use this system you can have different logos for each profile. Just add a PNG with the profile ID as name in `public/{PROFILE_ID}.png`.\
 <br>
 ## User list
 By default the app will store users in the file userList.json.
-If you use the profile system, the file will be suffixed with the profile name, example : `userList_profileName.json`.
+If you use the profile system, the file will be suffixed with the profile name, example : `userList_profileId.json`.

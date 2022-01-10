@@ -145,6 +145,7 @@ import Utils from "@/utils/Utils";
 import gsap from "gsap/all";
 import { Component, Vue } from "vue-property-decorator";
 import Config from "@/utils/Config";
+import { ProfileData } from "./ProfileSwitcher.vue";
 
 @Component({
 	components: {
@@ -199,20 +200,24 @@ export default class Home extends Vue {
 		return this.$store.state.OAuthToken;
 	}
 
+	public get profile():ProfileData {
+		return this.$store.state.profile;
+	}
+
 	public get title():string {
-		if(this.$store.state.profile?.title) return this.$store.state.profile?.title;
+		if(this.profile?.title) return this.profile?.title;
 		return "Streamer Raider";
 	}
 
 	public get userFile():string {
 		let res = "userList";
-		if(this.$store.state.profile.profile) res += "_"+this.$store.state.profile.profile;
+		if(this.profile.id) res += "_"+this.profile.id;
 		return res;
 	}
 
 	public get logoPath():string {
-		if(this.$store.state.profile.profile && !this.forceDefaultLogo) {
-			return "/logos/"+this.$store.state.profile.profile+".png";
+		if(this.profile.id && !this.forceDefaultLogo) {
+			return "/logos/"+this.profile.id+".png";
 		}else{
 			return "/logos/default.png";
 		}
@@ -262,7 +267,7 @@ export default class Home extends Vue {
 	 * Called if logo loading failed
 	 */
 	public onLogoError():void {
-		console.warn("No logo specified for current profile ("+this.$store.state.profile.profile+") on folder \"public/logos\". Fallback to default logo. Add a \""+this.$store.state.profile.profile+".png\" on \"public\" folder to change it !");
+		console.warn("No logo specified for current profile ("+this.$store.state.profile.id+") on folder \"public/logos\". Fallback to default logo. Add a \""+this.$store.state.profile.id+".png\" on \"public\" folder to change it !");
 		this.forceDefaultLogo = true;
 	}
 

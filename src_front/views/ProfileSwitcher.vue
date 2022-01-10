@@ -109,7 +109,7 @@ export interface Profile {
 
 export interface ProfileData {
 	domains:string[];
-	profile:string;
+	id:string;
 	title?:string;
 	prevProfile?:string;
 	nextProfile?:string;
