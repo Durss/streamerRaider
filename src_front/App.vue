@@ -58,7 +58,7 @@ export default class App extends Vue {
 	public onReady():void {
 		let p = <ProfileData>this.$store.state.profile;
 		if(!p) {
-			this.pageTitle = p+" Raider";
+			this.pageTitle = Config.DEFAULT_PAGE_TITLE;
 		}else{
 			let title = p.title? p.title : Config.DEFAULT_PAGE_TITLE;
 			this.pageTitle = title;
