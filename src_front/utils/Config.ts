@@ -7,6 +7,8 @@ export default class Config {
 	private static _ENV_NAME: EnvName;
 
 	public static IS_PROD:boolean = /.*\.(com|fr|net|org|ninja|st|stream)$/gi.test(window.location.hostname);
+	
+	public static DEFAULT_PAGE_TITLE:string = "Streamer Raider";
 
 	public static TWITCH_SCOPES:string[] = ["chat:read","chat:edit","channel_editor"];
 	public static NEW_USER_DURATION:number = 1000 * 60 * 60 * 24 * 31;//31 days

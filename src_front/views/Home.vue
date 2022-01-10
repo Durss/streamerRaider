@@ -206,7 +206,7 @@ export default class Home extends Vue {
 
 	public get title():string {
 		if(this.profile?.title) return this.profile?.title;
-		return "Streamer Raider";
+		return Config.DEFAULT_PAGE_TITLE;
 	}
 
 	public get userFile():string {
