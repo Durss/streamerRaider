@@ -3,6 +3,7 @@ import * as fs from "fs";
 import Config from "../utils/Config";
 import { EventDispatcher } from "../utils/EventDispatcher";
 import Logger from "../utils/Logger";
+import ProfileUtils from "../utils/ProfileUtils";
 import RaiderEvent from "../utils/RaiderEvent";
 import TwitchUtils, { TwitchUserInfos } from "../utils/TwitchUtils";
 import UserData from "../utils/UserData";
@@ -51,7 +52,7 @@ export default class APIController extends EventDispatcher {
 		//PRIVATE ROUTES
 		//==============
 		//Get current profile name from domain origin
-		this._app.get("/api/private/profile/current", (req:Request, res:Response) => this.getProfileName(req,res));
+		this._app.get("/api/private/profile/current", (req:Request, res:Response) => this.getCurrentProfile(req,res));
 		//Get all profiles list
 		this._app.get("/api/private/profile/list", (req:Request, res:Response) => this.getProfileList(req,res));
 		//Get twitch app client ID
@@ -79,7 +80,7 @@ export default class APIController extends EventDispatcher {
 		//Force caches refresh every 30 minutes to make sure "lastActivity" date is
 		//updated for all users
 		setInterval(() => {
-			Utils.getProfileList().forEach(async profile => {
+			ProfileUtils.getProfileList().forEach(async profile => {
 				await this.getStreamsListByProfile(profile.profile);
 			});
 		}, 1000 * 60 * 30);
@@ -103,8 +104,8 @@ export default class APIController extends EventDispatcher {
 	 * @param req 
 	 * @param res 
 	 */
-	private async getProfileName(req:Request, res:Response):Promise<void> {
-		let profile = Utils.getProfile(req);
+	private async getCurrentProfile(req:Request, res:Response):Promise<void> {
+		let profile = ProfileUtils.getProfile(req);
 		res.status(200).json({success:true, profile});
 	}
 
@@ -115,7 +116,7 @@ export default class APIController extends EventDispatcher {
 	 * @param res 
 	 */
 	private async getProfileList(req:Request, res:Response):Promise<void> {
-		let profiles = Utils.getProfileList();
+		let profiles = ProfileUtils.getProfileList();
 		res.status(200).json({success:true, profiles});
 	}
 
@@ -170,7 +171,7 @@ export default class APIController extends EventDispatcher {
 	private async postUser(req:Request, res:Response):Promise<void> {
 		let login = (<string>req.query.login)?.toLowerCase();
 		let users = Utils.getUserList(req);
-		let profile = Utils.getProfile(req);
+		let profile = ProfileUtils.getProfile(req)?.profile;
 		let userIndex = users.findIndex(v => v.name?.toLowerCase() == login?.toLowerCase());
 		Logger.info(`Add user: ${login}`);
 		if(userIndex == -1) {
@@ -206,7 +207,7 @@ export default class APIController extends EventDispatcher {
 	private async deleteUser(req:Request, res:Response):Promise<void> {
 		let login = (<string>req.query.login)?.toLowerCase();
 		let users = Utils.getUserList(req);
-		let profile = Utils.getProfile(req);
+		let profile = ProfileUtils.getProfile(req)?.profile;
 		let userIndex = users.findIndex(v => v.name?.toLowerCase() == login?.toLowerCase());
 		Logger.info(`Delete user: ${login}`);
 		if(userIndex > -1) {
@@ -244,7 +245,7 @@ export default class APIController extends EventDispatcher {
 	 */
 	private async getUsersOnlineCount(req:Request, res:Response):Promise<void> {
 		// let channels:string = <string>req.query.channels;
-		let profile = Utils.getProfile(req);
+		let profile = ProfileUtils.getProfile(req)?.profile;
 		if(!this._streamInfosCache[profile]) {
 			await this.getStreamInfos(req);
 		}
@@ -314,7 +315,7 @@ export default class APIController extends EventDispatcher {
 			let users = this.getCachedUserList(req);
 			let userIndex = users.findIndex(v => v.name?.toLowerCase() == login?.toLowerCase());
 			users[userIndex].description = description;
-			let profile:string = Utils.getProfile(req);
+			let profile:string = ProfileUtils.getProfile(req)?.profile;
 			this._usersCache[profile] = users;
 			fs.writeFileSync(Config.TWITCH_USERS_FILE(req), JSON.stringify(users));
 			res.status(200).send(JSON.stringify({success:true, data:users[userIndex]}));
@@ -337,7 +338,7 @@ export default class APIController extends EventDispatcher {
 		Logger.info(`Delete user description: ${login}`);
 		if(userIndex > -1) {
 			delete users[userIndex].description;
-			let profile:string = Utils.getProfile(req);
+			let profile:string = ProfileUtils.getProfile(req)?.profile;
 			this._usersCache[profile] = users;
 			fs.writeFileSync(Config.TWITCH_USERS_FILE(req), JSON.stringify(users));
 			res.status(200).send(JSON.stringify({success:true, data:users}));
@@ -356,7 +357,7 @@ export default class APIController extends EventDispatcher {
 	 */
 	private async getStreamInfos(req:Request, res?:Response):Promise<void> {
 		// let channels:string = <string>req.query.channels;
-		let profile = Utils.getProfile(req);
+		let profile = ProfileUtils.getProfile(req)?.profile;
 		let expireDuration = (Date.now() - this._streamInfosCache[profile]?.expires_at) / 1000;
 		let timeLeft = Config.STREAMERS_CACHE_DURATION - expireDuration;
 		if(timeLeft <= 0) {
@@ -464,7 +465,7 @@ export default class APIController extends EventDispatcher {
 	 */
 	private getCachedUserList(req:Request, profile?:string):UserData[] {
 		if(!profile) {
-			profile = Utils.getProfile(req);
+			profile = ProfileUtils.getProfile(req)?.profile;
 		}
 		if(APIController._CACHE_INVALIDATED[profile] !== false) {
 			this._usersCache[profile] = null;

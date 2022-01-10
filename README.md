@@ -188,25 +188,32 @@ Example of content:
 [
 	{
 		"domains":["localhost"],
+		"title":"Awesome streamers",
 		"profile": "awesome_streamers"
 	},
 	{
 		"domains":["awesome.streamers.com","awesome.streamers.net","awesome.streamers.tv"],
+		"title":"Awesome streamers",
 		"profile": "awesome_streamers",
 		"nextProfile": "better_streamers"
 	},
 	{
 		"domains":["better.streamers.com","better.streamers.net","better.streamers.tv"],
+		"title":"Better streamers",
 		"profile": "better_streamers",
-		"prevProfile": "awesome_streamers"
+		"prevProfile": "awesome_streamers",
+		"nextProfile": "lonely_streamers"
 	},
 	{
 		"domains":["lonely.streamers.com"],
-		"profile": "lonely_streamers"
+		"title":"Lonely streamers",
+		"profile": "lonely_streamers",
+		"prevProfile": "better_streamers"
 	}
 ]
 ```
 One profile can have multiple domains *(to handle multiple TLDs)*\
+If defined, the `title` will be used as the page's title.
 If you specify a `nextProfile` nor a `prevProfile` property with another profile's name as value, a navigation button will be displayed to switch from one profile to another.\
 <br>
 ## Logos

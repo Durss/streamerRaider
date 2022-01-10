@@ -18,7 +18,7 @@
 		<div v-if="!loading && !missingTwitchKeys && !invalidTwitchKeys && !missingTwitchUsers && !loadError" class="page">
 			<div v-if="!lightMode">
 				<img :src="logoPath" height="100" @error="onLogoError()">
-				<h1>{{title}} Raider</h1>
+				<h1>{{title}}</h1>
 			</div>
 
 			<AuthForm class="menu"
@@ -200,20 +200,19 @@ export default class Home extends Vue {
 	}
 
 	public get title():string {
-		let res = "";
-		if(this.$store.state.profileName) res = this.$store.state.profileName;
-		return res;
+		if(this.$store.state.profile?.title) return this.$store.state.profile?.title;
+		return "Streamer Raider";
 	}
 
 	public get userFile():string {
 		let res = "userList";
-		if(this.$store.state.profileName) res += "_"+this.$store.state.profileName;
+		if(this.$store.state.profile.profile) res += "_"+this.$store.state.profile.profile;
 		return res;
 	}
 
 	public get logoPath():string {
-		if(this.$store.state.profileName && !this.forceDefaultLogo) {
-			return "/logos/"+this.$store.state.profileName+".png";
+		if(this.$store.state.profile.profile && !this.forceDefaultLogo) {
+			return "/logos/"+this.$store.state.profile.profile+".png";
 		}else{
 			return "/logos/default.png";
 		}
@@ -263,7 +262,7 @@ export default class Home extends Vue {
 	 * Called if logo loading failed
 	 */
 	public onLogoError():void {
-		console.warn("No logo specified for current profile ("+this.$store.state.profileName+") on folder \"public/logos\". Fallback to default logo. Add a \""+this.$store.state.profileName+".png\" on \"public\" folder to change it !");
+		console.warn("No logo specified for current profile ("+this.$store.state.profile.profile+") on folder \"public/logos\". Fallback to default logo. Add a \""+this.$store.state.profile.profile+".png\" on \"public\" folder to change it !");
 		this.forceDefaultLogo = true;
 	}
 

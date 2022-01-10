@@ -2,6 +2,7 @@ import { Request } from "express-serve-static-core";
 import * as fs from "fs";
 import * as path from "path";
 import Logger, { LogStyle } from "../utils/Logger";
+import ProfileUtils from "./ProfileUtils";
 import Utils from "./Utils";
 /**
  * Created by Durss
@@ -22,7 +23,7 @@ export default class Config {
 
 	public static TWITCH_USERS_FILE(req:Request, discordGuildID?:string, profile?:string):string {
 		if(!profile) {
-			profile = Utils.getProfile(req, discordGuildID);
+			profile = ProfileUtils.getProfile(req, discordGuildID)?.profile;
 		}
 		let path = "data/userList{PROFILE}.json";
 		if(profile) path = path.replace(/\{PROFILE\}/gi, "_"+profile);

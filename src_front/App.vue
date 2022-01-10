@@ -20,7 +20,7 @@ import Tooltip from "./components/Tooltip.vue";
 import Utils from "./utils/Utils";
 import Alert from "./views/AlertView.vue";
 import Confirm from "./views/Confirm.vue";
-import ProfileSwitcher from "./views/ProfileSwitcher.vue";
+import ProfileSwitcher, { ProfileData } from "./views/ProfileSwitcher.vue";
 
 @Component({
 	components:{
@@ -45,7 +45,7 @@ export default class App extends Vue {
 	}
 
 	public async mounted():Promise<void> {
-		if(this.$store.state.profileName) {
+		if(this.$store.state.profile) {
 			this.onReady();
 		}
 	}
@@ -55,10 +55,13 @@ export default class App extends Vue {
 
 	@Watch("$store.state.initComplete", { immediate: true, deep: true })
 	public onReady():void {
-		let p = this.$store.state.profileName;
-		if(!p) p = "Streamer"
-		p = p.replace(/^\w/, (c) => c.toUpperCase());
-		this.pageTitle = p+" Raider";
+		let p = <ProfileData>this.$store.state.profile;
+		if(!p) {
+			this.pageTitle = p+" Raider";
+		}else{
+			let title = p.title? p.title : p.profile.replace(/^\w/, (c) => c.toUpperCase())+" Raider";
+			this.pageTitle = title;
+		}
 	}
 
 }

@@ -13,7 +13,7 @@ export default new Vuex.Store({
 		OAuthToken: "",//Stores the OAUth user access token
 		clientID: "",//Store the twitch app client ID loaded from server
 		userLogin: "",//Stores the current user's login
-		profileName: "",//Current profile if using multi-profiles configuration
+		profile: null,//Current profile if using multi-profiles configuration
 		initComplete: false,
 		botToxicEnabled: false,
 		botShoutoutEnabled: false,
@@ -35,7 +35,7 @@ export default new Vuex.Store({
 	mutations: {
 		setClientID(state, payload) { state.clientID = payload; },
 		
-		setProfileName(state, name) { state.profileName = name; },
+		setProfile(state, name) { state.profile = name; },
 
 		async setOAuthToken(state, token) {
 			if(!token) {
@@ -165,7 +165,7 @@ export default new Vuex.Store({
 			
 			try {
 				let res = await Api.get("private/profile/current");
-				commit("setProfileName", res.profile);
+				commit("setProfile", res.profile);
 			}catch(error) {}
 
 			state.initComplete = true;
@@ -174,7 +174,7 @@ export default new Vuex.Store({
 
 		setClientID({ commit }, id) { commit("setClientID", id); },
 
-		setProfileName({ commit }, name) { commit("setProfileName", name); },
+		setProfile({ commit }, p) { commit("setProfile", p); },
 
 		setOAuthToken({ commit }, token) { commit("setOAuthToken", token); },
 

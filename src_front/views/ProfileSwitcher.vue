@@ -44,7 +44,7 @@ export default class ProfileSwitcher extends Vue {
 	public nextProfile:Profile = null;
 	public prevProfile:Profile = null;
 	public hasProfile:boolean = false;
-	public profiles:ServerProfile[] = null;
+	public profiles:ProfileData[] = null;
 
 	public mounted():void {
 		if(this.$store.state.initComplete) {
@@ -76,7 +76,7 @@ export default class ProfileSwitcher extends Vue {
 				const p = this.profiles[i];
 				if(p.domains.indexOf(dns) > -1) {
 					if(p.nextProfile) {
-						let sideProfile:ServerProfile = this.profiles.find(v => v.profile === p.nextProfile);
+						let sideProfile:ProfileData = this.profiles.find(v => v.profile === p.nextProfile);
 						// console.log(sideProfile);
 						this.nextProfile = {
 							dns:sideProfile.domains[0],
@@ -86,7 +86,7 @@ export default class ProfileSwitcher extends Vue {
 						};
 					}
 					if(p.prevProfile) {
-						let sideProfile:ServerProfile = this.profiles.find(v => v.profile === p.prevProfile);
+						let sideProfile:ProfileData = this.profiles.find(v => v.profile === p.prevProfile);
 						this.prevProfile = {
 							dns:sideProfile.domains[0],
 							url: "https://"+sideProfile.domains[0] + route,
@@ -107,9 +107,10 @@ export interface Profile {
 	icon:string;
 }
 
-export interface ServerProfile {
+export interface ProfileData {
 	domains:string[];
 	profile:string;
+	title?:string;
 	prevProfile?:string;
 	nextProfile?:string;
 }

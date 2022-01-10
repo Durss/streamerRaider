@@ -15,6 +15,7 @@ import * as rateLimit from "express-rate-limit";
 import * as speedLimit from "express-slow-down";
 import EventSubController from '../controllers/EventSubController';
 import RaiderEvent from '../utils/RaiderEvent';
+import ProfileUtils from '../utils/ProfileUtils';
 
 export default class HTTPServer {
 
@@ -69,7 +70,7 @@ export default class HTTPServer {
 			
 			//Allow access to private API only if coming from authorized domain
 			if(req.url.indexOf("/api/private") > -1) {
-				let profile = Utils.getProfile(req);
+				let profile = ProfileUtils.getProfile(req);
 				if(profile) {
 					//If a profile is found, that's because domain origin is valid, allow the request
 					res.header('Access-Control-Allow-Origin', "*");

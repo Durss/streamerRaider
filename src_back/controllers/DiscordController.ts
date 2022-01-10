@@ -8,6 +8,7 @@ import APIController from "./APIController";
 import Utils from "../utils/Utils";
 import { EventDispatcher } from "../utils/EventDispatcher";
 import RaiderEvent from "../utils/RaiderEvent";
+import ProfileUtils from "../utils/ProfileUtils";
 
 /**
 * Created : 15/10/2020 
@@ -165,7 +166,7 @@ export default class DiscordController extends EventDispatcher {
 			//sub to all users of the corresponding profile.
 			if(this.liveAlertChannelsListCache[key]) {
 				let users = Utils.getUserList(null, key);
-				let profile = Utils.getProfile(null, key)
+				let profile = ProfileUtils.getProfile(null, key)?.profile;
 				for (let i = 0; i < users.length; i++) {
 					this.dispatchEvent(new RaiderEvent(RaiderEvent.SUB_TO_LIVE_EVENT, profile, users[i].id));
 				}
@@ -287,7 +288,7 @@ ${users.map(v => v.name).join(", ")}
 				//command managed transparently by another bot. You won't need this.
 				let protopoteSpecifics = "";
 				let liveAlertSpecifics = "";
-				let profile = Utils.getProfile(null, message.guild.id);
+				let profile = ProfileUtils.getProfile(null, message.guild.id)?.profile;
 
 				//Just some specific commands for the "protopotes" group
 				if(profile == "protopotes") {
@@ -441,7 +442,7 @@ ${protopoteSpecifics}
 		if(!this.isWatchingChannel(message)) return;
 		if(!this.isGuildValid(message)) return
 
-		let profile = Utils.getProfile(null, message.guild.id);
+		let profile = ProfileUtils.getProfile(null, message.guild.id)?.profile;
 		let cmd = chunks[0];
 
 		//Check if twitch user actually exists
@@ -549,7 +550,7 @@ ${protopoteSpecifics}
 			message.reply("La description a bien été supprimée pour le compte **\""+login+"\"**.");
 		}
 		fs.writeFileSync(Config.TWITCH_USERS_FILE(null, message.guild.id), JSON.stringify(users));
-		let profile = Utils.getProfile(null, message.guild.id)
+		let profile = ProfileUtils.getProfile(null, message.guild.id)?.profile;
 		APIController.invalidateCache(profile);
 	}
 
@@ -560,7 +561,7 @@ ${protopoteSpecifics}
 		if(offlineMode) {
 			let url = userInfo.offline_image_url;
 			if(!url) {
-				url = "https://"+Utils.getPublicDomainFromProfile(profile);
+				url = "https://"+ProfileUtils.getPublicDomainFromProfile(profile);
 				url += "/offline.png";
 			}
 			infos.thumbnail_url = url.replace("{width}", "1080").replace("{height}", "600");
