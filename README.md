@@ -213,7 +213,7 @@ Example of content:
 ]
 ```
 One profile can have multiple domains *(to handle multiple TLDs)*\
-If defined, the `title` will be used as the page's title.
+If defined, the `title` will be used as the page's title.\
 If you specify a `nextProfile` nor a `prevProfile` property with another profile's name as value, a navigation button will be displayed to switch from one profile to another.\
 <br>
 ## Logos
