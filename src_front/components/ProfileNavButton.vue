@@ -1,15 +1,15 @@
 <template>
 	<div :class="classes" @mouseenter="over=true" @mouseleave="over=false">
-		<a :href="data.url" class="link">
-			<img class="icon" :src="logo" :alt="data.name" @error="onLogoError()">
-			<div class="label">{{data.name}}</div>
+		<a :href="url" class="link">
+			<img class="icon" :src="logo" :alt="data.id" @error="onLogoError()">
+			<div class="label">{{title}}</div>
 		</a>
 	</div>
 </template>
 
 <script lang="ts">
-import { Profile } from "@/views/ProfileSwitcher.vue";
-import { Component, Inject, Model, Prop, Vue, Watch, Provide } from "vue-property-decorator";
+import { ProfileData } from "@/views/ProfileSwitcher.vue";
+import { Component, Prop, Vue } from "vue-property-decorator";
 
 @Component({
 	components:{}
@@ -17,7 +17,7 @@ import { Component, Inject, Model, Prop, Vue, Watch, Provide } from "vue-propert
 export default class ProfileNavButton extends Vue {
 
 	@Prop()
-	public data:Profile;
+	public data:ProfileData;
 
 	@Prop()
 	public position:"left"|"right";
@@ -31,7 +31,7 @@ export default class ProfileNavButton extends Vue {
 		if(this.forceDefaultLogo) {
 			return "/logos/default.png";
 		}else{
-			return this.data.icon;
+			return "/logos/"+this.data.id+".png";
 		}
 	}
 
@@ -41,6 +41,16 @@ export default class ProfileNavButton extends Vue {
 		if(this.over) res.push("open");
 		if(this.lightMode) res.push("lightMode");
 		return res;
+	}
+
+	public get title():string {
+		if(this.data?.title) return this.data?.title;
+		return "";
+	}
+
+	public get url():string {
+		let route = this.$route.path;
+		return "https://"+this.data.domains[0] + route;
 	}
 
 	public mounted():void {
@@ -55,7 +65,7 @@ export default class ProfileNavButton extends Vue {
 	 * Called if logo loading failed
 	 */
 	public onLogoError():void {
-		console.warn("No logo specified for profile \""+this.data.name+"\" on folder \"public/logos\". Fallback to default logo. Add a \""+this.data.name+".png\" on \"public/logos\" folder to change it !");
+		console.warn("No logo specified for profile \""+this.data.id+"\" on folder \"public/logos\". Fallback to default logo. Add a \""+this.data.id+".png\" on \"public/logos\" folder to change it !");
 		this.forceDefaultLogo = true;
 	}
 

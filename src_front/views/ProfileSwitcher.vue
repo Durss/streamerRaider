@@ -27,8 +27,7 @@
 import Button from "@/components/Button.vue";
 import ProfileNavButton from "@/components/ProfileNavButton.vue";
 import Api from "@/utils/Api";
-import Utils from "@/utils/Utils";
-import { Component, Inject, Model, Prop, Vue, Watch, Provide } from "vue-property-decorator";
+import { Component, Prop, Vue, Watch } from "vue-property-decorator";
 
 @Component({
 	components:{
@@ -41,8 +40,8 @@ export default class ProfileSwitcher extends Vue {
 	@Prop()
 	public lightMode:boolean;
 
-	public nextProfile:Profile = null;
-	public prevProfile:Profile = null;
+	public nextProfile:ProfileData = null;
+	public prevProfile:ProfileData = null;
 	public hasProfile:boolean = false;
 	public profiles:ProfileData[] = null;
 
@@ -71,40 +70,22 @@ export default class ProfileSwitcher extends Vue {
 			// dns = "protopotes.durss.fr";
 			// dns = "pogscience.durss.fr";
 			// console.log(this.profiles);
-			let route = this.$route.path;
 			for (let i = 0; i < this.profiles.length; i++) {
 				const p = this.profiles[i];
 				if(p.domains.indexOf(dns) > -1) {
 					if(p.nextProfile) {
-						let sideProfile:ProfileData = this.profiles.find(v => v.profile === p.nextProfile);
+						let sideProfile:ProfileData = this.profiles.find(v => v.id === p.nextProfile);
 						// console.log(sideProfile);
-						this.nextProfile = {
-							dns:sideProfile.domains[0],
-							url: "https://"+sideProfile.domains[0] + route,
-							name:sideProfile.profile,
-							icon: "/logos/"+sideProfile.profile+".png"
-						};
+						this.nextProfile = sideProfile;
 					}
 					if(p.prevProfile) {
-						let sideProfile:ProfileData = this.profiles.find(v => v.profile === p.prevProfile);
-						this.prevProfile = {
-							dns:sideProfile.domains[0],
-							url: "https://"+sideProfile.domains[0] + route,
-							name:sideProfile.profile,
-							icon: "/logos/"+sideProfile.profile+".png"
-						};
+						let sideProfile:ProfileData = this.profiles.find(v => v.id === p.prevProfile);
+						this.prevProfile = sideProfile;
 					}
 				}
 			}
 		}
 	}
-}
-
-export interface Profile {
-	dns:string;
-	url:string;
-	name:string;
-	icon:string;
 }
 
 export interface ProfileData {

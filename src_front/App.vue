@@ -17,6 +17,7 @@ import { Component, Vue, Watch } from "vue-property-decorator";
 import Footer from "./components/Footer.vue";
 import MainLoader from "./components/MainLoader.vue";
 import Tooltip from "./components/Tooltip.vue";
+import Config from "./utils/Config";
 import Utils from "./utils/Utils";
 import Alert from "./views/AlertView.vue";
 import Confirm from "./views/Confirm.vue";
@@ -59,7 +60,7 @@ export default class App extends Vue {
 		if(!p) {
 			this.pageTitle = p+" Raider";
 		}else{
-			let title = p.title? p.title : p.profile.replace(/^\w/, (c) => c.toUpperCase())+" Raider";
+			let title = p.title? p.title : Config.DEFAULT_PAGE_TITLE;
 			this.pageTitle = title;
 		}
 	}
