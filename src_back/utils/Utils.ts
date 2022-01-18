@@ -256,9 +256,9 @@ export default class Utils  {
 		return ip;
 	}
 
-	public static formatDuration(seconds: number): string {
-		let res = this.secondsToInputValue(seconds);
-		let days = Math.floor(seconds / (24 * 3600*1000));
+	public static formatDuration(millis: number): string {
+		let res = this.secondsToInputValue(millis);
+		let days = Math.floor(millis / (24 * 3600*1000));
 		if(days > 1) {
 			res = days+"j "+res;
 		}

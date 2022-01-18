@@ -50,7 +50,7 @@ export default class IRCClient extends EventDispatcher {
 			this.token = token;
 	
 			this.client = new tmi.Client({
-				options: { debug: false },
+				options: { debug: falsee, skipUpdatingEmotesets:true },
 				connection: { reconnect: true },
 				channels: [ login ],
 				identity: {

@@ -3,7 +3,6 @@ import * as fs from "fs";
 import * as path from "path";
 import Logger, { LogStyle } from "../utils/Logger";
 import ProfileUtils from "./ProfileUtils";
-import Utils from "./Utils";
 /**
  * Created by Durss
  */
