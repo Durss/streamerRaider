@@ -1,4 +1,4 @@
-<div align="center"><img src="https://raw.githubusercontent.com/Durss/streamerRaider/master/public/img/share_small.png" height="200"></div>
+<div align="center"><img src="https://raw.githubusercontent.com/Durss/streamerRaider/master/public/discordBot_icon.png" height="200"></div>
 
 # Streamer Raider
 
