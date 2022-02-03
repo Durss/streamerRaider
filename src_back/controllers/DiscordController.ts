@@ -92,8 +92,8 @@ export default class DiscordController extends EventDispatcher {
 		if(this.lastStreamInfos[uid] && !editedMessage) return;
 
 		let res = await TwitchUtils.getStreamsInfos(null, [uid]);
-		let steamDetails = res.data[0];
-		if(!steamDetails) {
+		let streamDetails = res.data[0];
+		if(!streamDetails) {
 			let maxAttempt = 10;
 			if(attemptCount < maxAttempt) {
 				if(!editedMessage) {
@@ -129,7 +129,7 @@ export default class DiscordController extends EventDispatcher {
 					//Get twitch channel's infos
 					let res = await TwitchUtils.loadChannelsInfo(null, [uid]);
 					let userInfo:TwitchUserInfos = (await res.json()).data[0];
-					let card = this.buildLiveCard(profile, steamDetails, userInfo, editedMessage!=null);
+					let card = this.buildLiveCard(profile, streamDetails, userInfo, editedMessage!=null);
 					let message:Discord.Message;
 					if(editedMessage) {
 						//Edit existing message
@@ -215,9 +215,10 @@ export default class DiscordController extends EventDispatcher {
 				break;
 			}
 		}
-		let txt = message.content.substr(1, message.content.length);
-		let chunks = txt.split(/\s/gi);
-		let	cmd = chunks[0];
+		const txt = message.content.substr(1, message.content.length);
+		const chunks = txt.split(/\s/gi);
+		const cmd = chunks[0];
+		const profile = ProfileUtils.getProfile(null, message.guild.id);
 		switch(cmd) {
 			case "raider-add":
 				if(isAdmin) {
@@ -281,6 +282,14 @@ ${users.map(v => v.name).join(", ")}
 				this.addDelDescription(message, chunks);
 				break;
 
+			case "eventsub-unsub-all":
+				this.dispatchEvent(new RaiderEvent(RaiderEvent.RESET_EVENTSUB, profile.id));
+				break;
+
+			case "eventsub-resub-all":
+				this.subToUsers();
+				break;
+
 			case "raider-help":
 				if(!this.isWatchingChannel(message) && !isAdmin) return;
 
@@ -288,10 +297,9 @@ ${users.map(v => v.name).join(", ")}
 				//command managed transparently by another bot. You won't need this.
 				let protopoteSpecifics = "";
 				let liveAlertSpecifics = "";
-				let profile = ProfileUtils.getProfile(null, message.guild.id)?.id;
 
 				//Just some specific commands for the "protopotes" group
-				if(profile == "protopotes") {
+				if(profile.id == "protopotes") {
 					protopoteSpecifics = `
 !add-user TWITCH_LOGIN TWITTER_LOGIN
 	Ajouter un·e utilisateur/trice twitch et son compte twitter
@@ -478,7 +486,24 @@ ${protopoteSpecifics}
 					lastActivity: Date.now(),
 				});
 				message.reply("Le compte Twitch **\""+login+"\"** a bien été ajouté à la liste.");
-				this.dispatchEvent(new RaiderEvent(RaiderEvent.USER_ADDED, profile, twitchUser.id));
+
+
+		
+				//Get discord guild ID from current profile
+				let guildId = Config.DISCORD_GUILD_ID_FROM_PROFILE(profile);
+				//Get channels IDs in which send alerts
+				let channelIDs = this.liveAlertChannelsListCache[guildId];
+				if(channelIDs) {
+					for (let i = 0; i < channelIDs.length; i++) {
+						const id = channelIDs[i];
+						//Get actual channel's reference
+						let channel = this.client.channels.cache.get(id) as Discord.TextChannel;
+						if(channel) {
+							//A channel is configured, subscribe user for eventsub notifications
+							this.dispatchEvent(new RaiderEvent(RaiderEvent.SUB_TO_LIVE_EVENT, profile, twitchUser.id));
+						}
+					}
+				}
 			}else{
 				users.splice(userIndex, 1);
 				message.reply("Le compte Twitch **\""+login+"\"** a bien été supprimé de la liste.");
@@ -577,11 +602,11 @@ ${protopoteSpecifics}
 		card.setURL(`https://twitch.tv/${infos.user_login}`);
 		card.setThumbnail(userInfo.profile_image_url);
 		card.setImage(infos.thumbnail_url+"?t=" + cacheKiller );
-		card.setAuthor(infos.user_name+" est en live !", userInfo.profile_image_url);
 		card.addFields(
 			{ name: 'Catégorie', value: infos.game_name, inline: false },
 		);
 		if(liveMode) {
+			card.setAuthor("🔴 "+infos.user_name+" est en live !", userInfo.profile_image_url);
 			let ellapsed = Date.now() - new Date(infos.started_at).getTime();
 			let uptime:string = Utils.formatDuration(ellapsed);
 			if(!this.maxViewersCount[userInfo.id]) this.maxViewersCount[userInfo.id] = 0;
@@ -592,6 +617,7 @@ ${protopoteSpecifics}
 			);
 			this.lastStreamInfos[userInfo.id] = infos;
 		}else if(offlineMode) {
+			card.setAuthor(infos.user_name+" était en live.", userInfo.profile_image_url);
 			let fields:Discord.EmbedField[] = [];
 			if(this.maxViewersCount[userInfo.id]) {
 				fields.push({ name: 'Viewers max', value: this.maxViewersCount[userInfo.id].toString(), inline: true });

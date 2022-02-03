@@ -1,11 +1,11 @@
 import { HmacSHA256 } from "crypto-js";
 import { Express, Request, Response } from "express-serve-static-core";
-import Config from "../utils/Config";
-import Logger, { LogStyle } from '../utils/Logger';
-import TwitchUtils from "../utils/TwitchUtils";
 import fetch from "node-fetch";
+import Config from "../utils/Config";
 import { EventDispatcher } from "../utils/EventDispatcher";
+import Logger, { LogStyle } from '../utils/Logger';
 import RaiderEvent from "../utils/RaiderEvent";
+import TwitchUtils from "../utils/TwitchUtils";
 
 /**
 * Created : 25/10/2021 
@@ -50,6 +50,15 @@ export default class EventSubController extends EventDispatcher {
 	}
 
 	/**
+	 * Unsubs all callbacks for a specific profile then
+	 * resub all its users
+	 */
+	public async unsubAll():Promise<void> {
+		await this.unsubPrevious(null, null, true);
+		await this.getCurrentCallbacks();//Forces local cache refresh
+	}
+
+	/**
 	 * Requests to receive live notifications for a specific user
 	 * 
 	 * @param uid	twitch user ID 
@@ -73,7 +82,7 @@ export default class EventSubController extends EventDispatcher {
 			const el = list[i];
 			if(el.condition.broadcaster_user_id === uid
 			&& el.transport.callback == callback) {
-				Logger.info("📢 EventSub Already subscribed to user "+uid);
+				// Logger.info("📢 EventSub Already subscribed to user "+uid);
 				return;
 			}
 		}
@@ -206,7 +215,7 @@ export default class EventSubController extends EventDispatcher {
 	 * @param uid	specify a user ID to remove a specific event sub
 	 * @returns 
 	 */
-	private async unsubPrevious(profile?:string, uid?:string):Promise<void> {
+	private async unsubPrevious(profile?:string, uid?:string, cleanAll:boolean = false):Promise<void> {
 		this.token = await TwitchUtils.getClientCredentialToken();
 		let opts = {
 			method:"GET",
@@ -243,11 +252,16 @@ export default class EventSubController extends EventDispatcher {
 
 		//Filtering out only callbacks for current environment
 		let callbacksToClean = list.filter(e => {
+			if(cleanAll) return true;
+
 			let include = e.transport.callback.indexOf(this.url) > -1;
-			if(uid && profile) {
-				include =  include
-						&& e.condition.broadcaster_user_id == uid
-						&& e.transport.callback.split("profile=")[1] == profile;
+			if(profile) {
+				//Only clean current profile if specified
+				include &&= e.transport.callback.split("profile=")[1] == profile;
+			}
+			if(uid) {
+				//Only clean current user if specified
+				include &&= e.condition.broadcaster_user_id == uid;
 			}
 			return include;
 		});

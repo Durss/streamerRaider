@@ -8,14 +8,14 @@
  **/
 export class Event {
 	private _type:string;
-	private _target:any;
+	private _target:unknown;
 
-	constructor(type:string, targetObj:any) {
+	constructor(type:string, targetObj?:unknown) {
 		this._type = type;
 		this._target = targetObj;
 	}
 	
-	public getTarget():any {
+	public getTarget():unknown {
 		return this._target;
 	}
 
@@ -25,14 +25,14 @@ export class Event {
 }
 
 export class EventDispatcher {
-	private _listeners:any[];
+	private _listeners:{type:string, listener:(e:Event)=>void}[];
 	constructor() {
 		this._listeners = [];
 	}
 
-	public hasEventListener(type:string, listener:Function):Boolean {
-		var exists:Boolean = false;
-		for (var i = 0; i < this._listeners.length; i++) {
+	public hasEventListener(type:string, listener:(e:Event)=>void):boolean {
+		let exists:boolean = false;
+		for (let i = 0; i < this._listeners.length; i++) {
 			if (this._listeners[i].type === type && this._listeners[i].listener === listener) {
 				exists = true;
 			}
@@ -41,7 +41,7 @@ export class EventDispatcher {
 		return exists;
 	}
 
-	public addEventListener (typeStr:string, listenerFunc:Function):void {
+	public addEventListener (typeStr:string, listenerFunc:(e:Event)=>void):void {
 		if (this.hasEventListener(typeStr, listenerFunc)) {
 			return;
 		}
@@ -49,16 +49,16 @@ export class EventDispatcher {
 		this._listeners.push({type: typeStr, listener: listenerFunc});
 	}
 
-	public removeEventListener (typeStr:string, listenerFunc:Function):void {
-		for (var i = 0; i < this._listeners.length; i++) {
+	public removeEventListener (typeStr:string, listenerFunc:(e:Event)=>void):void {
+		for (let i = 0; i < this._listeners.length; i++) {
 			if (this._listeners[i].type === typeStr && this._listeners[i].listener === listenerFunc) {
 				this._listeners.splice(i, 1);
 			}
 		}
 	}
 
-	public dispatchEvent (evt:Event) {
-		for (var i = 0; i < this._listeners.length; i++) {
+	public dispatchEvent (evt:Event):void {
+		for (let i = 0; i < this._listeners.length; i++) {
 			if (this._listeners[i].type === evt.getType()) {
 				this._listeners[i].listener.call(this, evt);
 			}

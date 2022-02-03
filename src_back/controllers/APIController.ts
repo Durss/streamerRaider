@@ -190,7 +190,7 @@ export default class APIController extends EventDispatcher {
 				});
 				fs.writeFileSync(Config.TWITCH_USERS_FILE(req), JSON.stringify(users));
 				res.status(200).send(JSON.stringify({success:true, data:users}));
-				this.dispatchEvent(new RaiderEvent(RaiderEvent.USER_ADDED, profile, req.headers.uid as string));
+				this.dispatchEvent(new RaiderEvent(RaiderEvent.SUB_TO_LIVE_EVENT, profile, req.headers.uid as string));
 			}
 		}else{
 			Logger.warn(`User ${login} already added`);

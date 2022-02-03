@@ -188,7 +188,8 @@ export default class HTTPServer {
 				
 			let eventSub = new EventSubController();
 			await eventSub.create(this.app);
-			api.addEventListener(RaiderEvent.USER_ADDED, (event:RaiderEvent) => { eventSub.subToUser(event.profile, event.channelId); });
+			
+			api.addEventListener(RaiderEvent.SUB_TO_LIVE_EVENT, (event:RaiderEvent) => { eventSub.subToUser(event.profile, event.channelId); });
 			api.addEventListener(RaiderEvent.USER_REMOVED, (event:RaiderEvent) => { eventSub.unsubUser(event.profile, event.channelId); });
 	
 			if(Config.DISCORDBOT_TOKEN) {
@@ -198,12 +199,16 @@ export default class HTTPServer {
 				discord.addEventListener(RaiderEvent.SUB_TO_LIVE_EVENT, (event:RaiderEvent) => {
 					eventSub.subToUser(event.profile, event.channelId);
 				});
+		
+				discord.addEventListener(RaiderEvent.RESET_EVENTSUB, (event:RaiderEvent) => {
+					eventSub.unsubAll();
+				});
 				
 				eventSub.addEventListener(RaiderEvent.DISCORD_ALERT_LIVE, (event:RaiderEvent) => {
 					discord.alertLiveChannel(event.profile, event.channelId);
 				});
 				
-				discord.addEventListener(RaiderEvent.USER_ADDED, (event:RaiderEvent) => { eventSub.subToUser(event.profile, event.channelId); });
+				discord.addEventListener(RaiderEvent.SUB_TO_LIVE_EVENT, (event:RaiderEvent) => { eventSub.subToUser(event.profile, event.channelId); });
 				discord.addEventListener(RaiderEvent.USER_REMOVED, (event:RaiderEvent) => { eventSub.unsubUser(event.profile, event.channelId); });
 				
 				discord.onEventsubReady();
