@@ -160,11 +160,11 @@ export default class DiscordController extends EventDispatcher {
 		// });
 	}
 
-	private subToUsers() {
+	private subToUsers(guildID?:string) {
 		for (const key in this.liveAlertChannelsListCache) {
 			//if a live alert channel has been defined for this discord
-			//sub to all users of the corresponding profile.
-			if(this.liveAlertChannelsListCache[key]) {
+			//sub to all users of the corresponding profile or the specified profile.
+			if((!guildID || key == guildID) && this.liveAlertChannelsListCache[key]) {
 				let users = Utils.getUserList(null, key);
 				let profile = ProfileUtils.getProfile(null, key)?.id;
 				for (let i = 0; i < users.length; i++) {
@@ -287,7 +287,7 @@ ${users.map(v => v.name).join(", ")}
 				break;
 
 			case "eventsub-resub-all":
-				this.subToUsers();
+				this.subToUsers(message.guild.id);
 				break;
 
 			case "raider-help":

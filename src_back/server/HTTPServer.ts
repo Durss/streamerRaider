@@ -196,10 +196,6 @@ export default class HTTPServer {
 				let discord = new DiscordController();
 				discord.create(this.app);
 		
-				discord.addEventListener(RaiderEvent.SUB_TO_LIVE_EVENT, (event:RaiderEvent) => {
-					eventSub.subToUser(event.profile, event.channelId);
-				});
-		
 				discord.addEventListener(RaiderEvent.RESET_EVENTSUB, (event:RaiderEvent) => {
 					eventSub.unsubAll();
 				});
