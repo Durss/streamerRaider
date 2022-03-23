@@ -94,15 +94,15 @@ export default class DiscordController extends EventDispatcher {
 		let res = await TwitchUtils.getStreamsInfos(null, [uid]);
 		let streamDetails = res.data[0];
 		if(!streamDetails) {
+			//No sream info available, try again 10 times max, then give up and assume the stream has ended.
 			let maxAttempt = 10;
 			if(attemptCount < maxAttempt) {
 				if(!editedMessage) {
 					Logger.info("No stream infos found for user " + uid + " try again.");
 				}
 				setTimeout(_=> this.alertLiveChannel(profile, uid, attemptCount+1, editedMessage), 5000 * (attemptCount+1));
-			}
-
-			if(attemptCount>=maxAttempt && editedMessage) {
+			
+			}else if(attemptCount>=maxAttempt && editedMessage) {
 				//user closed his/her stream, replace the stream picture by the offline one
 				let res = await TwitchUtils.loadChannelsInfo(null, [uid]);
 				let userInfo:TwitchUserInfos = (await res.json()).data[0];
@@ -118,7 +118,7 @@ export default class DiscordController extends EventDispatcher {
 		
 		//Get discord guild ID from current profile
 		let guildId = Config.DISCORD_GUILD_ID_FROM_PROFILE(profile);
-		//Get channels IDs in which send alerts
+		//Get channels IDs in which to send live alerts
 		let channelIDs = this.liveAlertChannelsListCache[guildId];
 		if(channelIDs) {
 			for (let i = 0; i < channelIDs.length; i++) {
@@ -131,12 +131,28 @@ export default class DiscordController extends EventDispatcher {
 					let userInfo:TwitchUserInfos = (await res.json()).data[0];
 					let card = this.buildLiveCard(profile, streamDetails, userInfo, editedMessage!=null);
 					let message:Discord.Message;
+					let errored:boolean = false;
 					if(editedMessage) {
 						//Edit existing message
 						message = editedMessage;
-						message = await message.edit({embeds:[card]});
+						try {
+							message = await message.edit({embeds:[card]});
+						}catch(error) {
+							errored = true;
+							Logger.error("Edition error");
+							console.log(error);
+						}
 					}else{
-						message = await channel.send({embeds:[card]});
+						try {
+							message = await channel.send({embeds:[card]});
+						}catch(error) {
+							errored = true;
+							Logger.error("Message post error");
+							console.log(error);
+						}
+					}
+					if(!errored && !editedMessage) {
+						Logger.success("Message successfully posted on channel " + channel.name);
 					}
 					//Schedule message update 1min later
 					setTimeout(_=> {
@@ -383,6 +399,13 @@ ${protopoteSpecifics}
 		this.watchListCache = json;
 
 		fs.writeFileSync(Config.DISCORD_CHANNELS_LISTENED, JSON.stringify(json));
+
+		if(add) {
+			this.subToUsers(serverId);
+		}else{
+			const profile = ProfileUtils.getProfile(null, serverId);
+			this.dispatchEvent(new RaiderEvent(RaiderEvent.RESET_EVENTSUB, profile.id));
+		}
 	}
 
 	/**

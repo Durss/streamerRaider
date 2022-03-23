@@ -162,7 +162,7 @@ export default class HTTPServer {
 		});
 		
 		let fallback = async (req, res) => {
-			console.log("NOT FOUND : ",req.url);
+			// console.log("NOT FOUND : ",req.url);
 			res.status(404).send(JSON.stringify({success:false, code:"ENDPOINT_NOT_FOUND", message:"Requested endpoint does not exists"}));
 		};
 		//Fallback endpoints
