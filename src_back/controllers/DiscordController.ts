@@ -270,7 +270,30 @@ export default class DiscordController extends EventDispatcher {
 					this.updateLiveAlertList(message.guild.id, message.channel.id, false);
 					message.reply("Le bot d'alertes de live a bien supprimé du channel #"+channelName);
 				}else{
-					message.reply("Seul un Administrateur peut ajouter le bot à un channel");
+					message.reply("Seul un Administrateur peut supprimer le bot d'un channel");
+				}
+				break;
+
+			case "raider-live-test":
+				if(isAdmin) {
+					const user = chunks[1];
+					if(chunks.length == 0 || user.length < 2) {
+						message.reply("Il faut spécifier le nom d'une chaîne en live. `raider-live-test XXX`");
+					}else{
+						try {
+							const infos = await TwitchUtils.getStreamsInfos([user]);
+							if(infos.data.length == 0) {
+								message.reply(user+" n'est pas en live");
+							}else{
+								this.alertLiveChannel(profile.id, infos.data[0].user_id);
+							}
+						}catch(error) {
+							console.log(error);
+							message.reply("Une erreur est survenue lors de la récupération du stream de "+user);
+						}
+					}
+				}else{
+					message.reply("Seul un Administrateur peut effectuer cette action");
 				}
 				break;
 		
