@@ -124,7 +124,7 @@ export default class DiscordController extends EventDispatcher {
 			for (let i = 0; i < channelIDs.length; i++) {
 				const id = channelIDs[i];
 				//Get actual channel's reference
-				let channel = this.client.channels.cache.get(id) as Discord.TextChannel;
+				let channel = this.client.channels.cache.get(id) as (Discord.TextChannel | Discord.NewsChannel);
 				if(channel) {
 					//Get twitch channel's infos
 					let res = await TwitchUtils.loadChannelsInfo(null, [uid]);
@@ -145,6 +145,15 @@ export default class DiscordController extends EventDispatcher {
 					}else{
 						try {
 							message = await channel.send({embeds:[card]});
+							if(channel.type == "GUILD_NEWS") {
+								Logger.info("Messages posted on an announcement channel, crosspost it");
+								try {
+									await message.crosspost();
+								}catch(error) {
+									Logger.error("Crossposting error");
+									console.log(error);
+								}
+							}
 						}catch(error) {
 							errored = true;
 							Logger.error("Message post error");
