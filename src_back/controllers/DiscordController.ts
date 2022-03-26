@@ -363,9 +363,12 @@ ${users.map(v => v.name).join(", ")}
 !raider-live-add
 	(admin) Ajouter le bot d'alertes de live à un chan.
 	Lorsqu'un·e utilisateur/trice twitch passe en live un message sera posté dans ce chan
-
+	
 !raider-live-del
 	(admin) Supprime le bot d'alertes de live d'un chan.
+
+!raider-live-test TWITCH_LOGIN
+	(admin) Envoie une alerte de live pour l'utilisateur/rice spécifié sur le channel configuré via la commande !raider-live-add
 `;
 				}
 
