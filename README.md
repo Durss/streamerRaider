@@ -95,7 +95,9 @@ The discord bot can post a message everytime a user goes live with a card like t
 <div align="center"><img src="https://user-images.githubusercontent.com/721001/160254698-2e11a648-19f5-4f81-a362-c254c2159fe4.png"></div>
 
 Just send this command on the channel you wish the alerts to be posted :
-```raider-live-add```
+```
+!raider-live-add
+```
 It also support `announcement channel` discord feature, the messages posted are automatically crossposted _(10 max per hour)_ if the configured channel is a announcement channel.
 
 <br>
