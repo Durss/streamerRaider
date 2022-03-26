@@ -20,7 +20,7 @@ export default class DiscordController extends EventDispatcher {
 	private liveAlertChannelsListCache:{[key:string]:string[]};
 	private adminsCache:{[key:string]:string[]};
 	private maxViewersCount:{[key:string]:number} = {};
-	private lastStreamInfos:{[key:string]:TwitchStreamInfos} = {};
+	private lastStreamInfos:{[key:string]:{[key:string]:TwitchStreamInfos}} = {};
 	private BOT_TOKEN:string = Config.DISCORDBOT_TOKEN;
 	
 	
@@ -89,7 +89,7 @@ export default class DiscordController extends EventDispatcher {
 	public async alertLiveChannel(profile:string, uid:string, attemptCount:number = 0, editedMessage?:Discord.Message):Promise<void> {
 		//If there's data in cache, it's becasue the stream is already live.
 		//Avoid having two messages for the same stream by ignoring this one.
-		if(this.lastStreamInfos[uid] && !editedMessage) return;
+		if(this.lastStreamInfos[profile] && this.lastStreamInfos[profile][uid] && !editedMessage) return;
 
 		let res = await TwitchUtils.getStreamsInfos(null, [uid]);
 		let streamDetails = res.data[0];
@@ -108,9 +108,9 @@ export default class DiscordController extends EventDispatcher {
 				let userInfo:TwitchUserInfos = (await res.json()).data[0];
 				// editedMessage.embeds[0].setImage(userInfo.offline_image_url.replace("{width}", "1080").replace("{height}", "600"));
 
-				let card = this.buildLiveCard(profile, this.lastStreamInfos[userInfo.id], userInfo, false, true);
+				let card = this.buildLiveCard(profile, this.lastStreamInfos[profile][userInfo.id], userInfo, false, true);
 				await editedMessage.edit({embeds:[card]});
-				delete this.lastStreamInfos[userInfo.id];
+				delete this.lastStreamInfos[profile][userInfo.id];
 				delete this.maxViewersCount[userInfo.id];
 			}
 			return;
@@ -670,7 +670,8 @@ ${protopoteSpecifics}
 				{ name: 'Viewers', value: infos.viewer_count.toString(), inline: true },
 				{ name: 'Uptime', value: uptime, inline: true },
 			);
-			this.lastStreamInfos[userInfo.id] = infos;
+			if(!this.lastStreamInfos[profile]) this.lastStreamInfos[profile] = {};
+			this.lastStreamInfos[profile][userInfo.id] = infos;
 		}else if(offlineMode) {
 			card.setAuthor(infos.user_name+" était en live.", userInfo.profile_image_url);
 			let fields:Discord.EmbedField[] = [];
