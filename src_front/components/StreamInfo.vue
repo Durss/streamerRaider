@@ -450,8 +450,10 @@ export default class StreamInfo extends Vue {
 			justify-content: space-between;
 
 			.row {
+				width:100%;
 				.infos,.preview {
 					max-width: 100%;
+					margin-right: 0;
 				}
 				.infos {
 					.title {

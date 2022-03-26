@@ -489,7 +489,7 @@ export default class Home extends Vue {
 	
 		.block {
 			width: 100%;
-			padding-top: 100px;
+			padding-top: 50px;
 	
 			.noResult {
 				color: @mainColor_normal;
