@@ -125,7 +125,7 @@ export default class Config {
 	public static get LOGS_ENABLED(): boolean {
 		return this.getEnvData({
 			dev: true,
-			prod: false,
+			prod: true,
 		});
 	}
 
@@ -178,7 +178,7 @@ export default class Config {
 		}
 
 		//Get the data from hashmap
-		if (map[this._ENV_NAME]) return map[this._ENV_NAME];
+		if (map[this._ENV_NAME] != undefined) return map[this._ENV_NAME];
 		return map[Object.keys(map)[0]];
 	}
 }
