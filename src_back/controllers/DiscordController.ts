@@ -19,7 +19,7 @@ export default class DiscordController extends EventDispatcher {
 	private watchListCache:{[key:string]:string[]};
 	private liveAlertChannelsListCache:{[key:string]:string[]};
 	private adminsCache:{[key:string]:string[]};
-	private maxViewersCount:{[key:string]:number} = {};
+	private maxViewersCount:{[key:string]:{[key:string]:number}} = {};
 	private lastStreamInfos:{[key:string]:{[key:string]:TwitchStreamInfos}} = {};
 	private BOT_TOKEN:string = Config.DISCORDBOT_TOKEN;
 	
@@ -111,7 +111,7 @@ export default class DiscordController extends EventDispatcher {
 				let card = this.buildLiveCard(profile, this.lastStreamInfos[profile][userInfo.id], userInfo, false, true);
 				await editedMessage.edit({embeds:[card]});
 				delete this.lastStreamInfos[profile][userInfo.id];
-				delete this.maxViewersCount[userInfo.id];
+				delete this.maxViewersCount[profile][userInfo.id];
 			}
 			return;
 		}
@@ -667,8 +667,9 @@ ${protopoteSpecifics}
 			card.setAuthor("🔴 "+infos.user_name+" est en live !", userInfo.profile_image_url);
 			let ellapsed = Date.now() - new Date(infos.started_at).getTime();
 			let uptime:string = Utils.formatDuration(ellapsed);
-			if(!this.maxViewersCount[userInfo.id]) this.maxViewersCount[userInfo.id] = 0;
-			this.maxViewersCount[userInfo.id] = Math.max(this.maxViewersCount[userInfo.id], infos.viewer_count);
+			if(!this.maxViewersCount[profile]) this.maxViewersCount[profile] = {};
+			if(!this.maxViewersCount[profile][userInfo.id]) this.maxViewersCount[profile][userInfo.id] = 0;
+			this.maxViewersCount[profile][userInfo.id] = Math.max(this.maxViewersCount[profile][userInfo.id], infos.viewer_count);
 			card.addFields(
 				{ name: 'Viewers', value: infos.viewer_count.toString(), inline: true },
 				{ name: 'Uptime', value: uptime, inline: true },
@@ -678,8 +679,8 @@ ${protopoteSpecifics}
 		}else if(offlineMode) {
 			card.setAuthor(infos.user_name+" était en live.", userInfo.profile_image_url);
 			let fields:Discord.EmbedField[] = [];
-			if(this.maxViewersCount[userInfo.id]) {
-				fields.push({ name: 'Viewers max', value: this.maxViewersCount[userInfo.id].toString(), inline: true });
+			if(this.maxViewersCount[profile][userInfo.id]) {
+				fields.push({ name: 'Viewers max', value: this.maxViewersCount[profile][userInfo.id].toString(), inline: true });
 			}
 			let ellapsed = Date.now() - new Date(infos.started_at).getTime();
 			let uptime:string = Utils.formatDuration(ellapsed);
