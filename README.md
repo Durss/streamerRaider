@@ -1,6 +1,7 @@
 <div align="center"><img src="https://raw.githubusercontent.com/Durss/streamerRaider/master/public/discordBot_icon.png" height="200"></div>
 <div align="center">Web app to list <strong>Twitch</strong> buddies in order to find out who's streaming at anytime and allow to raid them easily.</div>
 <div align="center">https://protopotes.durss.ninja</div>
+<div align="center">So far it only supports one language, French, but making it multilingual is on the TODO and will be done if there's is demand for it.</div>
 <br>
 <div align="center"><img src="https://user-images.githubusercontent.com/721001/160254393-8d9d41ae-8f38-4244-99a3-4e75e7289f9d.png"></div>
 
@@ -21,6 +22,7 @@
 <br>
 <br>
 <br>
+
 # Project setup
 ```
 npm install
