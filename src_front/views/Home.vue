@@ -320,6 +320,46 @@ export default class Home extends Vue {
 			return;
 		}
 
+		const today = new Date();
+		if(this.profile.id == "protopotes" && today.getDate() === 1 && today.getMonth() == 3) {
+			//April fool
+			onlineUsers.push({
+				id:                "135468063",
+				login:             "antoinedaniel",
+				display_name:      "AntoineDaniel",
+				type:              "",
+				broadcaster_type:  "partner",
+				description:       "Et oui je suis là",
+				profile_image_url: "https://static-cdn.jtvnw.net/jtv_user_pictures/7474d9d8-ab27-46c8-95f4-0c71b1878c78-profile_image-70x70.png",
+				offline_image_url: "",
+				view_count:        6000 + Math.round(Math.random() * 10000),
+				created_at:        "2012-08-24T20:05:04Z",
+				streamInfos:      {
+					"id": "45113231804",
+					"user_id": "135468063",
+					"user_login": "antoinedaniel",
+					"user_name": "AntoineDaniel",
+					"game_id": "1469308723",
+					"game_name": "Software and Game Development",
+					"type": "live",
+					"title": "Je viens d'arriver chez les Protopotes, je leur code un bot avec mes gros talents de codeur !",
+					"viewer_count": 6000 + Math.round(Math.random() * 10000),
+					"started_at": new Date(Date.now() - 5215000).toISOString(),
+					"language": "fr",
+					"thumbnail_url": "https://static-cdn.jtvnw.net/cf_vods/dgeft87wbj63p/35747a068688f7e3580b_antoinedaniel_45099654428_1648660897/thumb/thumb0-{width}x{height}.jpg",
+					"tag_ids": [
+						"6f655045-9989-4ef7-8f85-1edcec42d648"
+					]
+				},
+				rawData:       {
+					"name": "antoinedaniel",
+					"created_at": Date.now(),
+					"id": "45113231804",
+					"lastActivity": Date.now()
+				}
+			})
+		}
+
 		onlineUsers.sort((a, b) => {
 			if(a.streamInfos?.viewer_count > b.streamInfos?.viewer_count) return 1;
 			if(a.streamInfos?.viewer_count < b.streamInfos?.viewer_count) return -1;
