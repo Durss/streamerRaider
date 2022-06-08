@@ -240,7 +240,7 @@ export default class DiscordController extends EventDispatcher {
 				break;
 			}
 		}
-		const txt = message.content.substr(1, message.content.length);
+		const txt = message.cleanContent.substring(1, message.cleanContent.length);
 		const chunks = txt.split(/\s/gi);
 		const cmd = chunks[0];
 		const profile = ProfileUtils.getProfile(null, message.guild.id);
@@ -286,7 +286,7 @@ export default class DiscordController extends EventDispatcher {
 			case "raider-live-test":
 				if(isAdmin) {
 					const user = chunks[1];
-					if(chunks.length == 0 || user.length < 2) {
+					if(chunks.length < 2 || user.length < 2) {
 						message.reply("Il faut spécifier le nom d'une chaîne en live. `raider-live-test XXX`");
 					}else{
 						try {
@@ -519,7 +519,7 @@ ${protopoteSpecifics}
 			let json = await result.json();
 			
 			if(json.data.length == 0) {
-				message.reply("Le compte Twitch **\""+login+"\"** n'existe pas.");
+				message.reply("Le compte Twitch `"+login+"` n'existe pas.");
 				return;
 			}
 			twitchUser = json.data[0];
@@ -543,9 +543,7 @@ ${protopoteSpecifics}
 					created_at: Date.now(),
 					lastActivity: Date.now(),
 				});
-				message.reply("Le compte Twitch **\""+login+"\"** a bien été ajouté à la liste.");
-
-
+				message.reply("Le compte Twitch `"+login+"` a bien été ajouté à la liste.");
 		
 				//Get discord guild ID from current profile
 				let guildId = Config.DISCORD_GUILD_ID_FROM_PROFILE(profile);
@@ -564,7 +562,7 @@ ${protopoteSpecifics}
 				}
 			}else{
 				users.splice(userIndex, 1);
-				message.reply("Le compte Twitch **\""+login+"\"** a bien été supprimé de la liste.");
+				message.reply("Le compte Twitch `"+login+"` a bien été supprimé de la liste.");
 				this.dispatchEvent(new RaiderEvent(RaiderEvent.USER_REMOVED, profile, twitchUser.id));
 			}
 			fs.writeFileSync(Config.TWITCH_USERS_FILE(null, message.guild.id), JSON.stringify(users));
@@ -573,10 +571,10 @@ ${protopoteSpecifics}
 			if(cmd == "add-user") {
 				//Custom logic for "protopotes" site that has 2 discord bots running in sync
 				if(profile != "protopotes" || chunks.length == 2) {
-					message.reply("Le compte Twitch **\""+login+"\"** est déjà ajouté à la liste.");
+					message.reply("Le compte Twitch `"+login+"` est déjà ajouté à la liste.");
 				}
 			}else{
-				message.reply("Le compte Twitch **\""+login+"\"** est déjà absent de la liste.");
+				message.reply("Le compte Twitch `"+login+"` est déjà absent de la liste.");
 			}
 		}
 	}
@@ -597,7 +595,7 @@ ${protopoteSpecifics}
 			let result = await TwitchUtils.loadChannelsInfo([login]);
 			let json = await result.json();
 			if(json.data.length == 0) {
-				message.reply("Le compte Twitch **\""+login+"\"** n'existe pas. Voici ce qque tu dois m'envoyer : `!add-description TWITCH_LOGIN DESCRIPTION`");
+				message.reply("Le compte Twitch `"+login+"` n'existe pas. Voici ce qque tu dois m'envoyer : `!add-description TWITCH_LOGIN DESCRIPTION`");
 				return;
 			}
 		}catch(error) {
@@ -611,7 +609,7 @@ ${protopoteSpecifics}
 
 		if(userIndex == -1) {
 			//User not found on local DB
-			message.reply("Le compte **\""+login+"\"** n'est pas enregistré. Commence par l'ajouter via cette commande : `!user-add "+login+"`");
+			message.reply("Le compte `"+login+"` n'est pas enregistré. Commence par l'ajouter via cette commande : `!user-add "+login+"`");
 			return;
 		}
 
@@ -622,15 +620,15 @@ ${protopoteSpecifics}
 			let description = chunks.splice(2).join(" ");
 			if(description?.length > 0) {
 				users[userIndex].description = description;
-				message.reply("La description a bien été enregistrée pour le compte **\""+login+"\"**.");
+				message.reply("La description a bien été enregistrée pour le compte `"+login+"`.");
 			}else{
-				message.reply("Il faut me donner ta description comme ceci : `!add-description "+login+" DESCRIPTION`");
+				message.reply("Il faut me donner ta description comme ceci : `!add-description `"+login+"` DESCRIPTION`");
 			}
 		}else{
 			Logger.info(`Delete description: ${login}`);
 			//Delete description from user
 			delete users[userIndex].description;
-			message.reply("La description a bien été supprimée pour le compte **\""+login+"\"**.");
+			message.reply("La description a bien été supprimée pour le compte `"+login+"`.");
 		}
 		fs.writeFileSync(Config.TWITCH_USERS_FILE(null, message.guild.id), JSON.stringify(users));
 		let profile = ProfileUtils.getProfile(null, message.guild.id)?.id;
