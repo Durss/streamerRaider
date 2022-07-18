@@ -39,6 +39,10 @@ export default class EventSubController extends EventDispatcher {
 		this.app = app;
 		this.app.post("/api/eventsubcallback", (req:Request,res:Response) => this.eventSub(req,res));
 		
+		if(!Config.EVENTSUB_CALLBACK) {
+			Logger.error("Missing \"eventsub_callback\" value in file \"credentials.json\"");
+			return;
+		}
 		this.url = Config.EVENTSUB_CALLBACK.replace(/\/+$/gi, "")+"/";
 		
 		if(this.url) {
