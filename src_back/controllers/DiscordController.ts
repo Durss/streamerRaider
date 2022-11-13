@@ -124,7 +124,7 @@ export default class DiscordController extends EventDispatcher {
 			for (let i = 0; i < channelIDs.length; i++) {
 				const id = channelIDs[i];
 				//Get actual channel's reference
-				let channel = this.client.channels.cache.get(id) as (Discord.TextChannel | Discord.NewsChannel);
+				let channel = await this.client.channels.fetch(id) as (Discord.TextChannel | Discord.NewsChannel);
 				if(channel) {
 					//Get twitch channel's infos
 					let res = await TwitchUtils.loadChannelsInfo(null, [uid]);
