@@ -8,7 +8,7 @@ import Logger from "./Logger";
 */
 export default class ProfileUtils {
 
-	private static profileCache:ProfileData[] = null;
+	private static profileCache:ProfileData[]|null = null;
 	
 	constructor() {
 		this.initialize();
@@ -34,16 +34,16 @@ export default class ProfileUtils {
 				this.profileCache = JSON.parse(fs.readFileSync(Config.AVAILABLE_PROFILES_LIST, "utf8"));
 			}catch(error) {
 				Logger.error("Unable to parse JSON file: "+Config.AVAILABLE_PROFILES_LIST);
-				return null;
+				return [];
 			}
 		}
-		return this.profileCache;
+		return this.profileCache || [];
 	}
 
 	/**
 	 * Gets the public domain from a profile name
 	 */
-	public static getPublicDomainFromProfile(profile:string):string {
+	public static getPublicDomainFromProfile(profile:string):string|null {
 		let list = this.getProfileList();
 		//Search for matching profile
 		for (let i = 0; i < list.length; i++) {
@@ -58,7 +58,7 @@ export default class ProfileUtils {
 	/**
 	 * Gets a profile from an express request or a discord ID
 	 */
-	public static getProfile(req:Request, discordGuildID?:string):ProfileData {
+	public static getProfile(req:Request, discordGuildID?:string):ProfileData|null {
 		if(!Config.PROFILES_ENABLED) return null;
 		if(!this.profileCache) {
 			try {
@@ -71,8 +71,8 @@ export default class ProfileUtils {
 		//Check if domain matches a profile
 		if(req?.hostname) {
 			let host = req.hostname;
-			for (let i = 0; i < this.profileCache.length; i++) {
-				const p = this.profileCache[i];
+			for (let i = 0; i < this.profileCache!.length; i++) {
+				const p = this.profileCache![i];
 				if(p.domains.indexOf(host) > -1) {
 					return p;
 				}
@@ -88,8 +88,8 @@ export default class ProfileUtils {
 		if(req && !profileId) profileId = <string>req.body.profile;
 		
 		//Make sure the requested profile actually exists to avoid some sort of injection
-		for (let i = 0; i < this.profileCache.length; i++) {
-			const p = this.profileCache[i];
+		for (let i = 0; i < this.profileCache!.length; i++) {
+			const p = this.profileCache![i];
 			if(p.id===profileId) {
 				return p;
 			}

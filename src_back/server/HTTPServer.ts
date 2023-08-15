@@ -2,20 +2,18 @@ import * as historyApiFallback from 'connect-history-api-fallback';
 import { SHA256 } from "crypto-js";
 import * as express from "express";
 import { Express, NextFunction, Request, Response } from "express";
-import * as fs from "fs";
+import * as rateLimit from "express-rate-limit";
+import * as speedLimit from "express-slow-down";
 import * as http from "http";
 import APIController from '../controllers/APIController';
 import DiscordController from '../controllers/DiscordController';
+import EventSubController from '../controllers/EventSubController';
 import Config from '../utils/Config';
 import Logger, { LogStyle } from '../utils/Logger';
-import TwitchUtils from '../utils/TwitchUtils';
-import UserData from '../utils/UserData';
-import Utils from "../utils/Utils";
-import * as rateLimit from "express-rate-limit";
-import * as speedLimit from "express-slow-down";
-import EventSubController from '../controllers/EventSubController';
-import RaiderEvent from '../utils/RaiderEvent';
 import ProfileUtils from '../utils/ProfileUtils';
+import RaiderEvent from '../utils/RaiderEvent';
+import TwitchUtils from '../utils/TwitchUtils';
+import Utils from "../utils/Utils";
 
 export default class HTTPServer {
 
