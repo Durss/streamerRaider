@@ -4,7 +4,7 @@
 		<div class="holder" ref="holder">
 			<div class="head">
 				<span class="nickname">{{userName}}</span>
-				<Button :icon="require('@/assets/icons/cross_white.svg')" @click="close()" class="close"/>
+				<Button :icon="crossWhiteIcon" @click="close()" class="close"/>
 			</div>
 			<div class="content">
 				<div class="description">
@@ -15,10 +15,10 @@
 				<Button title="Mettre à jour" @click="submit()" :loading="saving" />
 				<Button class="apiBt"
 					:title="showAPI? '' : 'API'"
-					:icon="require('@/assets/icons/'+(showAPI? 'cross_white' : 'plug')+'.svg')"
+					:icon="apiBtIcon"
 					@click="showAPI = !showAPI"
 					highlight />
-				
+
 				<div class="apiInfo" v-if="showAPI">
 					<p>Vous pouvez récupérer la description d'un·e utilisateur·rice pour, par exemple, faire des shoutout personnalisés, via cette URL :</p>
 					<p class="url"><a :href="apiUrl" target="_blank">{{apiUrl}}</a></p>
@@ -29,70 +29,72 @@
 	</div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import Api from "@/utils/Api";
 import Config from "@/utils/Config";
 import IRCClient from "@/utils/IRCClient";
-import gsap from "gsap/all";
-import { Component, Vue } from "vue-property-decorator";
+import gsap from "gsap";
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { useMainStore } from "@/store";
 import Button from "./Button.vue";
+import crossWhiteIcon from "@/assets/icons/cross_white.svg";
+import plugIcon from "@/assets/icons/plug.svg";
 
-@Component({
-	components:{
-		Button,
-	}
-})
-export default class StreamerForm extends Vue {
+const emit = defineEmits<{ close: [] }>();
 
-	public showAPI:boolean = false;
-	public description:string = "";
-	public maxLengthDescription:number = 350;
-	public saving:boolean = false;
+const store = useMainStore();
 
-	private keyUpHandler:any;
+const showAPI = ref(false);
+const description = ref("");
+const maxLengthDescription = ref(350);
+const saving = ref(false);
+const dimmer = ref<HTMLElement>();
+const holder = ref<HTMLElement>();
 
-	public get userName():string{ return IRCClient.instance.authenticatedUserLogin; }
+let keyUpHandler:(e:KeyboardEvent)=>void;
 
-	public get apiUrl():string {
-		return Config.API_PATH_ABSOLUTE+"/description?login="+this.userName;
-	}
+const userName = computed(():string => IRCClient.instance.authenticatedUserLogin);
 
-	public mounted():void {
-		gsap.killTweensOf([this.$refs.holder, this.$refs.dimmer]);
-		gsap.set(this.$refs.holder, {marginTop:0, opacity:1});
-		gsap.to(this.$refs.dimmer, {duration:.25, opacity:1});
-		gsap.from(this.$refs.holder, {duration:.25, marginTop:100, opacity:0, ease:"back.out"});
+const apiUrl = computed(():string => {
+	return Config.API_PATH_ABSOLUTE+"/description?login="+userName.value;
+});
 
-		this.loadDescription();
+const apiBtIcon = computed(():string => showAPI.value ? crossWhiteIcon : plugIcon);
 
-		this.keyUpHandler = (e:KeyboardEvent) => { if(e.key == "Escape") this.close(); }
+onMounted(() => {
+	gsap.killTweensOf([holder.value, dimmer.value]);
+	gsap.set(holder.value, {marginTop:0, opacity:1});
+	gsap.to(dimmer.value, {duration:.25, opacity:1});
+	gsap.from(holder.value, {duration:.25, marginTop:100, opacity:0, ease:"back.out"});
 
-		document.addEventListener("keyup", this.keyUpHandler);
-	}
+	loadDescription();
 
-	public beforeDestroy():void {
-		document.removeEventListener("keyup", this.keyUpHandler);
-	}
+	keyUpHandler = (e:KeyboardEvent) => { if(e.key == "Escape") close(); }
 
-	private async loadDescription():Promise<void> {
-		this.description = await Api.get("description", {login:IRCClient.instance.authenticatedUserLogin});
-	}
+	document.addEventListener("keyup", keyUpHandler);
+});
 
-	public async submit():Promise<void> {
-		this.saving = true;
-		let res = await Api.post("description", {description:this.description, access_token:this.$store.state.OAuthToken});
-		this.saving = false;
-		this.close();
-	}
+onBeforeUnmount(() => {
+	document.removeEventListener("keyup", keyUpHandler);
+});
 
-	public close():void {
-		gsap.killTweensOf([this.$refs.holder, this.$refs.dimmer]);
-		gsap.to(this.$refs.dimmer, {duration:.25, opacity:0, ease:"sine.in"});
-		gsap.to(this.$refs.holder, {duration:.25, marginTop:100, opacity:0, ease:"back.out", onComplete:()=> {
-			this.$emit("close")
-		}});
-	}
+async function loadDescription():Promise<void> {
+	description.value = await Api.get("description", {login:IRCClient.instance.authenticatedUserLogin});
+}
 
+async function submit():Promise<void> {
+	saving.value = true;
+	await Api.post("description", {description:description.value, access_token:store.OAuthToken});
+	saving.value = false;
+	close();
+}
+
+function close():void {
+	gsap.killTweensOf([holder.value, dimmer.value]);
+	gsap.to(dimmer.value, {duration:.25, opacity:0, ease:"sine.in"});
+	gsap.to(holder.value, {duration:.25, marginTop:100, opacity:0, ease:"back.out", onComplete:()=> {
+		emit("close")
+	}});
 }
 </script>
 
@@ -173,7 +175,7 @@ export default class StreamerForm extends Vue {
 				min-width: 40px;//Fix weird bug that makes the BT's icon 0x0px if it has no label on first display
 				border-top-left-radius: 15px;
 				font-size: 14px;
-				/deep/ .icon {
+				:deep(.icon) {
 					max-height: 15px;
 				}
 			}

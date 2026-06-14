@@ -72,12 +72,15 @@ export default class HTTPServer {
 				if(profile) {
 					//If a profile is found, that's because domain origin is valid, allow the request
 					res.header('Access-Control-Allow-Origin', "*");
+				}else{
+					res.sendStatus(401)
+					return
 				}
 			}else{
 				res.header("Access-Control-Allow-Origin", "*");
 			}
 			if (req.method == 'OPTIONS') {
-				res.status(200).end();
+				res.sendStatus(200)
 				return;
 			}
 			

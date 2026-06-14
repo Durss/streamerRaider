@@ -1,7 +1,6 @@
 
 <template>
 	<div id="app" class="app">
-		<vue-headful :title="pageTitle" v-if="pageTitle" />
 		<router-view class="view" />
 		<Footer class="footer" v-if="!lightMode" />
 		<ProfileSwitcher :lightMode="lightMode" />
@@ -12,8 +11,10 @@
 	</div>
 </template>
 
-<script lang="ts">
-import { Component, Vue, Watch } from "vue-property-decorator";
+<script setup lang="ts">
+import { computed, onMounted, ref, watch, watchEffect } from "vue";
+import { useRoute } from "vue-router";
+import { useMainStore } from "./store";
 import Footer from "./components/Footer.vue";
 import MainLoader from "./components/MainLoader.vue";
 import Tooltip from "./components/Tooltip.vue";
@@ -23,48 +24,36 @@ import Alert from "./views/AlertView.vue";
 import Confirm from "./views/Confirm.vue";
 import ProfileSwitcher, { ProfileData } from "./views/ProfileSwitcher.vue";
 
-@Component({
-	components:{
-		Alert,
-		Footer,
-		Tooltip,
-		Confirm,
-		MainLoader,
-		ProfileSwitcher,
+const store = useMainStore();
+const route = useRoute();
+
+const pageTitle = ref<string>(null);
+
+const storeInitComplete = computed(():boolean => store.initComplete);
+
+const lightMode = computed(():boolean => Utils.getRouteMetaValue(route, "lightMode") === true);
+
+//Replaces the former vue-headful component: keep the document title in sync.
+watchEffect(() => {
+	if(pageTitle.value) document.title = pageTitle.value;
+});
+
+onMounted(() => {
+	if(store.profile) {
+		onReady();
 	}
-})
-export default class App extends Vue {
+});
 
-	public pageTitle:string = null;
+watch(() => store.initComplete, () => onReady(), { immediate: true });
 
-	public get storeInitComplete():boolean {
-		return this.$store.state.initComplete;
+function onReady():void {
+	let p = <ProfileData>store.profile;
+	if(!p) {
+		pageTitle.value = Config.DEFAULT_PAGE_TITLE;
+	}else{
+		let title = p.title? p.title : Config.DEFAULT_PAGE_TITLE;
+		pageTitle.value = title;
 	}
-
-	public get lightMode():boolean {
-		return Utils.getRouteMetaValue(this.$route, "lightMode") === true;
-	}
-
-	public async mounted():Promise<void> {
-		if(this.$store.state.profile) {
-			this.onReady();
-		}
-	}
-
-	public beforeDestroy():void {
-	}
-
-	@Watch("$store.state.initComplete", { immediate: true, deep: true })
-	public onReady():void {
-		let p = <ProfileData>this.$store.state.profile;
-		if(!p) {
-			this.pageTitle = Config.DEFAULT_PAGE_TITLE;
-		}else{
-			let title = p.title? p.title : Config.DEFAULT_PAGE_TITLE;
-			this.pageTitle = title;
-		}
-	}
-
 }
 </script>
 

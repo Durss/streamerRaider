@@ -1,4 +1,4 @@
-import store from '@/store';
+import { useMainStore } from '@/store';
 import Config from '@/utils/Config';
 
 export default class Api {
@@ -86,7 +86,7 @@ export default class Api {
 		}else if(result.status == 429) {
 			let json = await result.json()
 			let duration = Math.ceil(json.retryAfter/1000);
-			store.dispatch("alert", "Too many requests, try again in "+duration+" seconds");
+			useMainStore().openAlert("Too many requests, try again in "+duration+" seconds");
 			throw({success:false, error_code:"unknown", message:"Too many requests, try again in "+duration+" seconds"});
 		}else{
 			let err:ApiError;

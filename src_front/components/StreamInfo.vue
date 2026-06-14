@@ -3,9 +3,9 @@
 		<!-- HEADER -->
 		<div class="userName head">
 			<img v-if="userInfos" :src="userPicture" alt="avatar" class="avatar">
-			
+
 			<a class="name" :href="'https://twitch.tv/'+userName" target="_blank">{{userName}}</a>
-			
+
 			<div v-if="lightMode" class="viewersCount small">
 				<span>{{streamInfos.viewer_count}}</span>
 				<img class="icon" src="@/assets/icons/eye.svg" alt="">
@@ -13,12 +13,12 @@
 
 			<Button class="link"
 				v-if="streamInfos && !lightMode"
-				:icon="require('@/assets/icons/open.svg')"
+				:icon="openIcon"
 				type="link"
 				target="_blank"
 				:to="'https://twitch.tv/'+userName" />
 		</div>
-		
+
 		<!-- CONTENT -->
 		<div class="detailsHolder content" v-if="streamInfos">
 			<div class="row">
@@ -27,7 +27,7 @@
 					<div class="category" v-if="streamInfos.game_name && !lightMode">{{streamInfos.game_name}}</div>
 					<div class="duration">{{streamDuration}}</div>
 				</div>
-				
+
 				<div class="preview" @mouseenter="hoverItem()" v-if="!lightMode">
 					<div class="streamImage" v-if="!showLive"><img :src="previewUrl"></div>
 					<iframe
@@ -43,7 +43,7 @@
 			</div>
 
 			<div class="description" v-if="!lightMode && userInfos.rawData.description && !showLive">{{userInfos.rawData.description}}</div>
-		
+
 			<!-- RAID BUTTON -->
 			<Button v-if="streamInfos && !isSelf"
 				:title="'Raid '"
@@ -52,118 +52,106 @@
 				:disabled="!canRaid"
 				:data-tooltip="connected? null : 'Connecte toi en haut de page pour lancer un raid en un clic chez '+userName" />
 		</div>
-		
+
 		<div class="newUser" v-if="isNewUser">NEW</div>
 	</div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import Config from "@/utils/Config";
 import IRCClient from "@/utils/IRCClient";
-import { TwitchTypes } from "@/utils/TwitchUtils";
+import type { TwitchTypes } from "@/utils/TwitchUtils";
 import Utils from "@/utils/Utils";
-import { Component, Prop, Vue } from "vue-property-decorator";
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { useMainStore } from "@/store";
 import Button from "./Button.vue";
+import openIcon from "@/assets/icons/open.svg";
 
-@Component({
-	components:{
-		Button,
-	}
-})
-export default class StreamInfo extends Vue {
+const props = withDefaults(defineProps<{
+	userName:string;
+	small?:boolean;
+	userInfos:TwitchTypes.UserInfo;
+	lightMode?:boolean;
+}>(), {
+	small: false,
+});
 
-	@Prop()
-	public userName:string;
+const store = useMainStore();
 
-	@Prop({default:false})
-	public small!:boolean;
+const showLive = ref(false);
+const increment = ref(0);
+const pictureRefreshInc = ref(0);
 
-	@Prop()
-	public userInfos:TwitchTypes.UserInfo;
+let refreshThumbInterval:number;
+let incrementInterval:number;
 
-	@Prop()
-	public lightMode:boolean;
-	
-	public showLive:boolean = false;
+const connected = computed(():boolean => !!store.OAuthToken);
 
-	private increment:number = 0;
-	private refreshThumbInterval:number;
-	private incrementInterval:number;
-	private pictureRefreshInc:number = 0;
+const streamInfos = computed(():TwitchTypes.StreamInfo => props.userInfos.streamInfos);
 
-	public get connected():boolean { return this.$store.state.OAuthToken; }
+const isNewUser = computed(():boolean => Date.now() - props.userInfos?.rawData.created_at < Config.NEW_USER_DURATION);
 
-	public get streamInfos():TwitchTypes.StreamInfo { return this.userInfos.streamInfos; }
-	
-	public get isNewUser():boolean { return Date.now() - this.userInfos?.rawData.created_at < Config.NEW_USER_DURATION; }
+const twitchParent = computed(():string => document.location.hostname);
 
-	public get twitchParent():string {
-		return document.location.hostname;
-	}
+const isSelf = computed(():boolean => {
+	return props.userInfos.login.toLowerCase() == store.userLogin.toLowerCase();
+});
 
-	public get isSelf():boolean {
-		return this.userInfos.login.toLowerCase() == this.$store.state.userLogin.toLowerCase();
-	}
+const userPicture = computed(():string => {
+	return props.userInfos.profile_image_url.replace("300x300", "70x70");
+});
 
-	public get userPicture():string {
-		return this.userInfos.profile_image_url.replace("300x300", "70x70");
-	}
+const classes = computed(():string[] => {
+	let res = ["streaminfo"];
+	if(showLive.value) res.push("expand");
+	if(props.small !== false) res.push("small");
+	if(props.lightMode !== false) res.push("light");
+	if(isNewUser.value !== false) res.push("isNew");
+	return res;
+});
 
-	public get classes():string[] {
-		let res = ["streaminfo"];
-		if(this.showLive) res.push("expand");
-		if(this.small !== false) res.push("small");
-		if(this.lightMode !== false) res.push("light");
-		if(this.isNewUser !== false) res.push("isNew");
-		return res;
-	}
+const canRaid = computed(():boolean => !!store.OAuthToken);
 
-	public get canRaid():boolean {
-		return this.$store.state.OAuthToken;
-	}
+const streamDuration = computed(():string => {
+	let ellapsed = Date.now() - new Date(props.userInfos.streamInfos.started_at).getTime() + increment.value;
+	return Utils.formatDuration(ellapsed)
+});
 
-	public get streamDuration():string {
-		let ellapsed = Date.now() - new Date(this.userInfos.streamInfos.started_at).getTime() + this.increment;
-		return Utils.formatDuration(ellapsed)
-	}
+const previewUrl = computed(():string => {
+	return props.userInfos.streamInfos.thumbnail_url.replace(/\{width\}/gi, "340").replace(/\{height\}/gi, "190")+"?ck="+pictureRefreshInc.value;
+});
 
-	public get previewUrl():string {
-		return this.userInfos.streamInfos.thumbnail_url.replace(/\{width\}/gi, "340").replace(/\{height\}/gi, "190")+"?ck="+this.pictureRefreshInc;
-	}
+onMounted(() => {
+	//Allows to increment stream durations every seconds without using requestAnimationFrame
+	incrementInterval = setInterval(()=> {
+		increment.value ++;
+	},1000);
 
-	public async mounted():Promise<void> {
-		//Allows to increment stream durations every seconds without using requestAnimationFrame
-		this.incrementInterval = setInterval(_=> {
-			this.increment ++;
-		},1000);
+	//Refresh stream pictures every 5min + random duration to
+	//avoid having all pictures refreshing at once
+	refreshThumbInterval = setInterval(()=> {
+		pictureRefreshInc.value ++;
+	}, 5 * 60 * 1000 + Math.random()*30000);
+});
 
-		//Refresh stream pictures every 5min + random duration to
-		//avoid having all pictures refreshing at once
-		this.refreshThumbInterval = setInterval(_=> {
-			this.pictureRefreshInc ++;
-		}, 5 * 60 * 1000 + Math.random()*30000);
-	}
+onBeforeUnmount(() => {
+	clearInterval(incrementInterval);
+	clearInterval(refreshThumbInterval);
+});
 
-	public beforeDestroy():void {
-		clearInterval(this.incrementInterval);
-		clearInterval(this.refreshThumbInterval);
-	}
+function hoverItem():void {
+	showLive.value = true;
+}
 
-	public hoverItem():void {
-		this.showLive = true;
-	}
+function outItem():void {
+	showLive.value = false;
+}
 
-	public outItem():void {
-		this.showLive = false;
-	}
-
-	public startRaid():void {
-		Utils.confirm("Lancer un raid", "Veux-tu vraiment lancer un raid vers la chaîne de "+this.userName+" ?")
-		.then(_=> {
-			IRCClient.instance.sendMessage("/raid "+this.userName);
-		}).catch(error=>{});
-	}
-
+function startRaid():void {
+	Utils.confirm("Lancer un raid", "Veux-tu vraiment lancer un raid vers la chaîne de "+props.userName+" ?")
+	.then(()=> {
+		IRCClient.instance.sendMessage("/raid "+props.userName);
+	}).catch(error=>{});
 }
 </script>
 
@@ -171,7 +159,7 @@ export default class StreamInfo extends Vue {
 .streaminfo{
 	.block();
 	position: relative;
-	
+
 	&.expand {
 		.detailsHolder {
 			.row {
@@ -303,7 +291,7 @@ export default class StreamInfo extends Vue {
 			border-radius: 10px;
 		}
 	}
-		
+
 	.viewersCount {
 		font-style: italic;
 		font-size: 12px;
@@ -475,7 +463,7 @@ export default class StreamInfo extends Vue {
 				}
 			}
 		}
-	
+
 		&.expand {
 			.detailsHolder {
 				.row {

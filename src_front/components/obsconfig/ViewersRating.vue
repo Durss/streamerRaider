@@ -10,42 +10,29 @@
 	</div>
 </template>
 
-<script lang="ts">
-import { Component, Inject, Model, Prop, Vue, Watch, Provide } from "vue-property-decorator";
+<script setup lang="ts">
+import { computed, onMounted, ref, watch } from "vue";
+import { useMainStore } from "@/store";
 import Button from "../Button.vue";
 
-@Component({
-	components:{
-		Button,
+const store = useMainStore();
+const enabled = ref(false);
+
+const formClasses = computed(() => {
+	let res = ["form"];
+	if(!enabled.value) res.push("disabled");
+	return res;
+});
+
+onMounted(() => {
+	if(store.botToxicEnabled) {
+		enabled.value = true;
 	}
-})
-export default class ViewersRating extends Vue {
+});
 
-	public enabled:boolean = false;
-
-	public get formClasses():string[] {
-		let res = ["form"]
-		if(!this.enabled) res.push("disabled");
-		return res;
-	}
-
-	public mounted():void {
-		if(this.$store.state.botToxicEnabled) {
-			this.enabled = true;
-		}
-		
-	}
-
-	public beforeDestroy():void {
-		
-	}
-
-	@Watch("enabled")
-	public onToggle():void {
-		this.$store.dispatch("setBotToxicEnabled", this.enabled);
-	}
-
-}
+watch(enabled, () => {
+	store.setBotToxicEnabled(enabled.value);
+});
 </script>
 
 <style scoped lang="less">

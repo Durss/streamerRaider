@@ -1,7 +1,7 @@
 import { EventDispatcher } from "@/utils/EventDispatcher";
 import * as tmi from "tmi.js";
 import IRCEvent from "./IRCEvent";
-import Vue from 'vue';
+import { reactive } from 'vue';
 
 /**
 * Created : 19/01/2021 
@@ -25,8 +25,7 @@ export default class IRCClient extends EventDispatcher {
 	********************/
 	static get instance():IRCClient {
 		if(!IRCClient._instance) {
-			IRCClient._instance = new IRCClient();
-			Vue.observable(IRCClient.instance);
+			IRCClient._instance = reactive(new IRCClient()) as IRCClient;
 		}
 		return IRCClient._instance;
 	}

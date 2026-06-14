@@ -1,5 +1,5 @@
 import { Event } from '@/utils/EventDispatcher';
-import {IRCTypes} from './IRCClient';
+import type { IRCTypes } from './IRCClient';
 
 /**
 * Created : 07/12/2020 
