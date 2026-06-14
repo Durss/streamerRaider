@@ -1,44 +1,42 @@
 <template>
-	<div class="alert" v-if="message && message.length > 0" @click="close()">
+	<div class="alert" v-if="message && message.length > 0" @click="close()" ref="rootEl">
 		<p v-html="message" class="label"></p>
 	</div>
 </template>
 
-<script lang="ts">
-import { Component, Inject, Model, Prop, Vue, Watch, Provide } from 'vue-property-decorator'
+<script setup lang="ts">
 import gsap from 'gsap';
+import { nextTick, onMounted, ref, watch } from 'vue';
+import { useMainStore } from '@/store';
 
-@Component
-export default class AlertView extends Vue {
+const store = useMainStore();
+const message = ref<string>("");
+const rootEl = ref<HTMLElement>();
+let timeout:number;
 
-	public message:string = "";
-	public timeout:number;
-
-	public mounted():void {
-		this.onWatchAlert();
+async function onWatchAlert():Promise<void> {
+	let mess = store.alert;
+	if(mess && mess.length > 0) {
+		message.value = mess;
+		await nextTick();
+		rootEl.value.removeAttribute("style");
+		gsap.killTweensOf(rootEl.value);
+		gsap.from(rootEl.value, {duration:.3, height:0, paddingTop:0, paddingBottom:0, ease:"back.out"});
+		timeout = setTimeout(()=> close(), message.value.length*80 +2000);
+	}else if(message.value) {
+		gsap.to(rootEl.value, {duration:.3, height:0, paddingTop:0, paddingBottom:0, ease:"back.in", onComplete:()=> {
+			message.value = null;
+		}});
 	}
+}
 
-	@Watch("$store.state.alert")
-	public async onWatchAlert():Promise<void> {
-		let mess = this.$store.state.alert;
-		if(mess && mess.length > 0) {
-			this.message = mess;
-			await this.$nextTick();
-			this.$el.removeAttribute("style");
-			gsap.killTweensOf(this.$el);
-			gsap.from(this.$el, {duration:.3, height:0, paddingTop:0, paddingBottom:0, ease:"back.out"});
-			this.timeout = setTimeout(_=> this.close(), this.message.length*80 +2000);
-		}else if(this.message) {
-			gsap.to(this.$el, {duration:.3, height:0, paddingTop:0, paddingBottom:0, ease:"back.in", onComplete:()=> {
-				this.message = null;
-			}});
-		}
-	}
+watch(() => store.alert, () => onWatchAlert());
 
-	public close():void {
-		clearTimeout(this.timeout);
-		this.$store.state.alert = null;
-	}
+onMounted(() => onWatchAlert());
+
+function close():void {
+	clearTimeout(timeout);
+	store.alert = null;
 }
 </script>
 

@@ -7,68 +7,53 @@
 	</div>
 </template>
 
-<script lang="ts">
-import { ProfileData } from "@/views/ProfileSwitcher.vue";
-import { Component, Prop, Vue } from "vue-property-decorator";
+<script setup lang="ts">
+import type { ProfileData } from "@/views/ProfileSwitcher.vue";
+import { computed, ref } from "vue";
+import { useRoute } from "vue-router";
 
-@Component({
-	components:{}
-})
-export default class ProfileNavButton extends Vue {
+const props = defineProps<{
+	data:ProfileData;
+	position?:"left"|"right";
+	lightMode?:boolean;
+}>();
 
-	@Prop()
-	public data:ProfileData;
+const route = useRoute();
 
-	@Prop()
-	public position:"left"|"right";
+const over = ref(false);
+const forceDefaultLogo = ref(false);
 
-	@Prop()
-	public lightMode:boolean;
-
-	public over:boolean = false;
-	public forceDefaultLogo:boolean = false;
-	public get logo():string {
-		if(this.forceDefaultLogo) {
-			return "/logos/default.png";
-		}else{
-			return "/logos/"+this.data.id+".png";
-		}
+const logo = computed(():string => {
+	if(forceDefaultLogo.value) {
+		return "/logos/default.png";
+	}else{
+		return "/logos/"+props.data.id+".png";
 	}
+});
 
-	public get classes():string[] {
-		let res = ["profilenavbutton"];
-		res.push(this.position);
-		if(this.over) res.push("open");
-		if(this.lightMode) res.push("lightMode");
-		return res;
-	}
+const classes = computed(():string[] => {
+	let res = ["profilenavbutton"];
+	res.push(props.position);
+	if(over.value) res.push("open");
+	if(props.lightMode) res.push("lightMode");
+	return res;
+});
 
-	public get title():string {
-		if(this.data?.title) return this.data?.title;
-		return "";
-	}
+const title = computed(():string => {
+	if(props.data?.title) return props.data?.title;
+	return "";
+});
 
-	public get url():string {
-		let route = this.$route.path;
-		return "https://"+this.data.domains[0] + route;
-	}
+const url = computed(():string => {
+	return "https://"+props.data.domains[0] + route.path;
+});
 
-	public mounted():void {
-		
-	}
-
-	public beforeDestroy():void {
-		
-	}
-
-	/**
-	 * Called if logo loading failed
-	 */
-	public onLogoError():void {
-		console.warn("No logo specified for profile \""+this.data.id+"\" on folder \"public/logos\". Fallback to default logo. Add a \""+this.data.id+".png\" on \"public/logos\" folder to change it !");
-		this.forceDefaultLogo = true;
-	}
-
+/**
+ * Called if logo loading failed
+ */
+function onLogoError():void {
+	console.warn("No logo specified for profile \""+props.data.id+"\" on folder \"public/logos\". Fallback to default logo. Add a \""+props.data.id+".png\" on \"public/logos\" folder to change it !");
+	forceDefaultLogo.value = true;
 }
 </script>
 

@@ -7,8 +7,7 @@
 	:to="to"
 	:href="type=='link'? to : null"
 	@click="onClick($event)"
-	:style="progressStyle"
-	v-model="value">
+	:style="progressStyle">
 		<img :src="parsedIcon" v-if="parsedIcon && !isIconSVG" alt="icon" class="icon" :class="loading? 'hide' : 'show'">
 		<div v-html="parsedIcon" v-if="parsedIcon && isIconSVG" alt="icon" class="icon" :class="loading? 'hide' : 'show'"></div>
 
@@ -22,146 +21,147 @@
 
 		<img src="@/assets/loader/loader.svg" alt="loader" class="spinner" v-if="loading">
 		<span class="label" :class="loading? 'hide' : 'show'" v-if="title && type!='checkbox'" v-html="title"></span>
-		<input type="file" v-if="type=='file'" class="browse" :accept="accept" ref="browse" @change="$emit('change', $event)" />
+		<input type="file" v-if="type=='file'" class="browse" :accept="accept" ref="browse" @change="onFileChange" />
 	</component>
 </template>
 
-<script lang="ts">
-import { Component, Inject, Model, Prop, Vue, Watch, Provide } from "vue-property-decorator";
+<script setup lang="ts">
 import gsap from 'gsap';
+import { computed, onMounted, ref, watch } from "vue";
+import checkmarkWhiteIcon from '@/assets/icons/checkmark_white.svg';
+import checkmarkIcon from '@/assets/icons/checkmark.svg';
 
-@Component({
-	components:{
+const props = withDefaults(defineProps<{
+	icon?:string;
+	iconSelected?:string;
+	title?:string;
+	name?:string;
+	loading?:boolean;
+	type?:string;
+	target?:string;
+	to?:any;
+	percent?:number;
+	white?:boolean;
+	big?:boolean;
+	highlight?:boolean;
+	selected?:boolean;
+	disabled?:boolean;
+	modelValue?:boolean;
+	accept?:string;
+}>(), {
+	icon: null,
+	iconSelected: null,
+	title: null,
+	name: null,
+	loading: false,
+	type: "button",
+	target: null,
+	to: null,
+	percent: -1,
+	white: false,
+	big: false,
+	highlight: false,
+	selected: false,
+	disabled: false,
+	modelValue: false,
+	accept: "image/*",
+});
+
+const emit = defineEmits<{
+	click: [event:MouseEvent];
+	change: [event:Event];
+	"update:modelValue": [value:boolean];
+}>();
+
+const pInterpolated = ref(-1);
+const checked = ref(false);
+const browse = ref<HTMLInputElement>();
+
+const isIconSVG = computed(():boolean => parsedIcon.value.indexOf("<") != -1);
+
+const checkMarkIcon = computed(():string => {
+	if(props.white !== false) {
+		return checkmarkWhiteIcon;
+	}else{
+		return checkmarkIcon;
 	}
-})
-export default class Button extends Vue {
+});
 
-	@Prop({default: null})
-	public icon!:string;
-	@Prop({default: null})
-	public iconSelected!:string;
-	@Prop({default: null})
-	public title!:string;
-	@Prop({default: null})
-	public name!:string;
-	@Prop({default: false})
-	public loading!:boolean;
-	@Prop({default: "button"})
-	public type!:string;
-	@Prop({default: null})
-	public target!:string;
-	@Prop({default: null})
-	public to!:any;
-	@Prop({default: -1})
-	public percent!:number;
-	@Prop({default:false})
-	public white!:boolean;
-	@Prop({default:false})
-	public big!:boolean;
-	@Prop({default:false})
-	public highlight!:boolean;
-	@Prop({default:false})
-	public selected!:boolean;
-	@Prop({default:false})
-	public disabled!:boolean;
-	@Prop({default:false})
-	public value!:boolean;
-	@Prop({default:"image/*"})
-	public accept!:string;
+const nodeType = computed(():string => {
+	if(props.to) return "router-link";
+	if(props.type == "checkbox") return "div";
+	if(props.type == "link") return "a";
+	return "button";
+});
 
-	public pInterpolated:number = -1;
-	public checked:boolean = false;
-
-	public get isIconSVG():boolean {
-		return this.parsedIcon.indexOf("<") != -1;
+const parsedIcon = computed(():string => {
+	if(props.selected !== false && props.iconSelected) {
+		return props.iconSelected;
+	}else{
+		return props.icon;
 	}
+});
 
-	public get checkMarkIcon():string {
-		if(this.white !== false) {
-			return require('@/assets/icons/checkmark_white.svg');
-		}else{
-			return require('@/assets/icons/checkmark.svg');
+const progressStyle = computed(():any => {
+	if(pInterpolated.value> -1 && pInterpolated.value<100) {
+		let p:number = Math.round(pInterpolated.value);
+		let color = "255, 255, 255";
+		let alpha = .5;
+		if(props.white !== false) {
+			color = "75, 201, 194"
+			alpha = .3;
 		}
+		return {backgroundImage: "linear-gradient(to right, rgba("+color+",0) "+p+"%,rgba("+color+",0) "+p+"%,rgba("+color+","+alpha+") "+p+"%,rgba("+color+","+alpha+") 100%)"};
+	}else{
+		return {};
 	}
+});
 
-	public get nodeType():string {
-		if(this.to) return "router-link";
-		if(this.type == "checkbox") return "div";
-		if(this.type == "link") return "a";
-		return "button";
-	}
+const classes = computed(():any => {
+	let list =  ["button"]
+	if(!props.title) list.push("noTitle");
+	if(props.white !== false) list.push("white");
+	if(props.big !== false) list.push("big");
+	if(props.highlight !== false) list.push("highlight");
+	if(props.selected !== false) list.push("selected");
+	if(props.loading !== false) list.push("disabled");
+	if(props.disabled !== false) list.push("disabled");
+	if(props.type == "checkbox") list.push("checkbox");
+	return list;
+});
 
-	public get parsedIcon():string {
-		if(this.selected !== false && this.iconSelected) {
-			return this.iconSelected;
-		}else{
-			return this.icon;
-		}
-	}
+onMounted(() => {
+	checked.value = props.modelValue;
+});
 
-	public get progressStyle():any {
-		if(this.pInterpolated> -1 && this.pInterpolated<100) {
-			let p:number = Math.round(this.pInterpolated);
-			let color = "255, 255, 255";
-			let alpha = .5;
-			if(this.white !== false) {
-				color = "75, 201, 194"
-				alpha = .3;
-			}
-			return {backgroundImage: "linear-gradient(to right, rgba("+color+",0) "+p+"%,rgba("+color+",0) "+p+"%,rgba("+color+","+alpha+") "+p+"%,rgba("+color+","+alpha+") 100%)"};
-		}else{
-			return {};
-		}
-	}
-
-	public get classes():any {
-		let list =  ["button"]
-		if(!this.title) list.push("noTitle");
-		if(this.white !== false) list.push("white");
-		if(this.big !== false) list.push("big");
-		if(this.highlight !== false) list.push("highlight");
-		if(this.selected !== false) list.push("selected");
-		if(this.loading !== false) list.push("disabled");
-		if(this.disabled !== false) list.push("disabled");
-		if(this.type == "checkbox") list.push("checkbox");
-		return list;
-	}
-
-	public mounted():void {
-		this.checked = this.value;
-	}
-	
-	public beforeDestroy():void {
-		
-	}
-
-	public resetBrowse():void {
-		(<HTMLFormElement>this.$refs.browse).value = null;
-	}
-
-	public onClick(event):void {
-		if(this.disabled !== false || this.loading) return;
-		this.$emit('click', event);//bubble up event to avoid having to listen for @click.native everytime
-	}
-
-	@Watch("checked")
-	public onSelectStateChange():void {
-		this.$emit('input', this.checked);
-	}
-
-	@Watch("value")
-	public onValueChange():void {
-		this.checked = this.value;
-	}
-
-	@Watch("percent")
-	private onPercentChange():void {
-		let duration = this.percent < this.pInterpolated? 0 : .35;
-		gsap.killTweensOf(this);
-		gsap.to(this, {duration, pInterpolated:this.percent, ease:"sine.inout"});
-	}
-
+function resetBrowse():void {
+	browse.value.value = null;
 }
+
+function onClick(event:MouseEvent):void {
+	if(props.disabled !== false || props.loading) return;
+	emit('click', event);//bubble up event to avoid having to listen for @click.native everytime
+}
+
+function onFileChange(event:Event):void {
+	emit('change', event);
+}
+
+watch(checked, () => {
+	emit('update:modelValue', checked.value);
+});
+
+watch(() => props.modelValue, () => {
+	checked.value = props.modelValue;
+});
+
+watch(() => props.percent, () => {
+	let duration = props.percent < pInterpolated.value? 0 : .35;
+	gsap.killTweensOf(pInterpolated);
+	gsap.to(pInterpolated, {duration, value:props.percent, ease:"sine.inout"});
+});
+
+defineExpose({ resetBrowse });
 </script>
 
 <style lang="less" scoped>
@@ -258,7 +258,7 @@ export default class Button extends Vue {
 			color: @mainColor_light;
 			// overflow: visible;
 		}
-		
+
 		&:hover {
 			background: none;
 			.checkmark {
@@ -384,7 +384,7 @@ export default class Button extends Vue {
 			background-color: @mainColor_warn_light;
 		}
 	}
-	
+
 	&.disabled {
 		color: fade(@mainColor_light, 30%);
 		background-color: fade(@mainColor_normal, 30%);

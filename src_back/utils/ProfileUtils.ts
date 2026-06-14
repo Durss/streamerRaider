@@ -83,9 +83,9 @@ export default class ProfileUtils {
 		//Get if discord ID matches a profile
 		if(discordGuildID) profileId = Config.DISCORD_GUILD_ID_TO_PROFILE(discordGuildID);
 		//Allow GET override with "profile" var
-		if(req && !profileId) profileId = <string>req.query.profile;
+		if(req && !profileId) profileId = <string>req.query?.profile;
 		//Allow POST override with "profile" var
-		if(req && !profileId) profileId = <string>req.body.profile;
+		if(req && !profileId) profileId = <string>req.body?.profile;
 		
 		//Make sure the requested profile actually exists to avoid some sort of injection
 		for (let i = 0; i < this.profileCache!.length; i++) {

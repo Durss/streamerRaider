@@ -3,13 +3,13 @@
 		<div class="holder">
 			<div class="head">
 				<span class="title"><img src="@/assets/icons/params.svg" alt="params"> Outils</span>
-				<Button :icon="require('@/assets/icons/cross_white.svg')" @click="close()" class="close"/>
+				<Button :icon="crossWhiteIcon" @click="close()" class="close"/>
 			</div>
 			<div class="content">
 				<div class="tabs">
-					<Button :selected="content=='shoutout'" @click="content='shoutout'" title="Shoutout" :icon="require('@/assets/icons/shoutout.svg')" />
-					<Button disabled data-tooltip="Coming soon?" :selected="content=='viewers-rating'" @click="content='viewers-rating'" title="Viewers" :icon="require('@/assets/icons/user_rate.svg')" />
-					<Button disabled data-tooltip="Coming soon?" :selected="content=='autoban'" @click="content='autoban'" title="Auto ban" :icon="require('@/assets/icons/ban.svg')" />
+					<Button :selected="content=='shoutout'" @click="content='shoutout'" title="Shoutout" :icon="shoutoutIcon" />
+					<Button disabled data-tooltip="Coming soon?" :selected="content=='viewers-rating'" @click="content='viewers-rating'" title="Viewers" :icon="userRateIcon" />
+					<Button disabled data-tooltip="Coming soon?" :selected="content=='autoban'" @click="content='autoban'" title="Auto ban" :icon="banIcon" />
 				</div>
 				<div>
 					<ViewersRating v-if="content=='viewers-rating'" />
@@ -20,35 +20,22 @@
 	</div>
 </template>
 
-<script lang="ts">
-import { Component, Inject, Model, Prop, Vue, Watch, Provide } from "vue-property-decorator";
+<script setup lang="ts">
+import { ref } from "vue";
 import Button from "./Button.vue";
 import ShoutoutBot from "./obsconfig/ShoutoutBot.vue";
 import ViewersRating from "./obsconfig/ViewersRating.vue";
+import crossWhiteIcon from "@/assets/icons/cross_white.svg";
+import shoutoutIcon from "@/assets/icons/shoutout.svg";
+import userRateIcon from "@/assets/icons/user_rate.svg";
+import banIcon from "@/assets/icons/ban.svg";
 
-@Component({
-	components:{
-		Button,
-		ViewersRating,
-		ShoutoutBot,
-	}
-})
-export default class ObsConfigPanel extends Vue {
+const emit = defineEmits<{ close: [] }>();
 
-	public content:string = "shoutout";
+const content = ref("shoutout");
 
-	public mounted():void {
-		
-	}
-
-	public beforeDestroy():void {
-		
-	}
-
-	public close():void {
-		this.$emit("close");
-	}
-
+function close():void {
+	emit("close");
 }
 </script>
 
@@ -106,7 +93,7 @@ export default class ObsConfigPanel extends Vue {
 					}
 					&:not(.selected) {
 						background-color: lighten(@mainColor_dark_light, 20%);
-						&:hover {	
+						&:hover {
 							background-color: lighten(@mainColor_dark_light, 40%);
 						}
 					}
@@ -116,7 +103,7 @@ export default class ObsConfigPanel extends Vue {
 
 	}
 }
-	
+
 @media only screen and (max-width: 500px) {
 	.obsconfigpanel{
 		.holder {

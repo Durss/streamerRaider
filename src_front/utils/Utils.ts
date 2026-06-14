@@ -1,6 +1,5 @@
-import VueI18n from 'vue-i18n';
-import { Route } from 'vue-router';
-import store from '../store';
+import { RouteLocationNormalized } from 'vue-router';
+import { useMainStore } from '../store';
 
 /**
  * Created by Durss
@@ -80,11 +79,11 @@ export default class Utils {
 	/**
 	 * Opens up a confirm window so the user can confirm or cancel an action.
 	 */
-	public static confirm<T>(title: string|VueI18n.TranslateResult,
-		description?: string|VueI18n.TranslateResult,
+	public static confirm<T>(title: string,
+		description?: string,
 		data?: T,
-		yesLabel?:string|VueI18n.TranslateResult,
-		noLabel?:string|VueI18n.TranslateResult): Promise<T> {
+		yesLabel?:string,
+		noLabel?:string): Promise<T> {
 		let prom = <Promise<T>>new Promise((resolve, reject) => {
 			let confirmData: any = {}
 			confirmData.title = title;
@@ -97,7 +96,7 @@ export default class Utils {
 			confirmData.cancelCallback = () => {
 				reject(data);
 			};
-			store.dispatch("confirm", confirmData);
+			useMainStore().openConfirm(confirmData);
 		});
 		prom.catch((error) => {/*ignore*/ });//Avoid uncaugh error if not catched externally
 		return prom;
@@ -160,7 +159,7 @@ export default class Utils {
 	 * @param route 
 	 * @param metaKey 
 	 */
-	public static getRouteMetaValue(route:Route, metaKey:string):any {
+	public static getRouteMetaValue(route:RouteLocationNormalized, metaKey:string):any {
 		let res = null;
 		for (let i = route.matched.length-1; i >= 0; i--) {
 			const v = route.matched[i].meta[metaKey];

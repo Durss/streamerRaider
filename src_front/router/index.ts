@@ -1,12 +1,9 @@
-import store from '@/store';
+import { useMainStore } from '@/store';
 import Utils from "@/utils/Utils";
 import Home from '@/views/Home.vue';
-import Vue from 'vue';
-import VueRouter, { RouteConfig } from 'vue-router';
+import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
 
-Vue.use(VueRouter);
-
-const routes: Array<RouteConfig> = [
+const routes: Array<RouteRecordRaw> = [
 	{
 		path: '/',
 		name: 'home',
@@ -23,30 +20,31 @@ const routes: Array<RouteConfig> = [
 	{
 		path: '/oauth',
 		name: 'oauth',
+		component: Home,
 		beforeEnter: (to,from,next)=> {
+			const store = useMainStore();
 			let token = Utils.getQueryParameterByName("access_token");
 			let state = Utils.getQueryParameterByName("state");//Contains the route's name before auth flow
 			// let error = Utils.getQueryParameterByName("error");
 			if(token) {
-				store.dispatch("setOAuthToken", token);
+				store.setOAuthToken(token);
 			}else{
-				store.dispatch("alert", "Vous avez refusé l'accès à l'application Twitch.");
+				store.openAlert("Vous avez refusé l'accès à l'application Twitch.");
 			}
-			router.push({name:state});
+			next({name:state || 'home'});
 		},
 	},
 	{
-		path: "*",
+		path: "/:pathMatch(.*)*",
 		redirect:to => {
 			return {name:"home"}
 		},
 	},
 ]
 
-const router = new VueRouter({
-	mode: 'history',
-	base: process.env.BASE_URL,
-	routes
+const router = createRouter({
+	history: createWebHistory(import.meta.env.BASE_URL),
+	routes,
 })
 
 export default router

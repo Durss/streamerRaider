@@ -1,23 +1,23 @@
 <template>
 	<div class="shoutoutbot">
 		<Button type="checkbox" title="Activer" class="toggle" v-model="enabled" />
-		
+
 		<div :class="formClasses">
 			<div class="row">
 				<label for="command">Commande :</label>
 				<input type="text" id="command" v-model="command">
 			</div>
-			
+
 			<div class="row">
 				<label for="text">Message :</label>
 				<textarea id="text" v-model="text" rows="4"></textarea>
-			
+
 				<div class="fallback">
 					<Button type="checkbox" class="toggle" v-model="botDescriptionFallback" name="botDescriptionFallback" />
 					<label for="botDescriptionFallback">Si la personne n'a pas renseigné de description sur le Raider, afficher la description de sa chaîne twitch à la place.</label>
 				</div>
 			</div>
-			
+
 			<div class="row roles">
 				<label for="text">Rôles autorisés :</label>
 				<div class="role">
@@ -33,7 +33,7 @@
 					<label for="botRoleViewers">Viewers</label>
 				</div>
 			</div>
-			
+
 			<Button title="Reset" highlight @click="reset()" />
 		</div>
 
@@ -41,99 +41,70 @@
 	</div>
 </template>
 
-<script lang="ts">
-import { Component, Vue, Watch } from "vue-property-decorator";
+<script setup lang="ts">
+import { computed, onMounted, ref, watch } from "vue";
+import { useMainStore } from "@/store";
 import Button from "../Button.vue";
 
-@Component({
-	components:{
-		Button,
-	}
-})
-export default class ShoutoutBot extends Vue {
+const store = useMainStore();
 
-	public enabled:boolean = false;
-	public botDescriptionFallback:boolean = false;
-	public command:string = "";
-	public text:string = "";
-	public botRoleModerators:boolean = false;
-	public botRoleVIP:boolean = false;
-	public botRoleViewers:boolean = false;
+const enabled = ref(false);
+const botDescriptionFallback = ref(false);
+const command = ref("");
+const text = ref("");
+const botRoleModerators = ref(false);
+const botRoleVIP = ref(false);
+const botRoleViewers = ref(false);
 
-	public get formClasses():string[] {
-		let res = ["form"]
-		if(!this.enabled) res.push("disabled");
-		return res;
-	}
+const formClasses = computed(():string[] => {
+	let res = ["form"]
+	if(!enabled.value) res.push("disabled");
+	return res;
+});
 
-	public mounted():void {
-		if(this.$store.state.botShoutoutEnabled) {
-			this.enabled = true;
-		}
-
-		//Prefill form from store
-		this.command = this.$store.state.botCommand;
-		this.text = this.$store.state.botText;
-		this.botDescriptionFallback = this.$store.state.botDescriptionFallback;
-		let roles = this.$store.state.botRoles;
-		this.botRoleModerators = roles.includes("moderator");
-		this.botRoleVIP = roles.includes("vip");
-		this.botRoleViewers = roles.includes("viewer");
+onMounted(() => {
+	if(store.botShoutoutEnabled) {
+		enabled.value = true;
 	}
 
-	public beforeDestroy():void {
-		
-	}
+	//Prefill form from store
+	command.value = store.botCommand;
+	text.value = store.botText;
+	botDescriptionFallback.value = store.botDescriptionFallback;
+	let roles = store.botRoles;
+	botRoleModerators.value = roles.includes("moderator");
+	botRoleVIP.value = roles.includes("vip");
+	botRoleViewers.value = roles.includes("viewer");
+});
 
-	@Watch("enabled")
-	public onToggle():void {
-		this.$store.dispatch("setBotShoutoutEnabled", this.enabled);
-	}
+watch(enabled, () => store.setBotShoutoutEnabled(enabled.value));
+watch(command, () => store.setBotCommand(command.value));
+watch(text, () => store.setBotText(text.value));
+watch(botDescriptionFallback, () => store.setBotDescriptionFallback(botDescriptionFallback.value));
+watch(botRoleModerators, () => updateRolesList());
+watch(botRoleVIP, () => updateRolesList());
+watch(botRoleViewers, () => updateRolesList());
 
-	@Watch("command")
-	public onComandChange():void {
-		this.$store.dispatch("setBotCommand", this.command);
-	}
+function reset():void {
+	store.resetBotConfig();
+	command.value = store.botCommand;
+	text.value = store.botText;
+	botDescriptionFallback.value = store.botDescriptionFallback;
+	let roles = store.botRoles;
+	botRoleModerators.value = roles.includes("moderator");
+	botRoleVIP.value = roles.includes("vip");
+	botRoleViewers.value = roles.includes("viewer");
+}
 
-	@Watch("text")
-	public onTextChange():void {
-		this.$store.dispatch("setBotText", this.text);
-	}
-
-	@Watch("botDescriptionFallback")
-	public onBotDescriptionFallbackChange():void {
-		this.$store.dispatch("setBotDescriptionFallback", this.botDescriptionFallback);
-	}
-
-	@Watch("botRoleModerators")
-	public onBotRoleModeratorsChange():void { this.updateRolesList(); }
-	@Watch("botRoleVIP")
-	public onBotRoleVIPChange():void { this.updateRolesList(); }
-	@Watch("botRoleViewers")
-	public onBotRoleViewersChange():void { this.updateRolesList(); }
-
-	public reset():void {
-		this.$store.dispatch("resetBotConfig");
-		this.command = this.$store.state.botCommand;
-		this.text = this.$store.state.botText;
-		this.botDescriptionFallback = this.$store.state.botDescriptionFallback;
-		let roles = this.$store.state.botRoles;
-		this.botRoleModerators = roles.includes("moderator");
-		this.botRoleVIP = roles.includes("vip");
-		this.botRoleViewers = roles.includes("viewer");
-	}
-
-	/**
-	 * Called anytime a role is checked or unchecked
-	 */
-	private updateRolesList():void {
-		let roles = [];
-		if(this.botRoleModerators) roles.push("moderator");
-		if(this.botRoleVIP) roles.push("vip");
-		if(this.botRoleViewers) roles.push("viewer");
-		this.$store.dispatch("setBotRoles", roles);
-	}
-
+/**
+ * Called anytime a role is checked or unchecked
+ */
+function updateRolesList():void {
+	let roles = [];
+	if(botRoleModerators.value) roles.push("moderator");
+	if(botRoleVIP.value) roles.push("vip");
+	if(botRoleViewers.value) roles.push("viewer");
+	store.setBotRoles(roles);
 }
 </script>
 
@@ -217,6 +188,6 @@ export default class ShoutoutBot extends Vue {
 		margin-top: 10px;
 		color: @mainColor_warn;
 	}
-	
+
 }
 </style>

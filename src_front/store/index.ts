@@ -2,14 +2,38 @@ import Api from '@/utils/Api';
 import Config from '@/utils/Config';
 import IRCClient from '@/utils/IRCClient';
 import TwitchUtils from '@/utils/TwitchUtils';
-import Vue from 'vue';
-import Vuex from 'vuex';
+import { defineStore } from 'pinia';
+import type { ProfileData } from '@/views/ProfileSwitcher.vue';
 import Store from './Store';
 
-Vue.use(Vuex)
+interface ConfirmData {
+	title:string;
+	description:string;
+	confirmCallback:Function;
+	cancelCallback:Function;
+	yesLabel:string;
+	noLabel:string;
+}
 
-export default new Vuex.Store({
-	state: {
+interface MainState {
+	OAuthToken:string;
+	clientID:string;
+	userLogin:string;
+	profile:ProfileData;
+	initComplete:boolean;
+	botToxicEnabled:boolean;
+	botShoutoutEnabled:boolean;
+	botDescriptionFallback:boolean;
+	botRoles:string[];
+	botCommand:string;
+	botText:string;
+	tooltip:string;
+	alert:string;
+	confirm:ConfirmData;
+}
+
+export const useMainStore = defineStore('main', {
+	state: ():MainState => ({
 		OAuthToken: "",//Stores the OAUth user access token
 		clientID: "",//Store the twitch app client ID loaded from server
 		userLogin: "",//Stores the current user's login
@@ -23,85 +47,88 @@ export default new Vuex.Store({
 		botText: "",
 		tooltip: null,
 		alert: null,
-		confirm:{
-			title:null,
-			description:null,
-			confirmCallback:null,
-			cancelCallback:null,
-			yesLabel:null,
-			noLabel:null,
+		confirm: {
+			title: null,
+			description: null,
+			confirmCallback: null,
+			cancelCallback: null,
+			yesLabel: null,
+			noLabel: null,
 		},
-	},
-	mutations: {
-		setClientID(state, payload) { state.clientID = payload; },
-		
-		setProfile(state, name) { state.profile = name; },
+	}),
 
-		async setOAuthToken(state, token) {
+	actions: {
+		setClientID(payload:string) { this.clientID = payload; },
+
+		setProfile(name:ProfileData) { this.profile = name; },
+
+		async setOAuthToken(token:string) {
 			if(!token) {
-				state.OAuthToken = null;
+				this.OAuthToken = null;
 				Store.remove("OAuthToken");
 			}else{
 				let result = await TwitchUtils.validateToken(token);
 				if(result === false) {
-					state.OAuthToken = null;
+					this.OAuthToken = null;
 					Store.remove("OAuthToken");
 				}else{
-					state.userLogin = result.login;
-					state.OAuthToken = token;
+					this.userLogin = result.login;
+					this.OAuthToken = token;
 					Store.set("OAuthToken", token);
 					IRCClient.instance.initialize(result.login, token);
 				}
 			}
 		},
 
-		confirm(state, payload) { state.confirm = payload; },
+		openConfirm(payload:ConfirmData) { this.confirm = payload; },
 
-		alert(state, payload) { state.alert = payload; },
+		openAlert(payload:string) { this.alert = payload; },
 
-		openTooltip(state, payload) { state.tooltip = payload; },
-		
-		closeTooltip(state) { state.tooltip = null; },
-		
-		setBotShoutoutEnabled(state, payload) {
-			state.botShoutoutEnabled = payload;
+		openTooltip(payload:string) { this.tooltip = payload; },
+
+		closeTooltip() { this.tooltip = null; },
+
+		logout() { this.setOAuthToken(null); },
+
+		setBotShoutoutEnabled(payload:boolean) {
+			this.botShoutoutEnabled = payload;
 			Store.set("botShoutoutEnabled", payload? 'true' : 'false');
 		},
-		
-		setBotToxicEnabled(state, payload) {
-			state.botToxicEnabled = payload;
+
+		setBotToxicEnabled(payload:boolean) {
+			this.botToxicEnabled = payload;
 			Store.set("botToxicEnabled", payload? 'true' : 'false');
 		},
-		
-		setBotCommand(state, payload) {
+
+		setBotCommand(payload:string) {
 			if(payload) {
-				state.botCommand = payload;
+				this.botCommand = payload;
 				Store.set("botCommand", payload);
 			}
 		},
-		
-		setBotText(state, payload) {
+
+		setBotText(payload:string) {
 			if(payload) {
-				state.botText = payload;
+				this.botText = payload;
 				Store.set("botText", payload);
 			}
 		},
-		
-		setBotDescriptionFallback(state, payload) {
-			state.botDescriptionFallback = payload;
-			Store.set("botDescriptionFallback", payload);
+
+		setBotDescriptionFallback(payload:boolean) {
+			this.botDescriptionFallback = payload;
+			Store.set("botDescriptionFallback", payload? 'true' : 'false');
 		},
-		
-		setBotRoles(state, payload) {
-			state.botRoles = payload;
+
+		setBotRoles(payload:string[]) {
+			this.botRoles = payload;
 			Store.set("botRoles", payload.join(','));
 		},
-		
-		resetBotConfig(state, clearStorage) {
-			state.botCommand = "!so";
-			state.botText = "Allez follow twitch.tv/{PSEUDO} dont voici une description : {DESCRIPTION}";
-			state.botDescriptionFallback = true;
-			state.botRoles = ["moderator"];
+
+		resetBotConfig(clearStorage:boolean = true) {
+			this.botCommand = "!so";
+			this.botText = "Allez follow twitch.tv/{PSEUDO} dont voici une description : {DESCRIPTION}";
+			this.botDescriptionFallback = true;
+			this.botRoles = ["moderator"];
 			if(clearStorage === true) {
 				Store.remove("botCommand");
 				Store.remove("botText");
@@ -110,9 +137,7 @@ export default new Vuex.Store({
 			}
 		},
 
-	},
-	actions: {
-		async startApp({ state, commit, dispatch }, payload) { 
+		async startApp() {
 			let token = Store.get("OAuthToken");
 			//Check if token is valid and has all needed scopes
 			if(token) {
@@ -131,76 +156,44 @@ export default new Vuex.Store({
 					tokenValid = false;
 				}
 				if(!tokenValid) {
-					commit("setOAuthToken", null);
+					this.setOAuthToken(null);
 				}else{
-					commit("setOAuthToken", token);
+					this.setOAuthToken(token);
 				}
 			}
-			
-			commit("resetBotConfig", false);
+
+			this.resetBotConfig(false);
 
 			let botShoutoutEnabled = Store.get("botShoutoutEnabled");
-			if(botShoutoutEnabled === "true") state.botShoutoutEnabled = true;
+			if(botShoutoutEnabled === "true") this.botShoutoutEnabled = true;
 
 			let botToxicEnabled = Store.get("botToxicEnabled");
-			if(botToxicEnabled === "true") state.botToxicEnabled = true;
-			
+			if(botToxicEnabled === "true") this.botToxicEnabled = true;
+
 			let botCommand = Store.get("botCommand");
-			if(botCommand) state.botCommand = botCommand;
-			
+			if(botCommand) this.botCommand = botCommand;
+
 			let botDescriptionFallback = Store.get("botDescriptionFallback");
-			if(botDescriptionFallback!=undefined) state.botDescriptionFallback = botDescriptionFallback ==='true';
-			
+			if(botDescriptionFallback!=undefined) this.botDescriptionFallback = botDescriptionFallback ==='true';
+
 			let botRoles = Store.get("botRoles");
-			
-			if(botRoles!=undefined) state.botRoles = botRoles.split(",");
-			
+			if(botRoles!=undefined) this.botRoles = botRoles.split(",");
+
 			let botText = Store.get("botText");
-			if(botText) state.botText = botText;
-			
+			if(botText) this.botText = botText;
+
 			try {
 				let res = await Api.get("private/client_id");
-				commit("setClientID", res.id);
+				this.setClientID(res.id);
 			}catch(error) {}
-			
+
 			try {
 				let res = await Api.get("private/profile/current");
-				commit("setProfile", res.profile);
+				this.setProfile(res.profile);
 			}catch(error) {}
 
-			state.initComplete = true;
+			this.initComplete = true;
 			return true;
 		},
-
-		setClientID({ commit }, id) { commit("setClientID", id); },
-
-		setProfile({ commit }, p) { commit("setProfile", p); },
-
-		setOAuthToken({ commit }, token) { commit("setOAuthToken", token); },
-
-		confirm({commit}, payload) { commit("confirm", payload); },
-
-		alert({commit}, payload) { commit("alert", payload); },
-
-		openTooltip({commit}, payload) { commit("openTooltip", payload); },
-		
-		closeTooltip({commit}) { commit("closeTooltip", null); },
-		
-		logout({commit}) { commit("setOAuthToken", null); },
-		
-		setBotShoutoutEnabled({commit}, payload) { commit("setBotShoutoutEnabled", payload); },
-		
-		setBotToxicEnabled({commit}, payload) { commit("setBotToxicEnabled", payload); },
-		
-		setBotCommand({commit}, payload) { commit("setBotCommand", payload); },
-
-		setBotText({commit}, payload) { commit("setBotText", payload); },
-
-		setBotDescriptionFallback({commit}, payload) { commit("setBotDescriptionFallback", payload); },
-
-		setBotRoles({commit}, payload) { commit("setBotRoles", payload); },
-
-		resetBotConfig({commit}) { commit("resetBotConfig", true); },
-
 	},
-})
+});

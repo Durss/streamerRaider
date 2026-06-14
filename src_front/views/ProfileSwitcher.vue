@@ -24,76 +24,69 @@
 </template>
 
 <script lang="ts">
-import Button from "@/components/Button.vue";
-import ProfileNavButton from "@/components/ProfileNavButton.vue";
-import Api from "@/utils/Api";
-import { Component, Prop, Vue, Watch } from "vue-property-decorator";
-
-@Component({
-	components:{
-		Button,
-		ProfileNavButton,
-	}
-})
-export default class ProfileSwitcher extends Vue {
-
-	@Prop()
-	public lightMode:boolean;
-
-	public nextProfile:ProfileData = null;
-	public prevProfile:ProfileData = null;
-	public hasProfile:boolean = false;
-	public profiles:ProfileData[] = null;
-
-	public mounted():void {
-		if(this.$store.state.initComplete) {
-			this.loadProfiles();
-		}
-	}
-
-	public beforeDestroy():void {
-		
-	}
-
-	@Watch("$store.state.initComplete")
-	public async loadProfiles():Promise<void> {
-		let res;
-		try {
-			res = await Api.get("private/profile/list");
-		}catch(e) {
-			return;
-		}
-		if(res.profiles && res.profiles.length > 1) {
-			this.profiles = res.profiles;
-			this.hasProfile = true;
-			let dns = document.location.hostname;
-			// dns = "protopotes.durss.fr";
-			// dns = "pogscience.durss.fr";
-			// console.log(this.profiles);
-			for (let i = 0; i < this.profiles.length; i++) {
-				const p = this.profiles[i];
-				if(p.domains.indexOf(dns) > -1) {
-					if(p.nextProfile) {
-						let sideProfile:ProfileData = this.profiles.find(v => v.id === p.nextProfile);
-						// console.log(sideProfile);
-						this.nextProfile = sideProfile;
-					}
-					if(p.prevProfile) {
-						let sideProfile:ProfileData = this.profiles.find(v => v.id === p.prevProfile);
-						this.prevProfile = sideProfile;
-					}
-				}
-			}
-		}
-	}
-}
-
 export interface ProfileData {
 	domains:string[];
 	id:string;
 	title?:string;
 	prevProfile?:string;
 	nextProfile?:string;
+}
+</script>
+
+<script setup lang="ts">
+import ProfileNavButton from "@/components/ProfileNavButton.vue";
+import Api from "@/utils/Api";
+import { onMounted, ref, watch } from "vue";
+import { useMainStore } from "@/store";
+
+defineProps<{
+	lightMode?:boolean;
+}>();
+
+const store = useMainStore();
+
+const nextProfile = ref<ProfileData>(null);
+const prevProfile = ref<ProfileData>(null);
+const hasProfile = ref(false);
+const profiles = ref<ProfileData[]>(null);
+
+onMounted(() => {
+	if(store.initComplete) {
+		loadProfiles();
+	}
+});
+
+watch(() => store.initComplete, () => loadProfiles());
+
+async function loadProfiles():Promise<void> {
+	let res;
+	try {
+		res = await Api.get("private/profile/list");
+	}catch(e) {
+		return;
+	}
+	if(res.profiles && res.profiles.length > 1) {
+		profiles.value = res.profiles;
+		hasProfile.value = true;
+		let dns = document.location.hostname;
+		// dns = "protopotes.durss.fr";
+		// dns = "pogscience.durss.fr";
+		// console.log(profiles.value);
+		for (let i = 0; i < profiles.value.length; i++) {
+			const p = profiles.value[i];
+			if(p.domains.indexOf(dns) > -1) {
+				if(p.nextProfile) {
+					let sideProfile:ProfileData = profiles.value.find(v => v.id === p.nextProfile);
+					// console.log(sideProfile);
+					nextProfile.value = sideProfile;
+				}
+				if(p.prevProfile) {
+					let sideProfile:ProfileData = profiles.value.find(v => v.id === p.prevProfile);
+					prevProfile.value = sideProfile;
+				}
+			}
+		}
+	}
 }
 </script>
 

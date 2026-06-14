@@ -4,7 +4,7 @@
 		<div class="holder" ref="holder">
 			<div class="head">
 				<span class="title">Panneau OBS</span>
-				<Button :icon="require('@/assets/icons/cross_white.svg')" @click="close()" class="close"/>
+				<Button :icon="crossWhiteIcon" @click="close()" class="close"/>
 			</div>
 			<div class="content">
 				<p class="intro">Vous pouvez intégrer cette page à OBS avec un design minimaliste dédié.</p>
@@ -14,7 +14,7 @@
 				<p class="path" ref="url">
 					<strong @click="selectText()" ref="actualURL" v-if="!copiedText">{{obsPanelURL}}</strong>
 					<strong v-if="copiedText" class="copied">URL copiée !</strong>
-					<Button :icon="require('@/assets/icons/copy.svg')" class="copy" @click="copyLink()" data-tooltip="Copy" />
+					<Button :icon="copyIcon" class="copy" @click="copyLink()" data-tooltip="Copy" />
 				</p>
 				<p>Vous pouvez maintenant ajouter ce panneau où vous le souhaitez dans l'interface d'OBS.</p>
 				<p class="spacer">Dans ce panneau vous aurez en plus la possibilité d'activer un bot pour effectuer des shoutouts personnalisés avec la description de chaque personne.</p>
@@ -23,68 +23,70 @@
 	</div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import Utils from "@/utils/Utils";
-import gsap from "gsap/all";
-import { Component, Vue } from "vue-property-decorator";
+import gsap from "gsap";
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { useRouter } from "vue-router";
 import Button from "./Button.vue";
+import crossWhiteIcon from "@/assets/icons/cross_white.svg";
+import copyIcon from "@/assets/icons/copy.svg";
 
-@Component({
-	components:{
-		Button,
-	}
-})
-export default class OBSPanelInfo extends Vue {
+const emit = defineEmits<{ close: [] }>();
 
-	public copiedText:boolean = false;
+const router = useRouter();
 
-	private keyUpHandler:any;
+const copiedText = ref(false);
+const dimmer = ref<HTMLElement>();
+const holder = ref<HTMLElement>();
+const url = ref<HTMLElement>();
+const actualURL = ref<HTMLElement>();
 
-	public get obsPanelURL():string {
-		let route = this.$router.resolve({name: "obs"}).href;
-		return document.location.origin + route;
-	}
+let keyUpHandler:(e:KeyboardEvent)=>void;
 
-	public mounted():void {
-		gsap.killTweensOf([this.$refs.holder, this.$refs.dimmer]);
-		gsap.set(this.$refs.holder, {marginTop:0, opacity:1});
-		gsap.to(this.$refs.dimmer, {duration:.25, opacity:1});
-		gsap.from(this.$refs.holder, {duration:.25, marginTop:100, opacity:0, ease:"back.out"});
+const obsPanelURL = computed(():string => {
+	let route = router.resolve({name: "obs"}).href;
+	return document.location.origin + route;
+});
 
-		this.keyUpHandler = (e:KeyboardEvent) => { if(e.key == "Escape") this.close(); }
+onMounted(() => {
+	gsap.killTweensOf([holder.value, dimmer.value]);
+	gsap.set(holder.value, {marginTop:0, opacity:1});
+	gsap.to(dimmer.value, {duration:.25, opacity:1});
+	gsap.from(holder.value, {duration:.25, marginTop:100, opacity:0, ease:"back.out"});
 
-		document.addEventListener("keyup", this.keyUpHandler);
-	}
+	keyUpHandler = (e:KeyboardEvent) => { if(e.key == "Escape") close(); }
 
-	public beforeDestroy():void {
-		document.removeEventListener("keyup", this.keyUpHandler);
-	}
+	document.addEventListener("keyup", keyUpHandler);
+});
 
-	public close():void {
-		gsap.killTweensOf([this.$refs.holder, this.$refs.dimmer]);
-		gsap.to(this.$refs.dimmer, {duration:.25, opacity:0, ease:"sine.in"});
-		gsap.to(this.$refs.holder, {duration:.25, marginTop:100, opacity:0, ease:"back.out", onComplete:()=> {
-			this.$emit("close");
-		}});
-	}
+onBeforeUnmount(() => {
+	document.removeEventListener("keyup", keyUpHandler);
+});
 
-	public copyLink():void {
-		Utils.copyToClipboard(this.obsPanelURL);
-		gsap.set(this.$refs.url, {filter:"brightness(1) saturate(1)", background:"rgba(255,255,255,0)"});
-		gsap.from(this.$refs.url, {duration:.5, ease:"sine.in", filter:"brightness(2) saturate(0)", background:"rgba(255,255,255,1)"});
-		this.copiedText = true;
-		setTimeout(()=> {
-			this.copiedText = false;
-		}, 1000);
-	}
+function close():void {
+	gsap.killTweensOf([holder.value, dimmer.value]);
+	gsap.to(dimmer.value, {duration:.25, opacity:0, ease:"sine.in"});
+	gsap.to(holder.value, {duration:.25, marginTop:100, opacity:0, ease:"back.out", onComplete:()=> {
+		emit("close");
+	}});
+}
 
-	public selectText():void {
-        var range = document.createRange();
-        range.selectNode(<HTMLParagraphElement>this.$refs.actualURL);
-        window.getSelection().removeAllRanges();
-        window.getSelection().addRange(range);
-	}
+function copyLink():void {
+	Utils.copyToClipboard(obsPanelURL.value);
+	gsap.set(url.value, {filter:"brightness(1) saturate(1)", background:"rgba(255,255,255,0)"});
+	gsap.from(url.value, {duration:.5, ease:"sine.in", filter:"brightness(2) saturate(0)", background:"rgba(255,255,255,1)"});
+	copiedText.value = true;
+	setTimeout(()=> {
+		copiedText.value = false;
+	}, 1000);
+}
 
+function selectText():void {
+	var range = document.createRange();
+	range.selectNode(actualURL.value);
+	window.getSelection().removeAllRanges();
+	window.getSelection().addRange(range);
 }
 </script>
 
@@ -149,7 +151,7 @@ export default class OBSPanelInfo extends Vue {
 
 			.copy {
 				padding: 5px;
-				/deep/ .icon {
+				:deep(.icon) {
 					width: 14px;
 					height: 14px;
 				}

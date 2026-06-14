@@ -1,16 +1,16 @@
 <template>
 	<div class="authform">
 		<Button v-if="showButton"
-			:icon="require('@/assets/icons/twitch.svg')"
+			:icon="twitchIcon"
 			@click="showForm=true; showButton=false" title="Connexion" white
 			class="login"/>
 
 		<transition name="scale"
-		v-on:after-leave="onClose">
+		@after-leave="onClose">
 			<div v-if="showForm" class="content">
 				<div class="title">
 					<span class="text">Connexion</span>
-					<Button :icon="require('@/assets/icons/cross_white.svg')" @click="showForm=false" class="close"/>
+					<Button :icon="crossWhiteIcon" @click="showForm=false" class="close"/>
 				</div>
 				<div v-if="lightMode">En te connectant tu pourras lancer un raid en un click et activer un bot pour faire des shoutouts personnalisés.</div>
 				<div v-if="!lightMode">En te connectant tu pourras lancer un raid en un click et éditer ta description.</div>
@@ -18,65 +18,50 @@
 					class="auth"
 					type="link"
 					target="_self"
-					:icon="require('@/assets/icons/twitch.svg')"
+					:icon="twitchIcon"
 					title="Me connecter" />
 			</div>
 		</transition>
 	</div>
 </template>
 
-<script lang="ts">
-import Button from "@/components/Button.vue";
+<script setup lang="ts">
 import Config from "@/utils/Config";
-import { Component, Prop, Vue } from "vue-property-decorator";
+import { computed, ref } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { useMainStore } from "@/store";
+import Button from "@/components/Button.vue";
+import twitchIcon from "@/assets/icons/twitch.svg";
+import crossWhiteIcon from "@/assets/icons/cross_white.svg";
 
-@Component({
-	components:{
-		Button,
-	}
-})
-export default class AuthForm extends Vue {
-	@Prop()
-	public lightMode:boolean;
+defineProps<{
+	lightMode?:boolean;
+}>();
 
-	public token:string = null;
-	public loading:boolean = false;
-	public showForm:boolean = false;
-	public showButton:boolean = true;
+const store = useMainStore();
+const router = useRouter();
+const route = useRoute();
 
-	public get oAuthURL():string {
-		let path = this.$router.resolve({name:"oauth"}).href;
-		let redirect = encodeURIComponent( document.location.origin+path );
-		let scopes = encodeURIComponent( Config.TWITCH_SCOPES.join(" ") );
-		let clientID = this.$store.state.clientID;
+const showForm = ref(false);
+const showButton = ref(true);
 
-		let url = "https://id.twitch.tv/oauth2/authorize?";
-		url += "client_id="+clientID
-		url += "&redirect_uri="+redirect;
-		url += "&response_type=token";
-		url += "&scope="+scopes;
-		url += "&state="+this.$route.name;//Used to redirect to the route we came from
-		return url;
-	}
+const oAuthURL = computed(():string => {
+	let path = router.resolve({name:"oauth"}).href;
+	let redirect = encodeURIComponent( document.location.origin+path );
+	let scopes = encodeURIComponent( Config.TWITCH_SCOPES.join(" ") );
+	let clientID = store.clientID;
 
-	public async mounted():Promise<void> {
-		
-	}
+	let url = "https://id.twitch.tv/oauth2/authorize?";
+	url += "client_id="+clientID
+	url += "&redirect_uri="+redirect;
+	url += "&response_type=token";
+	url += "&scope="+scopes;
+	url += "&state="+String(route.name);//Used to redirect to the route we came from
+	return url;
+});
 
-	public beforeDestroy():void {
-		
-	}
-
-	public onClose():void {
-		this.showButton = true;
-	}
-
-	// @Watch("showForm")
-	// public onFormChange():void {
-	// 	gsap.set(this.$el, {scale:1, maxHeight:"250px"});
-	// 	gsap.from(this.$el, {duration:.5, maxHeight:"35px", scale:1});
-	// }
-
+function onClose():void {
+	showButton.value = true;
 }
 </script>
 
@@ -136,11 +121,11 @@ export default class AuthForm extends Vue {
 			margin-bottom: -7px;
 		}
 	}
-	
+
 	.scale-enter-active, .scale-leave-active {
 		max-height: 235px;
 	}
-	.scale-enter, .scale-leave-to {
+	.scale-enter-from, .scale-leave-to {
 		max-height: 0px;
 	}
 
