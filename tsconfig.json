@@ -14,13 +14,12 @@
 	  "sourceMap": true,
 	  "noImplicitAny": false,
 	  "skipLibCheck": true,
-	  "baseUrl": ".",
 	  "types": [
 		"vite/client"
 	  ],
 	  "paths": {
 		"@/*": [
-		  "src_front/*"
+		  "./src_front/*"
 		]
 	  },
 	  "lib": [

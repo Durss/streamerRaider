@@ -10,12 +10,11 @@
 		"importHelpers": true,
 		"experimentalDecorators": true,
 		"sourceMap": false,
-		"baseUrl": ".",
 		"outDir": "./server",
 		"skipLibCheck": true,
 		"paths": {
 			"@/*": [
-				"src_back/*"
+				"./src_back/*"
 			]
 		},
 		"lib": [

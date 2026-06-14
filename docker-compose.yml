@@ -1,0 +1,12 @@
+services:
+  streamer-raider:
+    build: .
+    image: streamer-raider
+    container_name: streamer-raider
+    restart: unless-stopped
+    ports:
+      - "3012:3012"
+    volumes:
+      # Persistent, host-editable data folder (credentials, user lists,
+      # discord config, ...). Survives container restarts and rebuilds.
+      - ./data:/app/data

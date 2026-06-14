@@ -1,0 +1,20 @@
+# Build artifacts (regenerated inside the image)
+node_modules
+dist
+server
+
+# Runtime data lives on a mounted volume, never bake it into the image
+data
+env.conf
+
+# VCS / local tooling
+.git
+.github
+.vscode
+.idea
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

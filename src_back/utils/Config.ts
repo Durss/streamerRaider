@@ -139,7 +139,7 @@ export default class Config {
 	public static get PUBLIC_PATH(): string {
 		return this.getEnvData({
 			dev: "./dist",
-			prod: "./public",
+			prod: "./dist",
 		});
 	}
 
