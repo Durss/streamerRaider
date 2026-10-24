@@ -3,7 +3,7 @@
 # ---- Build stage ----------------------------------------------------------
 # Builds both the Vue front-end (vite -> /app/dist) and the Node server
 # (tsc -> /app/server).
-FROM node:20-alpine AS build
+FROM node:lts-alpine AS build
 WORKDIR /app
 
 # Install all dependencies first to leverage Docker layer caching.
@@ -19,7 +19,7 @@ RUN npm run build
 # the resolved node_modules (kept from the build stage so transitive runtime
 # deps such as tslib - used by the compiled server via importHelpers - are
 # guaranteed to be present).
-FROM node:20-alpine AS runtime
+FROM node:lts-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
 
